@@ -1,0 +1,7 @@
+apiVersion: syn.tools/v1alpha1
+kind: GitRepo
+metadata:
+  name: example-gitrepo
+spec:
+  # Add fields here
+  size: 3

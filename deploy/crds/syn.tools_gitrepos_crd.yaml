@@ -1,0 +1,114 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: gitrepos.syn.tools
+spec:
+  group: syn.tools
+  names:
+    kind: GitRepo
+    listKind: GitRepoList
+    plural: gitrepos
+    singular: gitrepo
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      description: GitRepo is the Schema for the gitrepos API
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          description: GitRepoSpec defines the desired state of GitRepo
+          properties:
+            apiSecretRef:
+              description: APISecretRef reference to secret containing connection
+                information
+              properties:
+                name:
+                  description: Name is unique within a namespace to reference a secret
+                    resource.
+                  type: string
+                namespace:
+                  description: Namespace defines the space within which the secret
+                    name must be unique.
+                  type: string
+              type: object
+            deployKeys:
+              description: DeployKeys optional list of SSH deploy keys. If not set,
+                not deploy keys will be configured
+              items:
+                description: DeployKey defines an SSH key to be used for git operations.
+                properties:
+                  key:
+                    type: string
+                  type:
+                    type: string
+                  writeAccess:
+                    type: boolean
+                type: object
+              type: array
+            path:
+              description: Path to Git repository
+              type: string
+            repoName:
+              description: RepoName ame of Git repository
+              type: string
+            tenantRef:
+              description: TenantRef references the tenant this repo belongs to
+              properties:
+                name:
+                  type: string
+                namespace:
+                  type: string
+              type: object
+          type: object
+        status:
+          description: GitRepoStatus defines the observed state of GitRepo
+          properties:
+            conditions:
+              description: Conditions updated by Operator with current conditions
+              items:
+                description: GitRepoConditions contains condition elements for the
+                  GitRep CRD
+                properties:
+                  lastTransitionTime:
+                    format: date-time
+                    type: string
+                  reason:
+                    type: string
+                  status:
+                    type: string
+                  type:
+                    type: string
+                type: object
+              type: array
+            phase:
+              description: Updated by Operator with current phase. The GitPhase enum
+                will be used for application logic as using it directly would only
+                print an integer.
+              type: string
+            type:
+              description: Type autodiscovered Git repo type. Same behaviour for the
+                enum as with the Phase.
+              type: string
+            url:
+              description: URL computed Git repository URL
+              type: string
+          type: object
+      type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
