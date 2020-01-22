@@ -1,0 +1,16 @@
+apiVersion: syn.tools/v1alpha1
+kind: Tenant
+metadata:
+  name: aezoo6
+spec:
+  slug: bigcorp
+  displayName: Big Corp.
+  gitRepoTemplate:
+    spec:
+      apiSecretRef:
+        key: my-api-secret
+        name: syn-lieutenant
+      deployKeys:
+      - type: ssh-ed25519
+        key: AAAA...
+        writeAccess: true
