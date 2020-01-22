@@ -29,6 +29,9 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+
+	// import all registered git implementations
+	_ "github.com/projectsyn/lieutenant-operator/pkg/git"
 )
 
 // Change below variables to serve metrics on different host or port.

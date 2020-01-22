@@ -27,9 +27,12 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 
 	instance := &synv1alpha1.Cluster{}
 
-	res, err := r.fetchInstance(instance, request.NamespacedName)
+	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
-		return res, err
+		if errors.IsNotFound(err) {
+			return reconcile.Result{}, nil
+		}
+		return reconcile.Result{}, err
 	}
 
 	if instance.Status.BootstrapToken == nil {
@@ -40,13 +43,17 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 	}
 
+	if time.Now().After(instance.Status.BootstrapToken.ValidUntil.Time) {
+		instance.Status.BootstrapToken.TokenValid = false
+	}
+
 	if instance.Spec.GitRepoURL == "" {
 		gvk := schema.GroupVersionKind{
 			Version: instance.APIVersion,
 			Kind:    instance.Kind,
 		}
 
-		err := helpers.CreateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, &instance.Spec.TenantRef)
+		err := helpers.CreateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, instance.Spec.TenantRef)
 		if err != nil {
 			reqLogger.Error(err, "Cannot create git repo object")
 			return reconcile.Result{}, err
@@ -62,7 +69,7 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 			return reconcile.Result{}, err
 		}
 
-		if gitRepo.Status.Phase == synv1alpha1.Created {
+		if gitRepo.Status.Phase != nil && *gitRepo.Status.Phase == synv1alpha1.Created {
 			instance.Spec.GitRepoURL = gitRepo.Status.URL
 		}
 
@@ -70,7 +77,12 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 
 	r.addLabels(instance)
 
-	return reconcile.Result{}, r.client.Update(context.TODO(), instance)
+	err = r.client.Update(context.TODO(), instance)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	return reconcile.Result{}, r.client.Status().Update(context.TODO(), instance)
 }
 
 func (r *ReconcileCluster) generateToken() (string, error) {
@@ -103,18 +115,12 @@ func (r *ReconcileCluster) newStatus(cluster *synv1alpha1.Cluster) error {
 	}
 
 	cluster.Status.BootstrapToken = &synv1alpha1.BootstrapToken{
-		Token:               token,
-		ValidUntil:          metav1.NewTime(validUntil),
-		BootstrapTokenValid: true,
+		Token:      token,
+		ValidUntil: metav1.NewTime(validUntil),
+		TokenValid: true,
 	}
 
-	return r.updateStatus(cluster)
-}
-
-func (r *ReconcileCluster) updateStatus(cluster *synv1alpha1.Cluster) error {
-
-	return r.client.Status().Update(context.TODO(), cluster)
-
+	return nil
 }
 
 func (r *ReconcileCluster) addLabels(cluster *synv1alpha1.Cluster) {
@@ -123,20 +129,4 @@ func (r *ReconcileCluster) addLabels(cluster *synv1alpha1.Cluster) {
 		cluster.ObjectMeta.Labels = make(map[string]string)
 	}
 	cluster.ObjectMeta.Labels[apis.LabelNameTenant] = cluster.Spec.TenantRef.Name
-}
-
-func (r *ReconcileCluster) fetchInstance(instance *synv1alpha1.Cluster, namespacedName types.NamespacedName) (reconcile.Result, error) {
-
-	err := r.client.Get(context.TODO(), namespacedName, instance)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
-			return reconcile.Result{}, err
-		}
-		// Error reading the object - requeue the request.
-		return reconcile.Result{Requeue: true}, err
-	}
-	return reconcile.Result{}, nil
 }

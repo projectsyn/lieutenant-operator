@@ -115,10 +115,10 @@ spec:
               description: BootstrapTokenValid validity of the bootstrap token, set
                 by the Lieutenant API.
               properties:
-                bootstrapTokenValid:
-                  type: boolean
                 token:
                   type: string
+                tokenValid:
+                  type: boolean
                 validUntil:
                   format: date-time
                   type: string

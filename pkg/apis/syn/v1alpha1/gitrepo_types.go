@@ -15,11 +15,8 @@ const (
 
 // GitPhase enum values
 const (
-	Creating     = GitPhase("creating")
 	Created      = GitPhase("created")
-	Updating     = GitPhase("update")
-	Deleting     = GitPhase("deleteing")
-	Deleted      = GitPhase("deleted")
+	Failed       = GitPhase("failed")
 	PhaseUnknown = GitPhase("")
 )
 
@@ -29,14 +26,9 @@ type GitPhase string
 // GitType as the enum for git types
 type GitType string
 
-// IsValid checks if the GitPhase enum is in the valid range
-func (g GitType) IsValid() bool {
-	return g > GitLab && g < TypeUnknown
-}
-
 // GitRepoSpec defines the desired state of GitRepo
 type GitRepoSpec struct {
-	GitRepoTemplate `json:"gitRepoTemplate"`
+	GitRepoTemplate `json:",inline"`
 	// TenantRef references the tenant this repo belongs to
 	TenantRef corev1.LocalObjectReference `json:"tenantRef"`
 }
@@ -63,23 +55,13 @@ type DeployKey struct {
 
 // GitRepoStatus defines the observed state of GitRepo
 type GitRepoStatus struct {
-	// Conditions updated by Operator with current conditions
-	Conditions []GitRepoConditions `json:"conditions,omitempty"`
 	// Updated by Operator with current phase. The GitPhase enum will be used for application logic
 	// as using it directly would only print an integer.
-	Phase GitPhase `json:"phase,omitempty"`
+	Phase *GitPhase `json:"phase,omitempty"`
 	// Type autodiscovered Git repo type. Same behaviour for the enum as with the Phase.
 	Type GitType `json:"type,omitempty"`
 	// URL computed Git repository URL
 	URL string `json:"url,omitempty"`
-}
-
-// GitRepoConditions contains condition elements for the GitRep CRD
-type GitRepoConditions struct {
-	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
-	Reason             string      `json:"reason,omitempty"`
-	Status             string      `json:"status,omitempty"`
-	Type               string      `json:"type,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
