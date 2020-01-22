@@ -3,6 +3,7 @@ package helpers
 import (
 	"context"
 	"fmt"
+	corev1 "k8s.io/api/core/v1"
 	"strings"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
@@ -14,20 +15,23 @@ import (
 )
 
 // CreateGitRepo will create the gitRepo object if it doesn't already exist. If the owner object itself is a tenant tenantRef can be set nil.
-func CreateGitRepo(obj metav1.Object, gvk schema.GroupVersionKind, template *synv1alpha1.GitRepoTemplate, client client.Client, tenantRef *synv1alpha1.TenantRef) error {
+func CreateGitRepo(obj metav1.Object, gvk schema.GroupVersionKind, template *synv1alpha1.GitRepoTemplate, client client.Client, tenantRef *corev1.LocalObjectReference) error {
+
+	if template == nil {
+		return fmt.Errorf("gitRepo template is empty")
+	}
 
 	tenantName := obj.GetName()
 	tenantNamespace := obj.GetNamespace()
 	if tenantRef != nil {
 		template.Spec.TenantRef = tenantRef
 		tenantName = tenantRef.Name
-		tenantNamespace = tenantRef.Namespace
+		tenantNamespace = obj.GetNamespace()
 	}
 
 	repo := &synv1alpha1.GitRepo{
 		ObjectMeta: metav1.ObjectMeta{
-			// Names have to be lowercase
-			Name:      strings.ToLower(tenantName + "-" + gvk.Kind),
+			Name:      GetRepoName(tenantName, gvk),
 			Namespace: tenantNamespace,
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(obj, gvk),
@@ -57,4 +61,9 @@ func CreateGitRepo(obj metav1.Object, gvk schema.GroupVersionKind, template *syn
 		return err
 	}
 	return nil
+}
+
+// GetRepoName will return the stable repo name for a given parent f.e. Cluster or Tenant
+func GetRepoName(tenantName string, gvk schema.GroupVersionKind) string {
+	return strings.ToLower(tenantName + "-" + gvk.Kind)
 }

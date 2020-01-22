@@ -3,6 +3,13 @@ kind: CustomResourceDefinition
 metadata:
   name: gitrepos.syn.tools
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.repoName
+    name: Repo Name
+    type: string
+  - JSONPath: .status.phase
+    name: Phase
+    type: string
   group: syn.tools
   names:
     kind: GitRepo
@@ -45,9 +52,7 @@ spec:
                   type: string
               type: object
             deployKeys:
-              description: DeployKeys optional list of SSH deploy keys. If not set,
-                not deploy keys will be configured
-              items:
+              additionalProperties:
                 description: DeployKey defines an SSH key to be used for git operations.
                 properties:
                   key:
@@ -57,7 +62,9 @@ spec:
                   writeAccess:
                     type: boolean
                 type: object
-              type: array
+              description: DeployKeys optional list of SSH deploy keys. If not set,
+                not deploy keys will be configured
+              type: object
             path:
               description: Path to Git repository
               type: string
@@ -68,10 +75,14 @@ spec:
               description: TenantRef references the tenant this repo belongs to
               properties:
                 name:
-                  type: string
-                namespace:
+                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    TODO: Add other useful fields. apiVersion, kind, uid?'
                   type: string
               type: object
+          required:
+          - apiSecretRef
+          - path
+          - repoName
           type: object
         status:
           description: GitRepoStatus defines the observed state of GitRepo

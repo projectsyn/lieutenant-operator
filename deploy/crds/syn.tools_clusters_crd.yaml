@@ -3,6 +3,13 @@ kind: CustomResourceDefinition
 metadata:
   name: clusters.syn.tools
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.displayName
+    name: Display Name
+    type: string
+  - JSONPath: .spec.tenantRef.name
+    name: Tenant
+    type: string
   group: syn.tools
   names:
     kind: Cluster
@@ -31,27 +38,12 @@ spec:
         spec:
           description: ClusterSpec defines the desired state of Cluster
           properties:
-            apiEndpointSecretRef:
-              description: APIEndpointSecretRef references the secret containing connection
-                information to Kubernetes API endpoint of the registered Kubernetes
-                cluster.
-              properties:
-                name:
-                  description: Name is unique within a namespace to reference a secret
-                    resource.
-                  type: string
-                namespace:
-                  description: Namespace defines the space within which the secret
-                    name must be unique.
-                  type: string
-              type: object
             displayName:
               description: DisplayName of cluster which could be different from metadata.name.
                 Allows cluster renaming should it be needed.
               type: string
             facts:
               additionalProperties:
-                description: FactValue is the value for the facts map
                 type: string
               description: Facts are key/value pairs for statically configured facts
               type: object
@@ -75,9 +67,7 @@ spec:
                           type: string
                       type: object
                     deployKeys:
-                      description: DeployKeys optional list of SSH deploy keys. If
-                        not set, not deploy keys will be configured
-                      items:
+                      additionalProperties:
                         description: DeployKey defines an SSH key to be used for git
                           operations.
                         properties:
@@ -88,7 +78,9 @@ spec:
                           writeAccess:
                             type: boolean
                         type: object
-                      type: array
+                      description: DeployKeys optional list of SSH deploy keys. If
+                        not set, not deploy keys will be configured
+                      type: object
                     path:
                       description: Path to Git repository
                       type: string
@@ -100,10 +92,14 @@ spec:
                         to
                       properties:
                         name:
-                          type: string
-                        namespace:
+                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            TODO: Add other useful fields. apiVersion, kind, uid?'
                           type: string
                       type: object
+                  required:
+                  - apiSecretRef
+                  - path
+                  - repoName
                   type: object
               type: object
             gitRepoURL:
@@ -115,13 +111,16 @@ spec:
                 to.
               properties:
                 name:
-                  type: string
-                namespace:
+                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    TODO: Add other useful fields. apiVersion, kind, uid?'
                   type: string
               type: object
             tokenLifeTime:
               description: TokenLifetime set the token lifetime
               type: string
+          required:
+          - displayName
+          - tenantRef
           type: object
         status:
           description: ClusterStatus defines the observed state of Cluster

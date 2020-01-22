@@ -39,7 +39,11 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	return nil
+	return c.Watch(&source.Kind{Type: &synv1alpha1.GitRepo{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &synv1alpha1.Tenant{},
+	})
+
 }
 
 // blank assignment to verify that ReconcileTenant implements reconcile.Reconciler
