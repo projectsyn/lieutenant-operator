@@ -50,9 +50,7 @@ func TestCreateGitRepo(t *testing.T) {
 				Spec: synv1alpha1.TenantSpec{
 					DisplayName: "test",
 					GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
-						Spec: synv1alpha1.GitRepoSpec{
-							RepoName: "test",
-						},
+						RepoName: "test",
 					},
 				},
 			}

@@ -3,7 +3,10 @@ kind: GitRepo
 metadata:
   name: example-gitrepo
 spec:
-  apiSecretRef:
-    name: test
-  path: test
-  repoName: test
+  gitRepoTemplate:
+    apiSecretRef:
+      name: test
+    path: test
+    repoName: test
+  tenantRef:
+      name: test

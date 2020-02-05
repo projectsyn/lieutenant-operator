@@ -46,7 +46,7 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 			Kind:    instance.Kind,
 		}
 
-		err := helpers.CreateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, instance.Spec.TenantRef)
+		err := helpers.CreateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, &instance.Spec.TenantRef)
 		if err != nil {
 			reqLogger.Error(err, "Cannot create git repo object")
 			return reconcile.Result{}, err

@@ -36,16 +36,22 @@ func (g GitType) IsValid() bool {
 
 // GitRepoSpec defines the desired state of GitRepo
 type GitRepoSpec struct {
+	GitRepoTemplate `json:"gitRepoTemplate"`
+	// TenantRef references the tenant this repo belongs to
+	TenantRef corev1.LocalObjectReference `json:"tenantRef"`
+}
+
+// GitRepoTemplate is used for templating git repos, it does not contain the tenantRef as it will be added by the
+// controller creating the template instance.
+type GitRepoTemplate struct {
 	// APISecretRef reference to secret containing connection information
-	APISecretRef *corev1.SecretReference `json:"apiSecretRef"`
+	APISecretRef corev1.SecretReference `json:"apiSecretRef"`
 	// DeployKeys optional list of SSH deploy keys. If not set, not deploy keys will be configured
 	DeployKeys map[string]DeployKey `json:"deployKeys,omitempty"`
 	// Path to Git repository
 	Path string `json:"path"`
 	// RepoName ame of Git repository
 	RepoName string `json:"repoName"`
-	// TenantRef references the tenant this repo belongs to
-	TenantRef *corev1.LocalObjectReference `json:"tenantRef,omitempty"`
 }
 
 // DeployKey defines an SSH key to be used for git operations.
@@ -74,11 +80,6 @@ type GitRepoConditions struct {
 	Reason             string      `json:"reason,omitempty"`
 	Status             string      `json:"status,omitempty"`
 	Type               string      `json:"type,omitempty"`
-}
-
-// GitRepoTemplate contains a GitRepoSpec for use in other CRDs
-type GitRepoTemplate struct {
-	Spec GitRepoSpec `json:"spec,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

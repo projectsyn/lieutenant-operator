@@ -10,17 +10,16 @@ spec:
   displayName: Big Corp. Production Cluster
   slug: prodcluster
   gitRepoTemplate:
-    spec:
-      path: test
-      repoName: test
-      apiSecretRef:
-        key: my-api-secret
-        name: default
-      deployKeys:
-        test:
-          type: ssh-ed25519
-          key: AAAA...
-          writeAccess: true
+    path: test
+    repoName: test
+    apiSecretRef:
+      key: my-api-secret
+      name: default
+    deployKeys:
+      test:
+        type: ssh-ed25519
+        key: AAAA...
+        writeAccess: true
   tenantRef:
     name: aezoo6
   tokenLifeTime: 4h

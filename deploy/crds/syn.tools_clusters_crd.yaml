@@ -50,57 +50,43 @@ spec:
             gitRepoTemplate:
               description: GitRepoTemplate template for managing the GitRepo object.
               properties:
-                spec:
-                  description: GitRepoSpec defines the desired state of GitRepo
+                apiSecretRef:
+                  description: APISecretRef reference to secret containing connection
+                    information
                   properties:
-                    apiSecretRef:
-                      description: APISecretRef reference to secret containing connection
-                        information
-                      properties:
-                        name:
-                          description: Name is unique within a namespace to reference
-                            a secret resource.
-                          type: string
-                        namespace:
-                          description: Namespace defines the space within which the
-                            secret name must be unique.
-                          type: string
-                      type: object
-                    deployKeys:
-                      additionalProperties:
-                        description: DeployKey defines an SSH key to be used for git
-                          operations.
-                        properties:
-                          key:
-                            type: string
-                          type:
-                            type: string
-                          writeAccess:
-                            type: boolean
-                        type: object
-                      description: DeployKeys optional list of SSH deploy keys. If
-                        not set, not deploy keys will be configured
-                      type: object
-                    path:
-                      description: Path to Git repository
+                    name:
+                      description: Name is unique within a namespace to reference
+                        a secret resource.
                       type: string
-                    repoName:
-                      description: RepoName ame of Git repository
+                    namespace:
+                      description: Namespace defines the space within which the secret
+                        name must be unique.
                       type: string
-                    tenantRef:
-                      description: TenantRef references the tenant this repo belongs
-                        to
-                      properties:
-                        name:
-                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                            TODO: Add other useful fields. apiVersion, kind, uid?'
-                          type: string
-                      type: object
-                  required:
-                  - apiSecretRef
-                  - path
-                  - repoName
                   type: object
+                deployKeys:
+                  additionalProperties:
+                    description: DeployKey defines an SSH key to be used for git operations.
+                    properties:
+                      key:
+                        type: string
+                      type:
+                        type: string
+                      writeAccess:
+                        type: boolean
+                    type: object
+                  description: DeployKeys optional list of SSH deploy keys. If not
+                    set, not deploy keys will be configured
+                  type: object
+                path:
+                  description: Path to Git repository
+                  type: string
+                repoName:
+                  description: RepoName ame of Git repository
+                  type: string
+              required:
+              - apiSecretRef
+              - path
+              - repoName
               type: object
             gitRepoURL:
               description: GitRepoURL git repository storing the cluster configuration

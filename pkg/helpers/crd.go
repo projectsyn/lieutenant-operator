@@ -24,9 +24,10 @@ func CreateGitRepo(obj metav1.Object, gvk schema.GroupVersionKind, template *syn
 	tenantName := obj.GetName()
 	tenantNamespace := obj.GetNamespace()
 	if tenantRef != nil {
-		template.Spec.TenantRef = tenantRef
 		tenantName = tenantRef.Name
 		tenantNamespace = obj.GetNamespace()
+	} else {
+		tenantRef = &corev1.LocalObjectReference{}
 	}
 
 	repo := &synv1alpha1.GitRepo{
@@ -37,7 +38,10 @@ func CreateGitRepo(obj metav1.Object, gvk schema.GroupVersionKind, template *syn
 				*metav1.NewControllerRef(obj, gvk),
 			},
 		},
-		Spec: template.Spec,
+		Spec: synv1alpha1.GitRepoSpec{
+			GitRepoTemplate: *template,
+			TenantRef:       *tenantRef,
+		},
 	}
 
 	err := client.Create(context.TODO(), repo)

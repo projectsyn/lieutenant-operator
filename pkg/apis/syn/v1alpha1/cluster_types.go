@@ -17,7 +17,7 @@ type ClusterSpec struct {
 	// GitRepoTemplate template for managing the GitRepo object.
 	GitRepoTemplate *GitRepoTemplate `json:"gitRepoTemplate,omitempty"`
 	// TenantRef reference to Tenant object the cluster belongs to.
-	TenantRef *corev1.LocalObjectReference `json:"tenantRef"`
+	TenantRef corev1.LocalObjectReference `json:"tenantRef"`
 	// TokenLifetime set the token lifetime
 	TokenLifeTime string `json:"tokenLifeTime,omitempty"`
 	// Facts are key/value pairs for statically configured facts
