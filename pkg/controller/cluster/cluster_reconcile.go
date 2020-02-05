@@ -6,11 +6,14 @@ import (
 	"encoding/base64"
 	"time"
 
+	"github.com/projectsyn/lieutenant-operator/pkg/apis"
+
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -22,18 +25,11 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling Cluster")
 
-	// Fetch the Cluster instance
 	instance := &synv1alpha1.Cluster{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+
+	res, err := r.fetchInstance(instance, request.NamespacedName)
 	if err != nil {
-		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
-			return reconcile.Result{}, nil
-		}
-		// Error reading the object - requeue the request.
-		return reconcile.Result{}, err
+		return res, err
 	}
 
 	if instance.Status.BootstrapToken == nil {
@@ -50,14 +46,31 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 			Kind:    instance.Kind,
 		}
 
-		err = helpers.CreateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, &instance.Spec.TenantRef)
+		err := helpers.CreateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, &instance.Spec.TenantRef)
 		if err != nil {
 			reqLogger.Error(err, "Cannot create git repo object")
 			return reconcile.Result{}, err
 		}
+
+		gitRepo := &synv1alpha1.GitRepo{}
+		repoNamespacedName := types.NamespacedName{
+			Namespace: instance.GetNamespace(),
+			Name:      helpers.GetRepoName(instance.Spec.TenantRef.Name, gvk),
+		}
+		err = r.client.Get(context.TODO(), repoNamespacedName, gitRepo)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+
+		if gitRepo.Status.Phase == synv1alpha1.Created {
+			instance.Spec.GitRepoURL = gitRepo.Status.URL
+		}
+
 	}
 
-	return reconcile.Result{}, nil
+	r.addLabels(instance)
+
+	return reconcile.Result{}, r.client.Update(context.TODO(), instance)
 }
 
 func (r *ReconcileCluster) generateToken() (string, error) {
@@ -102,4 +115,28 @@ func (r *ReconcileCluster) updateStatus(cluster *synv1alpha1.Cluster) error {
 
 	return r.client.Status().Update(context.TODO(), cluster)
 
+}
+
+func (r *ReconcileCluster) addLabels(cluster *synv1alpha1.Cluster) {
+
+	if cluster.ObjectMeta.Labels == nil {
+		cluster.ObjectMeta.Labels = make(map[string]string)
+	}
+	cluster.ObjectMeta.Labels[apis.LabelNameTenant] = cluster.Spec.TenantRef.Name
+}
+
+func (r *ReconcileCluster) fetchInstance(instance *synv1alpha1.Cluster, namespacedName types.NamespacedName) (reconcile.Result, error) {
+
+	err := r.client.Get(context.TODO(), namespacedName, instance)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			// Request object not found, could have been deleted after reconcile request.
+			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+			// Return and don't requeue
+			return reconcile.Result{}, err
+		}
+		// Error reading the object - requeue the request.
+		return reconcile.Result{Requeue: true}, err
+	}
+	return reconcile.Result{}, nil
 }

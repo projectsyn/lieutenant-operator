@@ -3,9 +3,10 @@ module github.com/projectsyn/lieutenant-operator
 go 1.13
 
 require (
-	github.com/go-logr/logr v0.1.0
+	github.com/golangplus/testing v0.0.0-20180327235837-af21d9c3145e
 	github.com/operator-framework/operator-sdk v0.14.0
 	github.com/spf13/pflag v1.0.5
+	github.com/stretchr/testify v1.4.0
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v12.0.0+incompatible
@@ -39,3 +40,5 @@ replace (
 )
 
 replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309 // Required by Helm
+
+replace github.com/stretchr/testify => github.com/stretchr/testify v1.4.0

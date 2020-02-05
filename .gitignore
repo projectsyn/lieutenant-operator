@@ -3,3 +3,5 @@
 _antora
 
 build/_output/*
+.vscode/
+.idea/
