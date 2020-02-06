@@ -36,16 +36,22 @@ func (g GitType) IsValid() bool {
 
 // GitRepoSpec defines the desired state of GitRepo
 type GitRepoSpec struct {
-	// APISecretRef reference to secret containing connection information
-	APISecretRef *corev1.SecretReference `json:"apiSecretRef,omitempty"`
-	// DeployKeys optional list of SSH deploy keys. If not set, not deploy keys will be configured
-	DeployKeys []DeployKey `json:"deployKeys,omitempty"`
-	// Path to Git repository
-	Path string `json:"path,omitempty"`
-	// RepoName ame of Git repository
-	RepoName string `json:"repoName,omitempty"`
+	GitRepoTemplate `json:"gitRepoTemplate"`
 	// TenantRef references the tenant this repo belongs to
-	TenantRef *TenantRef `json:"tenantRef,omitempty"`
+	TenantRef corev1.LocalObjectReference `json:"tenantRef"`
+}
+
+// GitRepoTemplate is used for templating git repos, it does not contain the tenantRef as it will be added by the
+// controller creating the template instance.
+type GitRepoTemplate struct {
+	// APISecretRef reference to secret containing connection information
+	APISecretRef corev1.SecretReference `json:"apiSecretRef"`
+	// DeployKeys optional list of SSH deploy keys. If not set, not deploy keys will be configured
+	DeployKeys map[string]DeployKey `json:"deployKeys,omitempty"`
+	// Path to Git repository
+	Path string `json:"path"`
+	// RepoName ame of Git repository
+	RepoName string `json:"repoName"`
 }
 
 // DeployKey defines an SSH key to be used for git operations.
@@ -76,16 +82,13 @@ type GitRepoConditions struct {
 	Type               string      `json:"type,omitempty"`
 }
 
-// GitRepoTemplate contains a GitRepoSpec for use in other CRDs
-type GitRepoTemplate struct {
-	Spec GitRepoSpec `json:"spec,omitempty"`
-}
-
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // GitRepo is the Schema for the gitrepos API
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=gitrepos,scope=Namespaced
+// +kubebuilder:printcolumn:name="Repo Name",type="string",JSONPath=".spec.repoName"
+// +kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase"
 type GitRepo struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

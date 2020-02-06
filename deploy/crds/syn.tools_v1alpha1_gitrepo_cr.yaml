@@ -3,5 +3,10 @@ kind: GitRepo
 metadata:
   name: example-gitrepo
 spec:
-  # Add fields here
-  size: 3
+  gitRepoTemplate:
+    apiSecretRef:
+      name: test
+    path: test
+    repoName: test
+  tenantRef:
+      name: test

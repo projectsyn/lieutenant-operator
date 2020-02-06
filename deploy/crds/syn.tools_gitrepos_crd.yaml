@@ -3,6 +3,13 @@ kind: CustomResourceDefinition
 metadata:
   name: gitrepos.syn.tools
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .spec.repoName
+    name: Repo Name
+    type: string
+  - JSONPath: .status.phase
+    name: Phase
+    type: string
   group: syn.tools
   names:
     kind: GitRepo
@@ -31,47 +38,60 @@ spec:
         spec:
           description: GitRepoSpec defines the desired state of GitRepo
           properties:
-            apiSecretRef:
-              description: APISecretRef reference to secret containing connection
-                information
+            gitRepoTemplate:
+              description: GitRepoTemplate is used for templating git repos, it does
+                not contain the tenantRef as it will be added by the controller creating
+                the template instance.
               properties:
-                name:
-                  description: Name is unique within a namespace to reference a secret
-                    resource.
+                apiSecretRef:
+                  description: APISecretRef reference to secret containing connection
+                    information
+                  properties:
+                    name:
+                      description: Name is unique within a namespace to reference
+                        a secret resource.
+                      type: string
+                    namespace:
+                      description: Namespace defines the space within which the secret
+                        name must be unique.
+                      type: string
+                  type: object
+                deployKeys:
+                  additionalProperties:
+                    description: DeployKey defines an SSH key to be used for git operations.
+                    properties:
+                      key:
+                        type: string
+                      type:
+                        type: string
+                      writeAccess:
+                        type: boolean
+                    type: object
+                  description: DeployKeys optional list of SSH deploy keys. If not
+                    set, not deploy keys will be configured
+                  type: object
+                path:
+                  description: Path to Git repository
                   type: string
-                namespace:
-                  description: Namespace defines the space within which the secret
-                    name must be unique.
+                repoName:
+                  description: RepoName ame of Git repository
                   type: string
+              required:
+              - apiSecretRef
+              - path
+              - repoName
               type: object
-            deployKeys:
-              description: DeployKeys optional list of SSH deploy keys. If not set,
-                not deploy keys will be configured
-              items:
-                description: DeployKey defines an SSH key to be used for git operations.
-                properties:
-                  key:
-                    type: string
-                  type:
-                    type: string
-                  writeAccess:
-                    type: boolean
-                type: object
-              type: array
-            path:
-              description: Path to Git repository
-              type: string
-            repoName:
-              description: RepoName ame of Git repository
-              type: string
             tenantRef:
               description: TenantRef references the tenant this repo belongs to
               properties:
                 name:
-                  type: string
-                namespace:
+                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                    TODO: Add other useful fields. apiVersion, kind, uid?'
                   type: string
               type: object
+          required:
+          - gitRepoTemplate
+          - tenantRef
           type: object
         status:
           description: GitRepoStatus defines the observed state of GitRepo
