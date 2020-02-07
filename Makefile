@@ -24,7 +24,7 @@ generate:
 build: generate
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -v \
 		-o $(BINARY_NAME) \
-		-ldflags "-X github.com/projectsyn/lieutenant-operator/version.Version=$(VERSION) -X 'github.com/projectsyn/lieutenant-operator/version.BuildDate=$(shell date)'" \
+		-ldflags "-X main.Version=$(VERSION) -X 'main.BuildDate=$(shell date)'" \
 		cmd/manager/main.go
 	@echo built '$(VERSION)'
 

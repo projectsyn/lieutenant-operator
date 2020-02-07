@@ -15,7 +15,6 @@ import (
 
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	"github.com/projectsyn/lieutenant-operator/pkg/controller"
-	"github.com/projectsyn/lieutenant-operator/version"
 
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
@@ -34,6 +33,8 @@ import (
 
 // Change below variables to serve metrics on different host or port.
 var (
+	Version                   = "unreleased"
+	BuildDate                 = "now"
 	metricsHost               = "0.0.0.0"
 	metricsPort         int32 = 8383
 	operatorMetricsPort int32 = 8686
@@ -41,8 +42,8 @@ var (
 var log = logf.Log.WithName("cmd")
 
 func printVersion() {
-	log.Info(fmt.Sprintf("Operator Version: %s", version.Version))
-	log.Info(fmt.Sprintf("Operator Build Date: %s", version.BuildDate))
+	log.Info(fmt.Sprintf("Operator Version: %s", Version))
+	log.Info(fmt.Sprintf("Operator Build Date: %s", BuildDate))
 	log.Info(fmt.Sprintf("Go Version: %s", runtime.Version()))
 	log.Info(fmt.Sprintf("Go OS/Arch: %s/%s", runtime.GOOS, runtime.GOARCH))
 	log.Info(fmt.Sprintf("Version of operator-sdk: %v", sdkVersion.Version))
