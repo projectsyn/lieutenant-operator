@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// The Controller will requeue the Request to be processed again if the returned error is non-nil or
+// Reconcile The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
@@ -47,7 +47,7 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 		gitRepo := &synv1alpha1.GitRepo{}
 		repoNamespacedName := types.NamespacedName{
 			Namespace: instance.GetNamespace(),
-			Name:      helpers.GetRepoName(instance.GetName(), gvk),
+			Name:      instance.GetName(),
 		}
 		err = r.client.Get(context.TODO(), repoNamespacedName, gitRepo)
 		if err != nil {

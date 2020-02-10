@@ -66,7 +66,7 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 		gitRepo := &synv1alpha1.GitRepo{}
 		repoNamespacedName := types.NamespacedName{
 			Namespace: instance.GetNamespace(),
-			Name:      helpers.GetRepoName(instance.Spec.TenantRef.Name, gvk),
+			Name:      instance.Name,
 		}
 		err = r.client.Get(context.TODO(), repoNamespacedName, gitRepo)
 		if err != nil {

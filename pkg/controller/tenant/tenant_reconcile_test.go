@@ -35,7 +35,7 @@ func TestCreateGitRepo(t *testing.T) {
 			name:      "Git repo object created",
 			want:      reconcile.Result{},
 			wantErr:   false,
-			objName:   "test",
+			objName:   "my-git-repo",
 			namespace: "tenant",
 		},
 	}
@@ -48,9 +48,9 @@ func TestCreateGitRepo(t *testing.T) {
 					Namespace: tt.namespace,
 				},
 				Spec: synv1alpha1.TenantSpec{
-					DisplayName: "test",
+					DisplayName: "Display Name",
 					GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
-						RepoName: "test",
+						RepoName: "repo-name",
 					},
 				},
 			}
@@ -81,7 +81,7 @@ func TestCreateGitRepo(t *testing.T) {
 			}
 
 			gitRepoNamespacedName := types.NamespacedName{
-				Name:      tt.objName + "-tenant",
+				Name:      tt.objName,
 				Namespace: tt.namespace,
 			}
 

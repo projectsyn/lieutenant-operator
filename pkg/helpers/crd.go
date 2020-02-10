@@ -3,7 +3,6 @@ package helpers
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -22,25 +21,21 @@ func CreateGitRepo(obj metav1.Object, gvk schema.GroupVersionKind, template *syn
 		return fmt.Errorf("gitRepo template is empty")
 	}
 
-	tenantName := tenantRef.Name
-	tenantNamespace := obj.GetNamespace()
-
-	// if we still have an empty tenant name it wasn't provided...
-	if tenantName == "" {
+	if tenantRef.Name == "" {
 		return fmt.Errorf("the tenant name is empty")
 	}
 
 	repo := &synv1alpha1.GitRepo{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      GetRepoName(tenantName, gvk),
-			Namespace: tenantNamespace,
+			Name:      obj.GetName(),
+			Namespace: obj.GetNamespace(),
 			OwnerReferences: []metav1.OwnerReference{
 				*metav1.NewControllerRef(obj, gvk),
 			},
 		},
 		Spec: synv1alpha1.GitRepoSpec{
 			GitRepoTemplate: *template,
-			TenantRef:       corev1.LocalObjectReference{Name: tenantName},
+			TenantRef:       corev1.LocalObjectReference{Name: tenantRef.Name},
 		},
 	}
 
@@ -65,9 +60,4 @@ func CreateGitRepo(obj metav1.Object, gvk schema.GroupVersionKind, template *syn
 		return err
 	}
 	return nil
-}
-
-// GetRepoName will return the stable repo name for a given parent f.e. Cluster or Tenant
-func GetRepoName(tenantName string, gvk schema.GroupVersionKind) string {
-	return strings.ToLower(tenantName + "-" + gvk.Kind)
 }
