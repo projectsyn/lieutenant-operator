@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -113,6 +114,20 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 
 			assert.NotEmpty(t, newCluster.Status.BootstrapToken.Token)
 
+			sa := &corev1.ServiceAccount{}
+			err = cl.Get(context.TODO(), req.NamespacedName, sa)
+			assert.NoError(t, err)
+
+			role := &rbacv1.Role{}
+			err = cl.Get(context.TODO(), req.NamespacedName, role)
+			assert.NoError(t, err)
+			assert.Contains(t, role.Rules[0].ResourceNames, req.Name)
+
+			roleBinding := &rbacv1.RoleBinding{}
+			err = cl.Get(context.TODO(), req.NamespacedName, roleBinding)
+			assert.NoError(t, err)
+			assert.Equal(t, roleBinding.RoleRef.Name, role.Name)
+			assert.Equal(t, roleBinding.Subjects[0].Name, sa.Name)
 		})
 	}
 }
