@@ -35,6 +35,10 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
+	if err := r.createClusterRBAC(*instance); err != nil {
+		return reconcile.Result{}, err
+	}
+
 	if instance.Status.BootstrapToken == nil {
 		reqLogger.Info("Adding status to Cluster object")
 		err := r.newStatus(instance)
