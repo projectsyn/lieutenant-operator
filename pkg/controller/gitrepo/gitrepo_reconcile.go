@@ -42,7 +42,11 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 
 	namespacedName := types.NamespacedName{
 		Name:      instance.Spec.APISecretRef.Name,
-		Namespace: instance.Spec.APISecretRef.Namespace,
+		Namespace: instance.Namespace,
+	}
+
+	if len(instance.Spec.APISecretRef.Namespace) > 0 {
+		namespacedName.Namespace = instance.Spec.APISecretRef.Namespace
 	}
 
 	err = r.client.Get(context.TODO(), namespacedName, secret)

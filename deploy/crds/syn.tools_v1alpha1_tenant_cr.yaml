@@ -1,15 +1,13 @@
 apiVersion: syn.tools/v1alpha1
 kind: Tenant
 metadata:
-  name: aezoo6
+  name: t-aezoo6
 spec:
-  slug: bigcorp
   displayName: Big Corp.
   gitRepoTemplate:
     path: tenant
     repoName: test
     apiSecretRef:
-      namespace: default
       name: example-secret
     deployKeys:
       test:
