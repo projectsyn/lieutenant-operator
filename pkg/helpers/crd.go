@@ -6,6 +6,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 
+	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -60,4 +61,12 @@ func CreateGitRepo(obj metav1.Object, gvk schema.GroupVersionKind, template *syn
 		return err
 	}
 	return nil
+}
+
+// AddTenantLabel adds the tenant label to an object
+func AddTenantLabel(meta *metav1.ObjectMeta, tenant string) {
+	if meta.Labels == nil {
+		meta.Labels = make(map[string]string)
+	}
+	meta.Labels[apis.LabelNameTenant] = tenant
 }

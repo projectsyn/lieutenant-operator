@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
+	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -34,9 +35,8 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 		return reconcile.Result{}, err
 	}
-
+	helpers.AddTenantLabel(&instance.ObjectMeta, instance.Spec.TenantRef.Name)
 	secret := &corev1.Secret{}
-
 	namespacedName := types.NamespacedName{
 		Name:      instance.Spec.APISecretRef.Name,
 		Namespace: instance.Spec.APISecretRef.Namespace,

@@ -6,8 +6,6 @@ import (
 	"encoding/base64"
 	"time"
 
-	"github.com/projectsyn/lieutenant-operator/pkg/apis"
-
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -79,7 +77,7 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 
 	}
 
-	r.addLabels(instance)
+	helpers.AddTenantLabel(&instance.ObjectMeta, instance.Spec.TenantRef.Name)
 
 	err = r.client.Update(context.TODO(), instance)
 	if err != nil {
@@ -123,14 +121,5 @@ func (r *ReconcileCluster) newStatus(cluster *synv1alpha1.Cluster) error {
 		ValidUntil: metav1.NewTime(validUntil),
 		TokenValid: true,
 	}
-
 	return nil
-}
-
-func (r *ReconcileCluster) addLabels(cluster *synv1alpha1.Cluster) {
-
-	if cluster.ObjectMeta.Labels == nil {
-		cluster.ObjectMeta.Labels = make(map[string]string)
-	}
-	cluster.ObjectMeta.Labels[apis.LabelNameTenant] = cluster.Spec.TenantRef.Name
 }
