@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
@@ -34,6 +35,8 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 		return reconcile.Result{}, err
 	}
+
+	r.addLabels(instance)
 
 	secret := &corev1.Secret{}
 
@@ -113,4 +116,11 @@ func (r *ReconcileGitRepo) repoExists(repo manager.Repo) bool {
 	}
 
 	return false
+}
+
+func (r *ReconcileGitRepo) addLabels(gitRepo *synv1alpha1.GitRepo) {
+	if gitRepo.ObjectMeta.Labels == nil {
+		gitRepo.ObjectMeta.Labels = make(map[string]string)
+	}
+	gitRepo.ObjectMeta.Labels[apis.LabelNameTenant] = gitRepo.Spec.TenantRef.Name
 }
