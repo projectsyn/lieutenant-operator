@@ -2,9 +2,10 @@ package cluster
 
 import (
 	"context"
-	corev1 "k8s.io/api/core/v1"
 	"reflect"
 	"testing"
+
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 
@@ -29,9 +30,9 @@ func testSetupClient(objs []runtime.Object) (client.Client, *runtime.Scheme) {
 
 func TestReconcileCluster_Reconcile(t *testing.T) {
 	type fields struct {
-		tenantName      string
-		objName         string
-		objNamespace    string
+		tenantName   string
+		objName      string
+		objNamespace string
 	}
 	tests := []struct {
 		name    string
@@ -44,9 +45,9 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			want:    reconcile.Result{},
 			wantErr: false,
 			fields: fields{
-				tenantName:      "test-tenant",
-				objName:         "test-object",
-				objNamespace:    "tenant",
+				tenantName:   "test-tenant",
+				objName:      "test-object",
+				objNamespace: "tenant",
 			},
 		},
 	}
@@ -62,9 +63,10 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 					DisplayName: "test",
 					GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
 						RepoName: "test",
+						Path:     "test",
 					},
 					TenantRef: corev1.LocalObjectReference{
-						Name:      tt.fields.tenantName,
+						Name: tt.fields.tenantName,
 					},
 				},
 			}

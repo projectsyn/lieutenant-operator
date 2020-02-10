@@ -3,6 +3,8 @@ package tenant
 import (
 	"context"
 
+	corev1 "k8s.io/api/core/v1"
+
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -37,7 +39,7 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 			Kind:    instance.Kind,
 		}
 
-		err = helpers.CreateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, nil)
+		err = helpers.CreateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, corev1.LocalObjectReference{Name: instance.GetName()})
 		if err != nil {
 			return reconcile.Result{}, err
 		}
@@ -52,7 +54,7 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 			return reconcile.Result{}, err
 		}
 
-		if gitRepo.Status.Phase == synv1alpha1.Created {
+		if gitRepo.Status.Phase != nil && *gitRepo.Status.Phase == synv1alpha1.Created {
 			instance.Spec.GitRepoURL = gitRepo.Status.URL
 		}
 

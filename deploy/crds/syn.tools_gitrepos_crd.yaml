@@ -38,49 +38,39 @@ spec:
         spec:
           description: GitRepoSpec defines the desired state of GitRepo
           properties:
-            gitRepoTemplate:
-              description: GitRepoTemplate is used for templating git repos, it does
-                not contain the tenantRef as it will be added by the controller creating
-                the template instance.
+            apiSecretRef:
+              description: APISecretRef reference to secret containing connection
+                information
               properties:
-                apiSecretRef:
-                  description: APISecretRef reference to secret containing connection
-                    information
-                  properties:
-                    name:
-                      description: Name is unique within a namespace to reference
-                        a secret resource.
-                      type: string
-                    namespace:
-                      description: Namespace defines the space within which the secret
-                        name must be unique.
-                      type: string
-                  type: object
-                deployKeys:
-                  additionalProperties:
-                    description: DeployKey defines an SSH key to be used for git operations.
-                    properties:
-                      key:
-                        type: string
-                      type:
-                        type: string
-                      writeAccess:
-                        type: boolean
-                    type: object
-                  description: DeployKeys optional list of SSH deploy keys. If not
-                    set, not deploy keys will be configured
-                  type: object
-                path:
-                  description: Path to Git repository
+                name:
+                  description: Name is unique within a namespace to reference a secret
+                    resource.
                   type: string
-                repoName:
-                  description: RepoName ame of Git repository
+                namespace:
+                  description: Namespace defines the space within which the secret
+                    name must be unique.
                   type: string
-              required:
-              - apiSecretRef
-              - path
-              - repoName
               type: object
+            deployKeys:
+              additionalProperties:
+                description: DeployKey defines an SSH key to be used for git operations.
+                properties:
+                  key:
+                    type: string
+                  type:
+                    type: string
+                  writeAccess:
+                    type: boolean
+                type: object
+              description: DeployKeys optional list of SSH deploy keys. If not set,
+                not deploy keys will be configured
+              type: object
+            path:
+              description: Path to Git repository
+              type: string
+            repoName:
+              description: RepoName ame of Git repository
+              type: string
             tenantRef:
               description: TenantRef references the tenant this repo belongs to
               properties:
@@ -90,29 +80,14 @@ spec:
                   type: string
               type: object
           required:
-          - gitRepoTemplate
+          - apiSecretRef
+          - path
+          - repoName
           - tenantRef
           type: object
         status:
           description: GitRepoStatus defines the observed state of GitRepo
           properties:
-            conditions:
-              description: Conditions updated by Operator with current conditions
-              items:
-                description: GitRepoConditions contains condition elements for the
-                  GitRep CRD
-                properties:
-                  lastTransitionTime:
-                    format: date-time
-                    type: string
-                  reason:
-                    type: string
-                  status:
-                    type: string
-                  type:
-                    type: string
-                type: object
-              type: array
             phase:
               description: Updated by Operator with current phase. The GitPhase enum
                 will be used for application logic as using it directly would only

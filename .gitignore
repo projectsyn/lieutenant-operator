@@ -7,3 +7,4 @@ build/_output/*
 .idea/
 
 lieutenant-operator
+cmd/manager/__debug_bin

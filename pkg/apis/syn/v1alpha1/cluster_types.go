@@ -26,9 +26,9 @@ type ClusterSpec struct {
 
 // BootstrapToken this key is used only once for Steward to register.
 type BootstrapToken struct {
-	Token               string      `json:"token,omitempty"`
-	ValidUntil          metav1.Time `json:"validUntil,omitempty"`
-	BootstrapTokenValid bool        `json:"bootstrapTokenValid,omitempty"`
+	Token      string      `json:"token,omitempty"`
+	ValidUntil metav1.Time `json:"validUntil,omitempty"`
+	TokenValid bool        `json:"tokenValid,omitempty"`
 }
 
 // ClusterStatus defines the observed state of Cluster

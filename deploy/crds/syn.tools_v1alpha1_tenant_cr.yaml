@@ -6,17 +6,13 @@ spec:
   slug: bigcorp
   displayName: Big Corp.
   gitRepoTemplate:
-    path: test
+    path: tenant
     repoName: test
     apiSecretRef:
-      key: my-api-secret
-      name: default
+      namespace: default
+      name: example-secret
     deployKeys:
       test:
         type: ssh-ed25519
-        key: AAAA...
+        key: AAAAC3NzaC1lZDI1NTE5AAAAIJ22mHNYfSPnLAj8YiKa0RmxafD9r5nEUquizay7xh3s
         writeAccess: true
-      test2:
-        type: ssh-rsa
-        key: AAAA...
-        writeAccess: false
