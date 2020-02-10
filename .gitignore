@@ -5,3 +5,5 @@ _antora
 build/_output/*
 .vscode/
 .idea/
+
+lieutenant-operator

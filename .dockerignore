@@ -1,0 +1,4 @@
+.*ignore
+*.md
+Dockerfile
+lieutenant-operator

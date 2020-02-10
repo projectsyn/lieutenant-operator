@@ -1,23 +1,47 @@
+# Project parameters
+BINARY_NAME ?= lieutenant-operator
+
+VERSION ?= $(shell git describe --tags --always --dirty --match=v* || (echo "command failed $$?"; exit 1))
+
+IMAGE_NAME ?= docker.io/projectsyn/$(BINARY_NAME):$(VERSION)
+
 # Antora variables
-pages   := $(shell find . -type f -name '*.adoc')
-web_dir := ./_antora
+# Go parameters
+GOCMD   ?= go
+GOBUILD ?= $(GOCMD) build
+GOCLEAN ?= $(GOCMD) clean
+GOTEST  ?= $(GOCMD) test
+GOGET   ?= $(GOCMD) get
 
-docker_cmd  ?= docker
-docker_opts ?= --rm --tty --user "$$(id -u)"
+.PHONY: all
+all: test build
 
-antora_cmd  ?= $(docker_cmd) run $(docker_opts) --volume "$${PWD}":/antora vshn/antora:1.3
-antora_opts ?= --cache-dir=.cache/antora
+.PHONY: generate
+generate:
+	go generate ./...
 
-vale_cmd ?= $(docker_cmd) run $(docker_opts) --volume "$${PWD}"/docs/modules/ROOT/pages:/pages vshn/vale:1.1 --minAlertLevel=error --config=/pages/.vale.ini /pages
+.PHONY: build
+build: generate
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) -v \
+		-o $(BINARY_NAME) \
+		-ldflags "-X main.Version=$(VERSION) -X 'main.BuildDate=$(shell date)'" \
+		cmd/manager/main.go
+	@echo built '$(VERSION)'
 
-.PHONY: docs
-docs:    $(web_dir)/index.html
+.PHONY: test
+test: generate
+	$(GOTEST) -v -cover ./...
 
-$(web_dir)/index.html: playbook.yml $(pages)
-	$(antora_cmd) $(antora_opts) $<
+.PHONY: run
+run: generate
+	go run main.go
 
-.PHONY: check
-check:
-	$(vale_cmd)
+.PHONY: clean
+clean:
+	$(GOCLEAN)
+	rm -f $(BINARY_NAME)
 
-
+.PHONY: docker
+docker:
+	DOCKER_BUILDKIT=1 docker build -t $(IMAGE_NAME) .
+	@echo built image $(IMAGE_NAME)
