@@ -28,7 +28,7 @@ type ClusterSpec struct {
 type BootstrapToken struct {
 	Token      string      `json:"token,omitempty"`
 	ValidUntil metav1.Time `json:"validUntil,omitempty"`
-	TokenValid bool        `json:"tokenValid,omitempty"`
+	TokenValid bool        `json:"tokenValid"`
 }
 
 // ClusterStatus defines the observed state of Cluster

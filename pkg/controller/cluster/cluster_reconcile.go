@@ -80,13 +80,14 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 	}
 
 	r.addLabels(instance)
-
-	err = r.client.Update(context.TODO(), instance)
+	err = r.client.Status().Update(context.TODO(), instance)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-
-	return reconcile.Result{}, r.client.Status().Update(context.TODO(), instance)
+	if err := r.client.Update(context.TODO(), instance); err != nil {
+		return reconcile.Result{}, err
+	}
+	return reconcile.Result{}, nil
 }
 
 func (r *ReconcileCluster) generateToken() (string, error) {
