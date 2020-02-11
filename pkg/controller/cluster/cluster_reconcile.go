@@ -76,15 +76,12 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 
 	}
-
 	helpers.AddTenantLabel(&instance.ObjectMeta, instance.Spec.TenantRef.Name)
-
-	err = r.client.Update(context.TODO(), instance)
+	err = r.client.Status().Update(context.TODO(), instance)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-
-	return reconcile.Result{}, r.client.Status().Update(context.TODO(), instance)
+	return reconcile.Result{}, r.client.Update(context.TODO(), instance)
 }
 
 func (r *ReconcileCluster) generateToken() (string, error) {
