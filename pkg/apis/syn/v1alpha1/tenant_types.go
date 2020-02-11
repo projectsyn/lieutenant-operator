@@ -25,6 +25,7 @@ type TenantStatus struct {
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=tenants,scope=Namespaced
 // +kubebuilder:printcolumn:name="Display Name",type="string",JSONPath=".spec.displayName"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 type Tenant struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
