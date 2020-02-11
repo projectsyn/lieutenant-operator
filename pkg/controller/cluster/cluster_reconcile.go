@@ -73,6 +73,10 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 
 			if gitRepo.Status.Phase != nil && *gitRepo.Status.Phase == synv1alpha1.Created {
 				instance.Spec.GitRepoURL = gitRepo.Status.URL
+				if len(gitRepo.Status.HostKeys) > 0 &&
+					len(instance.Spec.GitHostKeys) == 0 {
+					instance.Spec.GitHostKeys = gitRepo.Status.HostKeys
+				}
 			}
 		}
 	}
