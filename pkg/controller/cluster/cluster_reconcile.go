@@ -48,33 +48,33 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 	if time.Now().After(instance.Status.BootstrapToken.ValidUntil.Time) {
 		instance.Status.BootstrapToken.TokenValid = false
 	}
-
 	if instance.Spec.GitRepoURL == "" {
 		gvk := schema.GroupVersionKind{
 			Version: instance.APIVersion,
 			Kind:    instance.Kind,
 		}
 
-		err := helpers.CreateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, instance.Spec.TenantRef)
+		created, err := helpers.CreateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, instance.Spec.TenantRef)
 		if err != nil {
 			reqLogger.Error(err, "Cannot create git repo object")
 			return reconcile.Result{}, err
 		}
 
-		gitRepo := &synv1alpha1.GitRepo{}
-		repoNamespacedName := types.NamespacedName{
-			Namespace: instance.GetNamespace(),
-			Name:      instance.Name,
-		}
-		err = r.client.Get(context.TODO(), repoNamespacedName, gitRepo)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
+		if !created {
+			gitRepo := &synv1alpha1.GitRepo{}
+			repoNamespacedName := types.NamespacedName{
+				Namespace: instance.GetNamespace(),
+				Name:      instance.Name,
+			}
+			err = r.client.Get(context.TODO(), repoNamespacedName, gitRepo)
+			if err != nil {
+				return reconcile.Result{}, err
+			}
 
-		if gitRepo.Status.Phase != nil && *gitRepo.Status.Phase == synv1alpha1.Created {
-			instance.Spec.GitRepoURL = gitRepo.Status.URL
+			if gitRepo.Status.Phase != nil && *gitRepo.Status.Phase == synv1alpha1.Created {
+				instance.Spec.GitRepoURL = gitRepo.Status.URL
+			}
 		}
-
 	}
 	helpers.AddTenantLabel(&instance.ObjectMeta, instance.Spec.TenantRef.Name)
 	err = r.client.Status().Update(context.TODO(), instance)

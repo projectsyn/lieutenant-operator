@@ -39,26 +39,24 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 			Kind:    instance.Kind,
 		}
 
-		err = helpers.CreateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, corev1.LocalObjectReference{Name: instance.GetName()})
+		created, err := helpers.CreateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, corev1.LocalObjectReference{Name: instance.GetName()})
 		if err != nil {
 			return reconcile.Result{}, err
 		}
-
-		gitRepo := &synv1alpha1.GitRepo{}
-		repoNamespacedName := types.NamespacedName{
-			Namespace: instance.GetNamespace(),
-			Name:      instance.GetName(),
+		if !created {
+			gitRepo := &synv1alpha1.GitRepo{}
+			repoNamespacedName := types.NamespacedName{
+				Namespace: instance.GetNamespace(),
+				Name:      instance.GetName(),
+			}
+			err = r.client.Get(context.TODO(), repoNamespacedName, gitRepo)
+			if err != nil {
+				return reconcile.Result{}, err
+			}
+			if gitRepo.Status.Phase != nil && *gitRepo.Status.Phase == synv1alpha1.Created {
+				instance.Spec.GitRepoURL = gitRepo.Status.URL
+			}
 		}
-		err = r.client.Get(context.TODO(), repoNamespacedName, gitRepo)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-
-		if gitRepo.Status.Phase != nil && *gitRepo.Status.Phase == synv1alpha1.Created {
-			instance.Spec.GitRepoURL = gitRepo.Status.URL
-		}
-
 	}
-
 	return reconcile.Result{}, r.client.Update(context.TODO(), instance)
 }
