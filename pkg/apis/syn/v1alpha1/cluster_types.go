@@ -14,6 +14,8 @@ type ClusterSpec struct {
 	DisplayName string `json:"displayName"`
 	// GitRepoURL git repository storing the cluster configuration catalog. If this is set, no gitRepoTemplate is needed.
 	GitRepoURL string `json:"gitRepoURL,omitempty"`
+	// SSH GitHostKeys of the git server
+	GitHostKeys string `json:"gitHostKeys,omitempty"`
 	// GitRepoTemplate template for managing the GitRepo object.
 	GitRepoTemplate *GitRepoTemplate `json:"gitRepoTemplate,omitempty"`
 	// TenantRef reference to Tenant object the cluster belongs to.

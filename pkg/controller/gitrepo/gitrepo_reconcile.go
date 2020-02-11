@@ -15,7 +15,12 @@ import (
 )
 
 const (
+	// SecretTokenName is the name of the secret entry containing the token
 	SecretTokenName = "token"
+	// SecretHostKeysName is the name of the secret entry containing the SSH host keys
+	SecretHostKeysName = "hostKeys"
+	// SecretEndpointName is the name of the secret entry containing the api endpoint
+	SecretEndpointName = "endpoint"
 )
 
 // Reconcile will create or delete a git repository based on the event.
@@ -54,6 +59,10 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, fmt.Errorf("error getting git secret: %v", err)
 	}
 
+	if hostKeys, ok := secret.Data[SecretHostKeysName]; ok {
+		instance.Status.HostKeys = string(hostKeys)
+	}
+
 	repoOptions := manager.RepoOptions{
 		Credentials: manager.Credentials{
 			Token: string(secret.Data[SecretTokenName]),
@@ -62,7 +71,7 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 		Logger:     reqLogger,
 	}
 
-	endpoint := string(secret.Data["endpoint"]) + "/" + instance.Spec.Path + "/" + instance.Spec.RepoName
+	endpoint := string(secret.Data[SecretEndpointName]) + "/" + instance.Spec.Path + "/" + instance.Spec.RepoName
 
 	repo, err := manager.NewRepo(endpoint, repoOptions)
 	if err != nil {
@@ -75,43 +84,34 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 	}
 
 	if !r.repoExists(repo) {
-		reqLogger.Info("creating git repo", "endpoint", endpoint)
-
+		reqLogger.Info("creating git repo", SecretEndpointName, endpoint)
 		err = repo.Create()
 		if err != nil {
-			err1 := r.updateStatus(instance, synv1alpha1.Failed, "git repo creation failed", "failure", repo)
-			if err1 != nil {
-				err = fmt.Errorf("could not set status while handling error: %s: %s", err1, err)
+			phase := synv1alpha1.Failed
+			instance.Status.Phase = &phase
+			instance.Status.URL = repo.FullURL().String()
+			if updateErr := r.client.Status().Update(context.TODO(), instance); updateErr != nil {
+				return reconcile.Result{}, fmt.Errorf("could not set status while handling error: %s: %s", updateErr, err)
 			}
 			return reconcile.Result{}, err
 		}
 
 		reqLogger.Info("successfully created the repository")
-
-		return reconcile.Result{}, r.updateStatus(instance, synv1alpha1.Created, "Git repo is ready to be used", "ready", repo)
-
-	} else {
-		changed, err := repo.Update()
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-
-		if changed {
-			reqLogger.Info("keys differed from CRD, keys re-applied to repository")
-		}
+		phase := synv1alpha1.Created
+		instance.Status.Phase = &phase
+		instance.Status.URL = repo.FullURL().String()
+		return reconcile.Result{}, r.client.Status().Update(context.TODO(), instance)
 	}
-	return reconcile.Result{}, nil
-}
-
-func (r *ReconcileGitRepo) updateStatus(gitRepo *synv1alpha1.GitRepo, phaseToSet synv1alpha1.GitPhase, reason, conditionType string, repoImpl manager.Repo) error {
-
-	gitRepo.Status.Phase = &phaseToSet
-
-	if phaseToSet == synv1alpha1.Created {
-		gitRepo.Status.URL = repoImpl.FullURL().String()
+	changed, err := repo.Update()
+	if err != nil {
+		return reconcile.Result{}, err
 	}
 
-	return r.client.Status().Update(context.TODO(), gitRepo)
+	if changed {
+		reqLogger.Info("keys differed from CRD, keys re-applied to repository")
+	}
+
+	return reconcile.Result{}, r.client.Status().Update(context.TODO(), instance)
 }
 
 func (r *ReconcileGitRepo) repoExists(repo manager.Repo) bool {

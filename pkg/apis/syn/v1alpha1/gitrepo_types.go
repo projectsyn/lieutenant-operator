@@ -62,6 +62,8 @@ type GitRepoStatus struct {
 	Type GitType `json:"type,omitempty"`
 	// URL computed Git repository URL
 	URL string `json:"url,omitempty"`
+	// SSH HostKeys of the git server
+	HostKeys string `json:"hostKeys,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
