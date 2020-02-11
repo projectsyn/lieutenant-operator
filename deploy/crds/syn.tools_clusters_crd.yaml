@@ -10,6 +10,9 @@ spec:
   - JSONPath: .spec.tenantRef.name
     name: Tenant
     type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: Age
+    type: date
   group: syn.tools
   names:
     kind: Cluster

@@ -44,6 +44,7 @@ type ClusterStatus struct {
 // +kubebuilder:resource:path=clusters,scope=Namespaced
 // +kubebuilder:printcolumn:name="Display Name",type="string",JSONPath=".spec.displayName"
 // +kubebuilder:printcolumn:name="Tenant",type="string",JSONPath=".spec.tenantRef.name"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 type Cluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
