@@ -7,7 +7,7 @@ Kubernetes Operator which implements the backend for [Lieutenant API](https://gi
 ## Deployment
 
 Deployment artifacts are available under `deploy/`. Please amend them to
-you environment.
+your environment.
 
 Example:
 
