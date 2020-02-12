@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// The Controller will requeue the Request to be processed again if the returned error is non-nil or
+// Reconcile The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
@@ -39,26 +39,24 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 			Kind:    instance.Kind,
 		}
 
-		err = helpers.CreateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, corev1.LocalObjectReference{Name: instance.GetName()})
+		created, err := helpers.CreateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, corev1.LocalObjectReference{Name: instance.GetName()})
 		if err != nil {
 			return reconcile.Result{}, err
 		}
-
-		gitRepo := &synv1alpha1.GitRepo{}
-		repoNamespacedName := types.NamespacedName{
-			Namespace: instance.GetNamespace(),
-			Name:      helpers.GetRepoName(instance.GetName(), gvk),
+		if !created {
+			gitRepo := &synv1alpha1.GitRepo{}
+			repoNamespacedName := types.NamespacedName{
+				Namespace: instance.GetNamespace(),
+				Name:      instance.GetName(),
+			}
+			err = r.client.Get(context.TODO(), repoNamespacedName, gitRepo)
+			if err != nil {
+				return reconcile.Result{}, err
+			}
+			if gitRepo.Status.Phase != nil && *gitRepo.Status.Phase == synv1alpha1.Created {
+				instance.Spec.GitRepoURL = gitRepo.Status.URL
+			}
 		}
-		err = r.client.Get(context.TODO(), repoNamespacedName, gitRepo)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-
-		if gitRepo.Status.Phase != nil && *gitRepo.Status.Phase == synv1alpha1.Created {
-			instance.Spec.GitRepoURL = gitRepo.Status.URL
-		}
-
 	}
-
 	return reconcile.Result{}, r.client.Update(context.TODO(), instance)
 }

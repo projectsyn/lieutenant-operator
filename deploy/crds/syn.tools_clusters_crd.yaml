@@ -10,6 +10,9 @@ spec:
   - JSONPath: .spec.tenantRef.name
     name: Tenant
     type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: Age
+    type: date
   group: syn.tools
   names:
     kind: Cluster
@@ -47,6 +50,9 @@ spec:
                 type: string
               description: Facts are key/value pairs for statically configured facts
               type: object
+            gitHostKeys:
+              description: SSH GitHostKeys of the git server
+              type: string
             gitRepoTemplate:
               description: GitRepoTemplate template for managing the GitRepo object.
               properties:
@@ -122,6 +128,8 @@ spec:
                 validUntil:
                   format: date-time
                   type: string
+              required:
+              - tokenValid
               type: object
           type: object
       type: object

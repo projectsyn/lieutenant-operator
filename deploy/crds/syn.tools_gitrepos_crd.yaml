@@ -10,6 +10,9 @@ spec:
   - JSONPath: .status.phase
     name: Phase
     type: string
+  - JSONPath: .metadata.creationTimestamp
+    name: Age
+    type: date
   group: syn.tools
   names:
     kind: GitRepo
@@ -88,6 +91,9 @@ spec:
         status:
           description: GitRepoStatus defines the observed state of GitRepo
           properties:
+            hostKeys:
+              description: SSH HostKeys of the git server
+              type: string
             phase:
               description: Updated by Operator with current phase. The GitPhase enum
                 will be used for application logic as using it directly would only

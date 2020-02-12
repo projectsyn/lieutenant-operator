@@ -98,7 +98,7 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			}
 
 			gitRepoNamespacedName := types.NamespacedName{
-				Name:      tt.fields.tenantName + "-cluster",
+				Name:      tt.fields.objName,
 				Namespace: tt.fields.objNamespace,
 			}
 

@@ -14,6 +14,8 @@ type ClusterSpec struct {
 	DisplayName string `json:"displayName"`
 	// GitRepoURL git repository storing the cluster configuration catalog. If this is set, no gitRepoTemplate is needed.
 	GitRepoURL string `json:"gitRepoURL,omitempty"`
+	// SSH GitHostKeys of the git server
+	GitHostKeys string `json:"gitHostKeys,omitempty"`
 	// GitRepoTemplate template for managing the GitRepo object.
 	GitRepoTemplate *GitRepoTemplate `json:"gitRepoTemplate,omitempty"`
 	// TenantRef reference to Tenant object the cluster belongs to.
@@ -28,7 +30,7 @@ type ClusterSpec struct {
 type BootstrapToken struct {
 	Token      string      `json:"token,omitempty"`
 	ValidUntil metav1.Time `json:"validUntil,omitempty"`
-	TokenValid bool        `json:"tokenValid,omitempty"`
+	TokenValid bool        `json:"tokenValid"`
 }
 
 // ClusterStatus defines the observed state of Cluster
@@ -44,6 +46,7 @@ type ClusterStatus struct {
 // +kubebuilder:resource:path=clusters,scope=Namespaced
 // +kubebuilder:printcolumn:name="Display Name",type="string",JSONPath=".spec.displayName"
 // +kubebuilder:printcolumn:name="Tenant",type="string",JSONPath=".spec.tenantRef.name"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"
 type Cluster struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

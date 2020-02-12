@@ -6,8 +6,6 @@ import (
 	"encoding/base64"
 	"time"
 
-	"github.com/projectsyn/lieutenant-operator/pkg/apis"
-
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -50,43 +48,44 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 	if time.Now().After(instance.Status.BootstrapToken.ValidUntil.Time) {
 		instance.Status.BootstrapToken.TokenValid = false
 	}
-
 	if instance.Spec.GitRepoURL == "" {
 		gvk := schema.GroupVersionKind{
 			Version: instance.APIVersion,
 			Kind:    instance.Kind,
 		}
 
-		err := helpers.CreateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, instance.Spec.TenantRef)
+		created, err := helpers.CreateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, instance.Spec.TenantRef)
 		if err != nil {
 			reqLogger.Error(err, "Cannot create git repo object")
 			return reconcile.Result{}, err
 		}
 
-		gitRepo := &synv1alpha1.GitRepo{}
-		repoNamespacedName := types.NamespacedName{
-			Namespace: instance.GetNamespace(),
-			Name:      helpers.GetRepoName(instance.Spec.TenantRef.Name, gvk),
-		}
-		err = r.client.Get(context.TODO(), repoNamespacedName, gitRepo)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
+		if !created {
+			gitRepo := &synv1alpha1.GitRepo{}
+			repoNamespacedName := types.NamespacedName{
+				Namespace: instance.GetNamespace(),
+				Name:      instance.Name,
+			}
+			err = r.client.Get(context.TODO(), repoNamespacedName, gitRepo)
+			if err != nil {
+				return reconcile.Result{}, err
+			}
 
-		if gitRepo.Status.Phase != nil && *gitRepo.Status.Phase == synv1alpha1.Created {
-			instance.Spec.GitRepoURL = gitRepo.Status.URL
+			if gitRepo.Status.Phase != nil && *gitRepo.Status.Phase == synv1alpha1.Created {
+				instance.Spec.GitRepoURL = gitRepo.Status.URL
+				if len(gitRepo.Status.HostKeys) > 0 &&
+					len(instance.Spec.GitHostKeys) == 0 {
+					instance.Spec.GitHostKeys = gitRepo.Status.HostKeys
+				}
+			}
 		}
-
 	}
-
-	r.addLabels(instance)
-
-	err = r.client.Update(context.TODO(), instance)
+	helpers.AddTenantLabel(&instance.ObjectMeta, instance.Spec.TenantRef.Name)
+	err = r.client.Status().Update(context.TODO(), instance)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-
-	return reconcile.Result{}, r.client.Status().Update(context.TODO(), instance)
+	return reconcile.Result{}, r.client.Update(context.TODO(), instance)
 }
 
 func (r *ReconcileCluster) generateToken() (string, error) {
@@ -123,14 +122,5 @@ func (r *ReconcileCluster) newStatus(cluster *synv1alpha1.Cluster) error {
 		ValidUntil: metav1.NewTime(validUntil),
 		TokenValid: true,
 	}
-
 	return nil
-}
-
-func (r *ReconcileCluster) addLabels(cluster *synv1alpha1.Cluster) {
-
-	if cluster.ObjectMeta.Labels == nil {
-		cluster.ObjectMeta.Labels = make(map[string]string)
-	}
-	cluster.ObjectMeta.Labels[apis.LabelNameTenant] = cluster.Spec.TenantRef.Name
 }

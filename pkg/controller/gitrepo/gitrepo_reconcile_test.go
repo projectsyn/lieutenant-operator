@@ -90,8 +90,9 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 					Namespace: tt.fields.namespace,
 				},
 				Data: map[string][]byte{
-					"endpoint": []byte("something"),
-					"token":    []byte("secret"),
+					SecretEndpointName: []byte("something"),
+					SecretTokenName:    []byte("secret"),
+					SecretHostKeysName: []byte("somekey"),
 				},
 			}
 
@@ -116,6 +117,12 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Reconcile() error = %v, wantErr %v", err, tt.wantErr)
 				return
+			}
+			if !tt.wantErr {
+				gitRepo := &synv1alpha1.GitRepo{}
+				err = cl.Get(context.TODO(), req.NamespacedName, gitRepo)
+				assert.NoError(t, err)
+				assert.Equal(t, string(secret.Data[SecretHostKeysName]), gitRepo.Status.HostKeys)
 			}
 		})
 	}
