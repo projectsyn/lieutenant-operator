@@ -2,22 +2,14 @@ apiVersion: syn.tools/v1alpha1
 kind: Cluster
 metadata:
   name: ae3oso
-  # labels:
-  #   tenant: aezoo6
-  annotations:
-    tenantslug: bigcorp
 spec:
-  apiEndpointSecretRef:
-    key: k8sapi-ae3oso
-    name: default
   displayName: Big Corp. Production Cluster
-  slug: prodcluster
   gitRepoTemplate:
     path: cluster
     repoName: test
     apiSecretRef:
-      namespace: default
       name: example-secret
+      namespace: syn-lieutenant
     deployKeys:
       test:
         type: ssh-ed25519
@@ -25,7 +17,6 @@ spec:
         writeAccess: true
   tenantRef:
     name: aezoo6
-    namespace: default
   tokenLifeTime: 4h
   facts:
     distribution: openshift3

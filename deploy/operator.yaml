@@ -15,8 +15,7 @@ spec:
       serviceAccountName: lieutenant-operator
       containers:
         - name: lieutenant-operator
-          # Replace this with the built image name
-          image: REPLACE_IMAGE
+          image: docker.io/projectsyn/lieutenant-operator:v0.0.3
           command:
           - lieutenant-operator
           imagePullPolicy: Always

@@ -9,6 +9,7 @@ spec:
     repoName: test
     apiSecretRef:
       name: example-secret
+      namespace: syn-lieutenant
     deployKeys:
       test:
         type: ssh-ed25519
