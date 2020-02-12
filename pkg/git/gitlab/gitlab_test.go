@@ -53,10 +53,12 @@ func TestGitlab_Read(t *testing.T) {
 
 			defer tt.httpServer.Close()
 
-			parsedURL, _ := url.Parse(tt.httpServer.URL)
+			serverURL, _ := url.Parse(tt.httpServer.URL)
 
 			g := &Gitlab{
-				url:         parsedURL,
+				ops: manager.RepoOptions{
+					URL: serverURL,
+				},
 				credentials: tt.fields.credentials,
 			}
 
@@ -90,7 +92,8 @@ func TestGitlab_IsType(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			defer tt.httpServer.Close()
 			g := &Gitlab{}
-			if got, _ := g.IsType(tt.httpServer.URL); got != tt.want {
+			serverURL, _ := url.Parse(tt.httpServer.URL)
+			if got, _ := g.IsType(serverURL); got != tt.want {
 				t.Errorf("IsType() = %v, want %v", got, tt.want)
 			}
 		})
@@ -156,11 +159,15 @@ func TestGitlab_Create(t *testing.T) {
 
 			defer tt.httpServer.Close()
 
-			parsedURL, _ := url.Parse(tt.httpServer.URL + "/" + tt.fields.namespace + "/" + tt.fields.projectname)
+			serverURL, _ := url.Parse(tt.httpServer.URL)
 
 			g := &Gitlab{
 				credentials: tt.fields.credentials,
-				url:         parsedURL,
+				ops: manager.RepoOptions{
+					URL:      serverURL,
+					Path:     tt.fields.namespace,
+					RepoName: tt.fields.projectname,
+				},
 			}
 
 			_ = g.Connect()
@@ -200,10 +207,12 @@ func TestGitlab_Delete(t *testing.T) {
 
 			defer tt.httpServer.Close()
 
-			parsedURL, _ := url.Parse(tt.httpServer.URL)
+			serverURL, _ := url.Parse(tt.httpServer.URL)
 
 			g := &Gitlab{
-				url:         parsedURL,
+				ops: manager.RepoOptions{
+					URL: serverURL,
+				},
 				credentials: tt.fields.credentials,
 			}
 
@@ -278,10 +287,12 @@ func TestGitlab_Update(t *testing.T) {
 
 			defer tt.httpServer.Close()
 
-			parsedURL, _ := url.Parse(tt.httpServer.URL)
+			serverURL, _ := url.Parse(tt.httpServer.URL)
 
 			g := &Gitlab{
-				url:     parsedURL,
+				ops: manager.RepoOptions{
+					URL: serverURL,
+				},
 				project: tt.fields.project,
 				log:     zap.Logger(),
 			}

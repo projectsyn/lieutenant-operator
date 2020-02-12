@@ -20,11 +20,11 @@ func Register(i Implementation) {
 }
 
 // NewRepo returns a Repo object that can handle the specific URL
-func NewRepo(URL string, opts RepoOptions) (Repo, error) {
+func NewRepo(opts RepoOptions) (Repo, error) {
 
 	for _, imp := range implementations {
-		if exists, err := imp.IsType(URL); exists {
-			newImp, err := imp.New(URL, opts)
+		if exists, err := imp.IsType(opts.URL); exists {
+			newImp, err := imp.New(opts)
 			if err != nil {
 				return nil, err
 			}
@@ -36,7 +36,7 @@ func NewRepo(URL string, opts RepoOptions) (Repo, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("no git implementation found for given url: %v ", URL)
+	return nil, fmt.Errorf("no git implementation found for given url: %v ", opts.URL.String())
 }
 
 // RepoOptions hold the options for creating a repository. The credentials are required to work. The deploykeys are
@@ -45,6 +45,9 @@ type RepoOptions struct {
 	Credentials Credentials
 	DeployKeys  map[string]synv1alpha1.DeployKey
 	Logger      logr.Logger
+	URL         *url.URL
+	Path        string
+	RepoName    string
 }
 
 // Credentials holds the authentication information for the API. Most of the times this
@@ -74,7 +77,7 @@ type Repo interface {
 // for the given URL.
 type Implementation interface {
 	// IsType returns true, if the given URL is handleable by the given implementation (Github,Gitlab, etc.)
-	IsType(URL string) (bool, error)
+	IsType(URL *url.URL) (bool, error)
 	// New returns a clean new Repo implementation with the given URL
-	New(URL string, options RepoOptions) (Repo, error)
+	New(options RepoOptions) (Repo, error)
 }

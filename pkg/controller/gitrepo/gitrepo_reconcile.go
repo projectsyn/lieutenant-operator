@@ -3,6 +3,7 @@ package gitrepo
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
 	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
@@ -60,17 +61,32 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 		instance.Status.HostKeys = string(hostKeys)
 	}
 
+	if _, ok := secret.Data[SecretEndpointName]; !ok {
+		return reconcile.Result{}, fmt.Errorf("secret %s does not contain endpoint data", secret.GetName())
+	}
+
+	if _, ok := secret.Data[SecretTokenName]; !ok {
+		return reconcile.Result{}, fmt.Errorf("secret %s does not contain token", secret.GetName())
+	}
+
+	repoURL, err := url.Parse(string(secret.Data[SecretEndpointName]) + "/" + instance.Spec.Path + "/" + instance.Spec.RepoName)
+
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
 	repoOptions := manager.RepoOptions{
 		Credentials: manager.Credentials{
 			Token: string(secret.Data[SecretTokenName]),
 		},
 		DeployKeys: instance.Spec.DeployKeys,
 		Logger:     reqLogger,
+		Path:       instance.Spec.Path,
+		RepoName:   instance.Spec.RepoName,
+		URL:        repoURL,
 	}
 
-	endpoint := string(secret.Data[SecretEndpointName]) + "/" + instance.Spec.Path + "/" + instance.Spec.RepoName
-
-	repo, err := manager.NewRepo(endpoint, repoOptions)
+	repo, err := manager.NewRepo(repoOptions)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -81,7 +97,7 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 	}
 
 	if !r.repoExists(repo) {
-		reqLogger.Info("creating git repo", SecretEndpointName, endpoint)
+		reqLogger.Info("creating git repo", SecretEndpointName, repoOptions.URL)
 		err = repo.Create()
 		if err != nil {
 			phase := synv1alpha1.Failed
