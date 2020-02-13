@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -49,39 +48,17 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 		instance.Status.BootstrapToken.TokenValid = false
 	}
 
-	//TODO: search for the gitrepo instance instead to check if it exists
-	if instance.Spec.GitRepoURL == "" {
-		gvk := schema.GroupVersionKind{
-			Version: instance.APIVersion,
-			Kind:    instance.Kind,
-		}
-
-		created, err := helpers.CreateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, instance.Spec.TenantRef)
-		if err != nil {
-			reqLogger.Error(err, "Cannot create git repo object")
-			return reconcile.Result{}, err
-		}
-
-		if !created {
-			gitRepo := &synv1alpha1.GitRepo{}
-			repoNamespacedName := types.NamespacedName{
-				Namespace: instance.GetNamespace(),
-				Name:      instance.Name,
-			}
-			err = r.client.Get(context.TODO(), repoNamespacedName, gitRepo)
-			if err != nil {
-				return reconcile.Result{}, err
-			}
-
-			if gitRepo.Status.Phase != nil && *gitRepo.Status.Phase == synv1alpha1.Created {
-				instance.Spec.GitRepoURL = gitRepo.Status.URL
-				if len(gitRepo.Status.HostKeys) > 0 &&
-					len(instance.Spec.GitHostKeys) == 0 {
-					instance.Spec.GitHostKeys = gitRepo.Status.HostKeys
-				}
-			}
-		}
+	gvk := schema.GroupVersionKind{
+		Version: instance.APIVersion,
+		Kind:    instance.Kind,
 	}
+
+	err = helpers.CreateOrUpdateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, instance.Spec.TenantRef)
+	if err != nil {
+		reqLogger.Error(err, "Cannot create or update git repo object")
+		return reconcile.Result{}, err
+	}
+
 	helpers.AddTenantLabel(&instance.ObjectMeta, instance.Spec.TenantRef.Name)
 	err = r.client.Status().Update(context.TODO(), instance)
 	if err != nil {
