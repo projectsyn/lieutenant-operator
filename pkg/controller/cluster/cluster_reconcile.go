@@ -48,6 +48,8 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 	if time.Now().After(instance.Status.BootstrapToken.ValidUntil.Time) {
 		instance.Status.BootstrapToken.TokenValid = false
 	}
+
+	//TODO: search for the gitrepo instance instead to check if it exists
 	if instance.Spec.GitRepoURL == "" {
 		gvk := schema.GroupVersionKind{
 			Version: instance.APIVersion,
@@ -124,3 +126,5 @@ func (r *ReconcileCluster) newStatus(cluster *synv1alpha1.Cluster) error {
 	}
 	return nil
 }
+
+//TODO: update git if template changes

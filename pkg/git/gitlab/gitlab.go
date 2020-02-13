@@ -141,7 +141,14 @@ func (g *Gitlab) Connect() error {
 
 // FullURL returns the complete url of this git repository
 func (g *Gitlab) FullURL() *url.URL {
-	return g.ops.URL
+
+	sshURL := g.ops.URL
+
+	sshURL.Scheme = "ssh"
+	sshURL.User = url.User("git")
+	sshURL.Path = sshURL.Path + ".git"
+
+	return sshURL
 }
 
 // IsType determines if the given url can be handled by this concrete implementation.
