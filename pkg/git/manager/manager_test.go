@@ -2,7 +2,9 @@ package manager
 
 import (
 	"fmt"
+	"net/url"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -10,15 +12,15 @@ type testImplementation struct {
 	found bool
 }
 
-func (t *testImplementation) IsType(URL string) (bool, error) {
-	if URL == "notfound" {
+func (t *testImplementation) IsType(URL *url.URL) (bool, error) {
+	if strings.Contains(URL.String(), "notfound") {
 		return false, nil
 	}
 	return t.found, nil
 }
 
-func (t *testImplementation) New(URL string, options RepoOptions) (Repo, error) {
-	if URL == "fail" {
+func (t *testImplementation) New(options RepoOptions) (Repo, error) {
+	if strings.Contains(options.URL.String(), "fail") {
 		return nil, fmt.Errorf("expected error")
 	}
 	return nil, nil
@@ -31,8 +33,7 @@ func TestNewRepo(t *testing.T) {
 	Register(&testImplementation{found: false})
 
 	type args struct {
-		URL   string
-		creds RepoOptions
+		options RepoOptions
 	}
 	tests := []struct {
 		name    string
@@ -43,8 +44,9 @@ func TestNewRepo(t *testing.T) {
 		{
 			name: "test successfull",
 			args: args{
-				URL:   "test",
-				creds: RepoOptions{},
+				options: RepoOptions{
+					URL: &url.URL{Scheme: "http://", Host: "test"},
+				},
 			},
 			want:    nil,
 			wantErr: false,
@@ -52,8 +54,9 @@ func TestNewRepo(t *testing.T) {
 		{
 			name: "test fail",
 			args: args{
-				URL:   "fail",
-				creds: RepoOptions{},
+				options: RepoOptions{
+					URL: &url.URL{Scheme: "http://", Host: "fail"},
+				},
 			},
 			want:    nil,
 			wantErr: true,
@@ -61,8 +64,9 @@ func TestNewRepo(t *testing.T) {
 		{
 			name: "test not found",
 			args: args{
-				URL:   "notfound",
-				creds: RepoOptions{},
+				options: RepoOptions{
+					URL: &url.URL{Scheme: "http://", Host: "notfound"},
+				},
 			},
 			want:    nil,
 			wantErr: true,
@@ -70,7 +74,7 @@ func TestNewRepo(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewRepo(tt.args.URL, tt.args.creds)
+			got, err := NewRepo(tt.args.options)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewRepo() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -1,14 +1,14 @@
 apiVersion: syn.tools/v1alpha1
 kind: GitRepo
 metadata:
-  name: example-gitrepo
+  name: example-gitrepo2
 spec:
   tenantRef:
     name: blubb
   apiSecretRef:
     name: example-secret
-  path: root
-  repoName: test
+  path: cluster/subgroup
+  repoName: somethingelse
   deployKeys:
     test:
       type: ssh-ed25519

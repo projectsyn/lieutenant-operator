@@ -35,6 +35,7 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 		namespace  string
 		tenantName string
 		secretName string
+		URL        string
 	}
 	tests := []struct {
 		name    string
@@ -47,6 +48,7 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 				name:       "testrep",
 				namespace:  "testnamespace",
 				secretName: "testsecret",
+				URL:        "something",
 			},
 			wantErr: true,
 		},
@@ -57,6 +59,7 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 				namespace:  "namespace",
 				tenantName: "sometenant",
 				secretName: "testsecret",
+				URL:        "another",
 			},
 		},
 	}
@@ -90,7 +93,7 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 					Namespace: tt.fields.namespace,
 				},
 				Data: map[string][]byte{
-					SecretEndpointName: []byte("something"),
+					SecretEndpointName: []byte(tt.fields.URL),
 					SecretTokenName:    []byte("secret"),
 					SecretHostKeysName: []byte("somekey"),
 				},
@@ -132,11 +135,11 @@ type testRepoImplementation struct {
 	//meh
 }
 
-func (t testRepoImplementation) IsType(URL string) (bool, error) {
-	return strings.Contains(URL, "another"), nil
+func (t testRepoImplementation) IsType(URL *url.URL) (bool, error) {
+	return strings.Contains(URL.String(), "another"), nil
 }
 
-func (t testRepoImplementation) New(URL string, options manager.RepoOptions) (manager.Repo, error) {
+func (t testRepoImplementation) New(options manager.RepoOptions) (manager.Repo, error) {
 	return &testRepoImplementation{}, nil
 }
 
