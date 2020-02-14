@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reuse object names for GitRepo names
 ### Fixed
 - Gitlab subgroup handling
+- GitRepos properly updated from Clusters and Tenants
 
 ## v0.0.3 - 2019-02-10
 ### Added

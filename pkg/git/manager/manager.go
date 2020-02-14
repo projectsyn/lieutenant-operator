@@ -60,7 +60,7 @@ type Credentials struct {
 type Repo interface {
 	// Type returns the type of the repo
 	Type() string
-	// FullURL returns the full url to the repository
+	// FullURL returns the full url to the repository for ssh pulling
 	FullURL() *url.URL
 	Create() error
 	// Update will enforce the defined keys to be deployed to the repository, it will return true if an actual change

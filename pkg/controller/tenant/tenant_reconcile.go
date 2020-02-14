@@ -9,7 +9,6 @@ import (
 	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -33,30 +32,14 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 
-	if instance.Spec.GitRepoURL == "" {
-		gvk := schema.GroupVersionKind{
-			Version: instance.APIVersion,
-			Kind:    instance.Kind,
-		}
+	gvk := schema.GroupVersionKind{
+		Version: instance.APIVersion,
+		Kind:    instance.Kind,
+	}
 
-		created, err := helpers.CreateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, corev1.LocalObjectReference{Name: instance.GetName()})
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-		if !created {
-			gitRepo := &synv1alpha1.GitRepo{}
-			repoNamespacedName := types.NamespacedName{
-				Namespace: instance.GetNamespace(),
-				Name:      instance.GetName(),
-			}
-			err = r.client.Get(context.TODO(), repoNamespacedName, gitRepo)
-			if err != nil {
-				return reconcile.Result{}, err
-			}
-			if gitRepo.Status.Phase != nil && *gitRepo.Status.Phase == synv1alpha1.Created {
-				instance.Spec.GitRepoURL = gitRepo.Status.URL
-			}
-		}
+	err = helpers.CreateOrUpdateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, corev1.LocalObjectReference{Name: instance.GetName()})
+	if err != nil {
+		return reconcile.Result{}, err
 	}
 	return reconcile.Result{}, r.client.Update(context.TODO(), instance)
 }

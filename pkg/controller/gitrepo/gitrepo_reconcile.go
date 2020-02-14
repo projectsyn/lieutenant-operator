@@ -124,6 +124,8 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 		reqLogger.Info("keys differed from CRD, keys re-applied to repository")
 	}
 
+	helpers.AddTenantLabel(&instance.ObjectMeta, instance.Spec.TenantRef.Name)
+
 	return reconcile.Result{}, r.client.Status().Update(context.TODO(), instance)
 }
 
