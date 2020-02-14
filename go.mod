@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/go-logr/logr v0.1.0
-	github.com/operator-framework/operator-sdk v0.15.1
+	github.com/operator-framework/operator-sdk v0.15.2
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.4.0
 	github.com/xanzy/go-gitlab v0.15.0
