@@ -78,6 +78,15 @@ spec:
                 repoName:
                   description: RepoName ame of Git repository
                   type: string
+                repoType:
+                  default: auto
+                  description: RepoType specifies if a repo should be managed by the
+                    git controller. A value of 'unmanaged' means it's not manged by
+                    the controller
+                  enum:
+                  - auto
+                  - unmanaged
+                  type: string
               required:
               - apiSecretRef
               - path

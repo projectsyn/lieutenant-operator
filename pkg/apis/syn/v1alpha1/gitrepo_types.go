@@ -13,6 +13,15 @@ const (
 	TypeUnknown = GitType("")
 )
 
+const (
+	// AutoRepoType managed by the git controller
+	AutoRepoType = RepoType("auto")
+	// UnmanagedRepoType by the git controller. These objects are only used as data store
+	UnmanagedRepoType = RepoType("unmanaged")
+	// DefaultRepoType is auto
+	DefaultRepoType = RepoType("")
+)
+
 // GitPhase enum values
 const (
 	Created      = GitPhase("created")
@@ -25,6 +34,9 @@ type GitPhase string
 
 // GitType as the enum for git types
 type GitType string
+
+// RepoType specifies the type of the repo
+type RepoType string
 
 // GitRepoSpec defines the desired state of GitRepo
 type GitRepoSpec struct {
@@ -44,6 +56,10 @@ type GitRepoTemplate struct {
 	Path string `json:"path"`
 	// RepoName ame of Git repository
 	RepoName string `json:"repoName"`
+	// RepoType specifies if a repo should be managed by the git controller. A value of 'unmanaged' means it's not manged by the controller
+	// +kubebuilder:default=auto
+	// +kubebuilder:validation:Enum=auto;unmanaged
+	RepoType RepoType `json:"repoType,omitempty"`
 }
 
 // DeployKey defines an SSH key to be used for git operations.
