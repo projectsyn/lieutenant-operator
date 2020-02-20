@@ -42,6 +42,9 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 	helpers.AddTenantLabel(&instance.ObjectMeta, instance.Spec.TenantRef.Name)
+	if instance.Spec.RepoType == synv1alpha1.DefaultRepoType {
+		instance.Spec.RepoType = synv1alpha1.AutoRepoType
+	}
 	secret := &corev1.Secret{}
 	namespacedName := types.NamespacedName{
 		Name:      instance.Spec.APISecretRef.Name,

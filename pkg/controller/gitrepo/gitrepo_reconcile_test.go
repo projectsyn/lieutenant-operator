@@ -126,6 +126,7 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 				err = cl.Get(context.TODO(), req.NamespacedName, gitRepo)
 				assert.NoError(t, err)
 				assert.Equal(t, string(secret.Data[SecretHostKeysName]), gitRepo.Status.HostKeys)
+				assert.Equal(t, synv1alpha1.AutoRepoType, gitRepo.Spec.RepoType)
 			}
 		})
 	}
