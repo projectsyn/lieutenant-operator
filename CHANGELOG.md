@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Fixed
+- Key comparison issues when using multiline strings in YAML
+- GitRepoURL not being set for clusters/tenants
 
 ## v0.0.4 - 2020-02-17
 ### Added
