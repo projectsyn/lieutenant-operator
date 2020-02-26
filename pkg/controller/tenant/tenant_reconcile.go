@@ -41,5 +41,9 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 	if err != nil {
 		return reconcile.Result{}, err
 	}
+	instance.Spec.GitRepoURL, err = helpers.GetGitRepoURL(instance, r.client)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
 	return reconcile.Result{}, r.client.Update(context.TODO(), instance)
 }
