@@ -60,7 +60,7 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 	}
 
 	helpers.AddTenantLabel(&instance.ObjectMeta, instance.Spec.TenantRef.Name)
-	instance.Spec.GitRepoURL, err = helpers.GetGitRepoURL(instance, r.client)
+	instance.Spec.GitRepoURL, instance.Spec.GitHostKeys, err = helpers.GetGitRepoURLAndHostKeys(instance, r.client)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

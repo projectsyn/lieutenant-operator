@@ -72,7 +72,7 @@ func AddTenantLabel(meta *metav1.ObjectMeta, tenant string) {
 	meta.Labels[apis.LabelNameTenant] = tenant
 }
 
-func GetGitRepoURL(obj metav1.Object, client client.Client) (string, error) {
+func GetGitRepoURLAndHostKeys(obj metav1.Object, client client.Client) (string, string, error) {
 	gitRepo := &synv1alpha1.GitRepo{}
 	repoNamespacedName := types.NamespacedName{
 		Namespace: obj.GetNamespace(),
@@ -80,8 +80,8 @@ func GetGitRepoURL(obj metav1.Object, client client.Client) (string, error) {
 	}
 	err := client.Get(context.TODO(), repoNamespacedName, gitRepo)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return gitRepo.Status.URL, nil
+	return gitRepo.Status.URL, gitRepo.Status.HostKeys, nil
 }
