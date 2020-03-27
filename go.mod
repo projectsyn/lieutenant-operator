@@ -7,7 +7,7 @@ require (
 	github.com/operator-framework/operator-sdk v0.16.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.5.1
-	github.com/xanzy/go-gitlab v0.26.0
+	github.com/xanzy/go-gitlab v0.29.0
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v12.0.0+incompatible
