@@ -3,6 +3,7 @@ module github.com/projectsyn/lieutenant-operator
 go 1.13
 
 require (
+	github.com/ahmetb/gen-crd-api-reference-docs v0.2.0 // indirect
 	github.com/go-logr/logr v0.1.0
 	github.com/operator-framework/operator-sdk v0.16.0
 	github.com/spf13/pflag v1.0.5
