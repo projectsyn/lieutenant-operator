@@ -1,0 +1,872 @@
+<p>Packages:</p>
+<ul>
+<li>
+<a href="#syn.tools%2fv1alpha1">syn.tools/v1alpha1</a>
+</li>
+</ul>
+<h2 id="syn.tools/v1alpha1">syn.tools/v1alpha1</h2>
+<p>
+<p>Package v1alpha1 contains API Schema definitions for the syn v1alpha1 API group</p>
+</p>
+Resource Types:
+<ul></ul>
+<h3 id="syn.tools/v1alpha1.BootstrapToken">BootstrapToken
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#syn.tools/v1alpha1.ClusterStatus">ClusterStatus</a>)
+</p>
+<p>
+<p>BootstrapToken this key is used only once for Steward to register.</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>token</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Token is the actual token to register the cluster</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>validUntil</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#time-v1-meta">
+Kubernetes meta/v1.Time
+</a>
+</em>
+</td>
+<td>
+<p>ValidUntil timespan how long the token is valid. If the token is
+used after this timestamp it will be rejected.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>tokenValid</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+<p>TokenValid indicates if the token is still valid or was already used.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="syn.tools/v1alpha1.Cluster">Cluster
+</h3>
+<p>
+<p>Cluster is the Schema for the clusters API</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>metadata</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#objectmeta-v1-meta">
+Kubernetes meta/v1.ObjectMeta
+</a>
+</em>
+</td>
+<td>
+Refer to the Kubernetes API documentation for the fields of the
+<code>metadata</code> field.
+</td>
+</tr>
+<tr>
+<td>
+<code>spec</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.ClusterSpec">
+ClusterSpec
+</a>
+</em>
+</td>
+<td>
+<br/>
+<br/>
+<table>
+<tr>
+<td>
+<code>displayName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>DisplayName of cluster which could be different from metadata.name. Allows cluster renaming should it be needed.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>gitRepoURL</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>GitRepoURL git repository storing the cluster configuration catalog. If this is set, no gitRepoTemplate is needed.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>gitHostKeys</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>SSH GitHostKeys of the git server</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>gitRepoTemplate</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.GitRepoTemplate">
+GitRepoTemplate
+</a>
+</em>
+</td>
+<td>
+<p>GitRepoTemplate template for managing the GitRepo object.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>tenantRef</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#localobjectreference-v1-core">
+Kubernetes core/v1.LocalObjectReference
+</a>
+</em>
+</td>
+<td>
+<p>TenantRef reference to Tenant object the cluster belongs to.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>tokenLifeTime</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>TokenLifetime set the token lifetime</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>facts</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.Facts">
+Facts
+</a>
+</em>
+</td>
+<td>
+<p>Facts are key/value pairs for statically configured facts</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td>
+<code>status</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.ClusterStatus">
+ClusterStatus
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="syn.tools/v1alpha1.ClusterSpec">ClusterSpec
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#syn.tools/v1alpha1.Cluster">Cluster</a>)
+</p>
+<p>
+<p>ClusterSpec defines the desired state of Cluster</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>displayName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>DisplayName of cluster which could be different from metadata.name. Allows cluster renaming should it be needed.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>gitRepoURL</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>GitRepoURL git repository storing the cluster configuration catalog. If this is set, no gitRepoTemplate is needed.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>gitHostKeys</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>SSH GitHostKeys of the git server</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>gitRepoTemplate</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.GitRepoTemplate">
+GitRepoTemplate
+</a>
+</em>
+</td>
+<td>
+<p>GitRepoTemplate template for managing the GitRepo object.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>tenantRef</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#localobjectreference-v1-core">
+Kubernetes core/v1.LocalObjectReference
+</a>
+</em>
+</td>
+<td>
+<p>TenantRef reference to Tenant object the cluster belongs to.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>tokenLifeTime</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>TokenLifetime set the token lifetime</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>facts</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.Facts">
+Facts
+</a>
+</em>
+</td>
+<td>
+<p>Facts are key/value pairs for statically configured facts</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="syn.tools/v1alpha1.ClusterStatus">ClusterStatus
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#syn.tools/v1alpha1.Cluster">Cluster</a>)
+</p>
+<p>
+<p>ClusterStatus defines the observed state of Cluster</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>bootstrapToken</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.BootstrapToken">
+BootstrapToken
+</a>
+</em>
+</td>
+<td>
+<p>BootstrapTokenValid validity of the bootstrap token, set by the Lieutenant API.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="syn.tools/v1alpha1.DeployKey">DeployKey
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#syn.tools/v1alpha1.GitRepoTemplate">GitRepoTemplate</a>)
+</p>
+<p>
+<p>DeployKey defines an SSH key to be used for git operations.</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>type</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Type defines what type the key is (rsa, ed25519, etc&hellip;)</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>key</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Key is the actual key</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>writeAccess</code></br>
+<em>
+bool
+</em>
+</td>
+<td>
+<p>WriteAccess if the key has RW access or not</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="syn.tools/v1alpha1.Facts">Facts
+(<code>map[string]string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#syn.tools/v1alpha1.ClusterSpec">ClusterSpec</a>)
+</p>
+<p>
+<p>Facts is a map of arbitrary facts for the cluster</p>
+</p>
+<h3 id="syn.tools/v1alpha1.GitPhase">GitPhase
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#syn.tools/v1alpha1.GitRepoStatus">GitRepoStatus</a>)
+</p>
+<p>
+<p>GitPhase is the enum for the git phase status</p>
+</p>
+<h3 id="syn.tools/v1alpha1.GitRepo">GitRepo
+</h3>
+<p>
+<p>GitRepo is the Schema for the gitrepos API</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>metadata</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#objectmeta-v1-meta">
+Kubernetes meta/v1.ObjectMeta
+</a>
+</em>
+</td>
+<td>
+Refer to the Kubernetes API documentation for the fields of the
+<code>metadata</code> field.
+</td>
+</tr>
+<tr>
+<td>
+<code>spec</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.GitRepoSpec">
+GitRepoSpec
+</a>
+</em>
+</td>
+<td>
+<br/>
+<br/>
+<table>
+<tr>
+<td>
+<code>GitRepoTemplate</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.GitRepoTemplate">
+GitRepoTemplate
+</a>
+</em>
+</td>
+<td>
+<p>
+(Members of <code>GitRepoTemplate</code> are embedded into this type.)
+</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>tenantRef</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#localobjectreference-v1-core">
+Kubernetes core/v1.LocalObjectReference
+</a>
+</em>
+</td>
+<td>
+<p>TenantRef references the tenant this repo belongs to</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td>
+<code>status</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.GitRepoStatus">
+GitRepoStatus
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="syn.tools/v1alpha1.GitRepoSpec">GitRepoSpec
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#syn.tools/v1alpha1.GitRepo">GitRepo</a>)
+</p>
+<p>
+<p>GitRepoSpec defines the desired state of GitRepo</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>GitRepoTemplate</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.GitRepoTemplate">
+GitRepoTemplate
+</a>
+</em>
+</td>
+<td>
+<p>
+(Members of <code>GitRepoTemplate</code> are embedded into this type.)
+</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>tenantRef</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#localobjectreference-v1-core">
+Kubernetes core/v1.LocalObjectReference
+</a>
+</em>
+</td>
+<td>
+<p>TenantRef references the tenant this repo belongs to</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="syn.tools/v1alpha1.GitRepoStatus">GitRepoStatus
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#syn.tools/v1alpha1.GitRepo">GitRepo</a>)
+</p>
+<p>
+<p>GitRepoStatus defines the observed state of GitRepo</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>phase</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.GitPhase">
+GitPhase
+</a>
+</em>
+</td>
+<td>
+<p>Updated by Operator with current phase. The GitPhase enum will be used for application logic
+as using it directly would only print an integer.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>type</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.GitType">
+GitType
+</a>
+</em>
+</td>
+<td>
+<p>Type autodiscovered Git repo type. Same behaviour for the enum as with the Phase.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>url</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>URL computed Git repository URL</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>hostKeys</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>SSH HostKeys of the git server</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="syn.tools/v1alpha1.GitRepoTemplate">GitRepoTemplate
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#syn.tools/v1alpha1.ClusterSpec">ClusterSpec</a>, 
+<a href="#syn.tools/v1alpha1.GitRepoSpec">GitRepoSpec</a>, 
+<a href="#syn.tools/v1alpha1.TenantSpec">TenantSpec</a>)
+</p>
+<p>
+<p>GitRepoTemplate is used for templating git repos, it does not contain the tenantRef as it will be added by the
+controller creating the template instance.</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>apiSecretRef</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#secretreference-v1-core">
+Kubernetes core/v1.SecretReference
+</a>
+</em>
+</td>
+<td>
+<p>APISecretRef reference to secret containing connection information</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>deployKeys</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.DeployKey">
+map[string]github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1.DeployKey
+</a>
+</em>
+</td>
+<td>
+<p>DeployKeys optional list of SSH deploy keys. If not set, not deploy keys will be configured</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>path</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>Path to Git repository</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>repoName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>RepoName ame of Git repository</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>repoType</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.RepoType">
+RepoType
+</a>
+</em>
+</td>
+<td>
+<p>RepoType specifies if a repo should be managed by the git controller. A value of &lsquo;unmanaged&rsquo; means it&rsquo;s not manged by the controller</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="syn.tools/v1alpha1.GitType">GitType
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#syn.tools/v1alpha1.GitRepoStatus">GitRepoStatus</a>)
+</p>
+<p>
+<p>GitType as the enum for git types</p>
+</p>
+<h3 id="syn.tools/v1alpha1.RepoType">RepoType
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#syn.tools/v1alpha1.GitRepoTemplate">GitRepoTemplate</a>)
+</p>
+<p>
+<p>RepoType specifies the type of the repo</p>
+</p>
+<h3 id="syn.tools/v1alpha1.Tenant">Tenant
+</h3>
+<p>
+<p>Tenant is the Schema for the tenants API</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>metadata</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#objectmeta-v1-meta">
+Kubernetes meta/v1.ObjectMeta
+</a>
+</em>
+</td>
+<td>
+Refer to the Kubernetes API documentation for the fields of the
+<code>metadata</code> field.
+</td>
+</tr>
+<tr>
+<td>
+<code>spec</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.TenantSpec">
+TenantSpec
+</a>
+</em>
+</td>
+<td>
+<br/>
+<br/>
+<table>
+<tr>
+<td>
+<code>displayName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>DisplayName is the display name of the tenant.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>gitRepoURL</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>GitRepoURL git repository storing the tenant configuration. If this is set, no gitRepoTemplate is needed.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>gitRepoTemplate</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.GitRepoTemplate">
+GitRepoTemplate
+</a>
+</em>
+</td>
+<td>
+<p>GitRepoTemplate Template for managing the GitRepo object. If not set, no  GitRepo object will be created.</p>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+<tr>
+<td>
+<code>status</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.TenantStatus">
+TenantStatus
+</a>
+</em>
+</td>
+<td>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="syn.tools/v1alpha1.TenantSpec">TenantSpec
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#syn.tools/v1alpha1.Tenant">Tenant</a>)
+</p>
+<p>
+<p>TenantSpec defines the desired state of Tenant</p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>displayName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>DisplayName is the display name of the tenant.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>gitRepoURL</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+<p>GitRepoURL git repository storing the tenant configuration. If this is set, no gitRepoTemplate is needed.</p>
+</td>
+</tr>
+<tr>
+<td>
+<code>gitRepoTemplate</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.GitRepoTemplate">
+GitRepoTemplate
+</a>
+</em>
+</td>
+<td>
+<p>GitRepoTemplate Template for managing the GitRepo object. If not set, no  GitRepo object will be created.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="syn.tools/v1alpha1.TenantStatus">TenantStatus
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#syn.tools/v1alpha1.Tenant">Tenant</a>)
+</p>
+<p>
+<p>TenantStatus defines the observed state of Tenant</p>
+</p>
+<hr/>
+<p><em>
+Generated with <code>gen-crd-api-reference-docs</code>
+on git commit <code>95528ad</code>.
+</em></p>
