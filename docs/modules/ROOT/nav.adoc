@@ -1,1 +1,3 @@
 * xref:index.adoc[Home]
+* xref:gettingstarted.adoc[Getting Started]
+* xref:crds-html.adoc[CRDs]

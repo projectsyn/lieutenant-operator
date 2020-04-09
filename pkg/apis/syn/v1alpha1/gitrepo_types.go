@@ -63,9 +63,12 @@ type GitRepoTemplate struct {
 
 // DeployKey defines an SSH key to be used for git operations.
 type DeployKey struct {
-	Type        string `json:"type,omitempty"`
-	Key         string `json:"key,omitempty"`
-	WriteAccess bool   `json:"writeAccess,omitempty"`
+	// Type defines what type the key is (rsa, ed25519, etc...)
+	Type string `json:"type,omitempty"`
+	// Key is the actual key
+	Key string `json:"key,omitempty"`
+	// WriteAccess if the key has RW access or not
+	WriteAccess bool `json:"writeAccess,omitempty"`
 }
 
 // GitRepoStatus defines the observed state of GitRepo
