@@ -101,10 +101,12 @@ spec:
                   - auto
                   - unmanaged
                   type: string
-              required:
-              - apiSecretRef
-              - path
-              - repoName
+                templateFiles:
+                  additionalProperties:
+                    type: string
+                  description: TemplateFiles is a list of files that should be pushed
+                    to the repository after its creation.
+                  type: object
               type: object
             gitRepoURL:
               description: GitRepoURL git repository storing the cluster configuration

@@ -82,11 +82,12 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 		Credentials: manager.Credentials{
 			Token: string(secret.Data[SecretTokenName]),
 		},
-		DeployKeys: instance.Spec.DeployKeys,
-		Logger:     reqLogger,
-		Path:       instance.Spec.Path,
-		RepoName:   instance.Spec.RepoName,
-		URL:        repoURL,
+		DeployKeys:    instance.Spec.DeployKeys,
+		Logger:        reqLogger,
+		Path:          instance.Spec.Path,
+		RepoName:      instance.Spec.RepoName,
+		URL:           repoURL,
+		TemplateFiles: instance.Spec.TemplateFiles,
 	}
 
 	repo, err := manager.NewRepo(repoOptions)
@@ -103,13 +104,13 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 		reqLogger.Info("creating git repo", SecretEndpointName, repoOptions.URL)
 		err = repo.Create()
 		if err != nil {
-			phase := synv1alpha1.Failed
-			instance.Status.Phase = &phase
-			instance.Status.URL = repo.FullURL().String()
-			if updateErr := r.client.Status().Update(context.TODO(), instance); updateErr != nil {
-				return reconcile.Result{}, fmt.Errorf("could not set status while handling error: %s: %s", updateErr, err)
-			}
-			return reconcile.Result{}, err
+			return r.handleRepoError(err, instance, repo)
+		}
+
+		err = repo.CommitTemplateFiles()
+		if err != nil {
+			return r.handleRepoError(err, instance, repo)
+
 		}
 
 		reqLogger.Info("successfully created the repository")
@@ -118,6 +119,12 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 		instance.Status.URL = repo.FullURL().String()
 		return reconcile.Result{}, r.client.Status().Update(context.TODO(), instance)
 	}
+
+	err = repo.CommitTemplateFiles()
+	if err != nil {
+		return r.handleRepoError(err, instance, repo)
+	}
+
 	changed, err := repo.Update()
 	if err != nil {
 		return reconcile.Result{}, err
@@ -138,4 +145,14 @@ func (r *ReconcileGitRepo) repoExists(repo manager.Repo) bool {
 	}
 
 	return false
+}
+
+func (r *ReconcileGitRepo) handleRepoError(err error, instance *synv1alpha1.GitRepo, repo manager.Repo) (reconcile.Result, error) {
+	phase := synv1alpha1.Failed
+	instance.Status.Phase = &phase
+	instance.Status.URL = repo.FullURL().String()
+	if updateErr := r.client.Status().Update(context.TODO(), instance); updateErr != nil {
+		return reconcile.Result{}, fmt.Errorf("could not set status while handling error: %s: %s", updateErr, err)
+	}
+	return reconcile.Result{}, err
 }
