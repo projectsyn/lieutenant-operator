@@ -1,7 +1,7 @@
 apiVersion: syn.tools/v1alpha1
 kind: Cluster
 metadata:
-  name: ae3oso
+  name: c-ae3oso
 spec:
   displayName: Big Corp. Production Cluster
   gitRepoTemplate:
@@ -16,7 +16,7 @@ spec:
         key: AAAAC3NzaC1lZDI1NTE5AAAAIJ22mHNYfSPnLAj8YiKa0RmxafD9r5nEUquizay7xh3s
         writeAccess: true
   tenantRef:
-    name: aezoo6
+    name: t-aezoo6
   tokenLifeTime: 4h
   facts:
     distribution: openshift3
