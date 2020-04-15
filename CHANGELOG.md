@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Docs from the SDD
 - Doc generator from CRDs
+- GitRepo file templates
+- Add an empty file for each cluster to the tenant git repo
 
 ## v0.0.5 - 2020-02-27
 ### Fixed
