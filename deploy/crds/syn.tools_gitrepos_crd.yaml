@@ -76,7 +76,7 @@ spec:
               description: Path to Git repository
               type: string
             repoName:
-              description: RepoName ame of Git repository
+              description: RepoName name of Git repository
               type: string
             repoType:
               description: RepoType specifies if a repo should be managed by the git

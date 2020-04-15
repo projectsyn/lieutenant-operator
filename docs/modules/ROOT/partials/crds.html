@@ -830,7 +830,7 @@ string
 </td>
 <td class="tableblock halign-left valign-top">
 <p class="tableblock">
-<p>RepoName ame of Git repository</p>
+<p>RepoName name of Git repository</p>
 <p class="tableblock">
 </td>
 </tr>
@@ -848,6 +848,22 @@ RepoType
 <td class="tableblock halign-left valign-top">
 <p class="tableblock">
 <p>RepoType specifies if a repo should be managed by the git controller. A value of &lsquo;unmanaged&rsquo; means it&rsquo;s not manged by the controller</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>templateFiles</code></br>
+<em>
+map[string]string
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>TemplateFiles is a list of files that should be pushed to the repository
+after its creation.</p>
 <p class="tableblock">
 </td>
 </tr>
@@ -1065,5 +1081,5 @@ GitRepoTemplate
 <hr/>
 <p><em>
 Generated with <code>gen-crd-api-reference-docs</code>
-on git commit <code>5ffda85</code>.
+on git commit <code>a8f4adf</code>.
 </em></p>
