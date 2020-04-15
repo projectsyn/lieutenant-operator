@@ -1,5 +1,5 @@
 {{ define "packages" }}
-
+<h1 class="page">CRD Documentation</h1>
 {{ with .packages}}
 <p>Packages:</p>
 <ul>

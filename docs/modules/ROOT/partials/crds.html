@@ -1,3 +1,4 @@
+<h1 class="page">CRD Documentation</h1>
 <p>Packages:</p>
 <ul>
 <li>
@@ -19,48 +20,60 @@ Resource Types:
 <p>
 <p>BootstrapToken this key is used only once for Steward to register.</p>
 </p>
-<table>
+<table class="tableblock halign-left valign-top">
 <thead>
 <tr>
-<th>Field</th>
-<th>Description</th>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>token</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>Token is the actual token to register the cluster</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>validUntil</code></br>
 <em>
 <a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#time-v1-meta">
 Kubernetes meta/v1.Time
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>ValidUntil timespan how long the token is valid. If the token is
 used after this timestamp it will be rejected.</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>tokenValid</code></br>
 <em>
 bool
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>TokenValid indicates if the token is still valid or was already used.</p>
+<p class="tableblock">
 </td>
 </tr>
 </tbody>
@@ -70,137 +83,177 @@ bool
 <p>
 <p>Cluster is the Schema for the clusters API</p>
 </p>
-<table>
+<table class="tableblock halign-left valign-top">
 <thead>
 <tr>
-<th>Field</th>
-<th>Description</th>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>metadata</code></br>
 <em>
 <a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#objectmeta-v1-meta">
 Kubernetes meta/v1.ObjectMeta
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 Refer to the Kubernetes API documentation for the fields of the
 <code>metadata</code> field.
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>spec</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.ClusterSpec">
 ClusterSpec
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <br/>
 <br/>
-<table>
+<table class="tableblock frame-all grid-all stretch">
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>displayName</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>DisplayName of cluster which could be different from metadata.name. Allows cluster renaming should it be needed.</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>gitRepoURL</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>GitRepoURL git repository storing the cluster configuration catalog. If this is set, no gitRepoTemplate is needed.</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>gitHostKeys</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>SSH GitHostKeys of the git server</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>gitRepoTemplate</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.GitRepoTemplate">
 GitRepoTemplate
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>GitRepoTemplate template for managing the GitRepo object.</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>tenantRef</code></br>
 <em>
 <a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#localobjectreference-v1-core">
 Kubernetes core/v1.LocalObjectReference
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>TenantRef reference to Tenant object the cluster belongs to.</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>tokenLifeTime</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>TokenLifetime set the token lifetime</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>facts</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.Facts">
 Facts
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>Facts are key/value pairs for statically configured facts</p>
+<p class="tableblock">
 </td>
 </tr>
 </table>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>status</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.ClusterStatus">
 ClusterStatus
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p class="tableblock">
 </td>
 </tr>
 </tbody>
@@ -214,95 +267,123 @@ ClusterStatus
 <p>
 <p>ClusterSpec defines the desired state of Cluster</p>
 </p>
-<table>
+<table class="tableblock halign-left valign-top">
 <thead>
 <tr>
-<th>Field</th>
-<th>Description</th>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>displayName</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>DisplayName of cluster which could be different from metadata.name. Allows cluster renaming should it be needed.</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>gitRepoURL</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>GitRepoURL git repository storing the cluster configuration catalog. If this is set, no gitRepoTemplate is needed.</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>gitHostKeys</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>SSH GitHostKeys of the git server</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>gitRepoTemplate</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.GitRepoTemplate">
 GitRepoTemplate
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>GitRepoTemplate template for managing the GitRepo object.</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>tenantRef</code></br>
 <em>
 <a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#localobjectreference-v1-core">
 Kubernetes core/v1.LocalObjectReference
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>TenantRef reference to Tenant object the cluster belongs to.</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>tokenLifeTime</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>TokenLifetime set the token lifetime</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>facts</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.Facts">
 Facts
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>Facts are key/value pairs for statically configured facts</p>
+<p class="tableblock">
 </td>
 </tr>
 </tbody>
@@ -316,25 +397,29 @@ Facts
 <p>
 <p>ClusterStatus defines the observed state of Cluster</p>
 </p>
-<table>
+<table class="tableblock halign-left valign-top">
 <thead>
 <tr>
-<th>Field</th>
-<th>Description</th>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>bootstrapToken</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.BootstrapToken">
 BootstrapToken
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>BootstrapTokenValid validity of the bootstrap token, set by the Lieutenant API.</p>
+<p class="tableblock">
 </td>
 </tr>
 </tbody>
@@ -348,45 +433,57 @@ BootstrapToken
 <p>
 <p>DeployKey defines an SSH key to be used for git operations.</p>
 </p>
-<table>
+<table class="tableblock halign-left valign-top">
 <thead>
 <tr>
-<th>Field</th>
-<th>Description</th>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>type</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>Type defines what type the key is (rsa, ed25519, etc&hellip;)</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>key</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>Key is the actual key</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>writeAccess</code></br>
 <em>
 bool
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>WriteAccess if the key has RW access or not</p>
+<p class="tableblock">
 </td>
 </tr>
 </tbody>
@@ -414,82 +511,102 @@ bool
 <p>
 <p>GitRepo is the Schema for the gitrepos API</p>
 </p>
-<table>
+<table class="tableblock halign-left valign-top">
 <thead>
 <tr>
-<th>Field</th>
-<th>Description</th>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>metadata</code></br>
 <em>
 <a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#objectmeta-v1-meta">
 Kubernetes meta/v1.ObjectMeta
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 Refer to the Kubernetes API documentation for the fields of the
 <code>metadata</code> field.
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>spec</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.GitRepoSpec">
 GitRepoSpec
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <br/>
 <br/>
-<table>
+<table class="tableblock frame-all grid-all stretch">
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>GitRepoTemplate</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.GitRepoTemplate">
 GitRepoTemplate
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>
 (Members of <code>GitRepoTemplate</code> are embedded into this type.)
 </p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>tenantRef</code></br>
 <em>
 <a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#localobjectreference-v1-core">
 Kubernetes core/v1.LocalObjectReference
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>TenantRef references the tenant this repo belongs to</p>
+<p class="tableblock">
 </td>
 </tr>
 </table>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>status</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.GitRepoStatus">
 GitRepoStatus
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p class="tableblock">
 </td>
 </tr>
 </tbody>
@@ -503,40 +620,48 @@ GitRepoStatus
 <p>
 <p>GitRepoSpec defines the desired state of GitRepo</p>
 </p>
-<table>
+<table class="tableblock halign-left valign-top">
 <thead>
 <tr>
-<th>Field</th>
-<th>Description</th>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>GitRepoTemplate</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.GitRepoTemplate">
 GitRepoTemplate
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>
 (Members of <code>GitRepoTemplate</code> are embedded into this type.)
 </p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>tenantRef</code></br>
 <em>
 <a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#localobjectreference-v1-core">
 Kubernetes core/v1.LocalObjectReference
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>TenantRef references the tenant this repo belongs to</p>
+<p class="tableblock">
 </td>
 </tr>
 </tbody>
@@ -550,61 +675,77 @@ Kubernetes core/v1.LocalObjectReference
 <p>
 <p>GitRepoStatus defines the observed state of GitRepo</p>
 </p>
-<table>
+<table class="tableblock halign-left valign-top">
 <thead>
 <tr>
-<th>Field</th>
-<th>Description</th>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>phase</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.GitPhase">
 GitPhase
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>Updated by Operator with current phase. The GitPhase enum will be used for application logic
 as using it directly would only print an integer.</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>type</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.GitType">
 GitType
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>Type autodiscovered Git repo type. Same behaviour for the enum as with the Phase.</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>url</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>URL computed Git repository URL</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>hostKeys</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>SSH HostKeys of the git server</p>
+<p class="tableblock">
 </td>
 </tr>
 </tbody>
@@ -621,73 +762,93 @@ string
 <p>GitRepoTemplate is used for templating git repos, it does not contain the tenantRef as it will be added by the
 controller creating the template instance.</p>
 </p>
-<table>
+<table class="tableblock halign-left valign-top">
 <thead>
 <tr>
-<th>Field</th>
-<th>Description</th>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>apiSecretRef</code></br>
 <em>
 <a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#secretreference-v1-core">
 Kubernetes core/v1.SecretReference
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>APISecretRef reference to secret containing connection information</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>deployKeys</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.DeployKey">
 map[string]github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1.DeployKey
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>DeployKeys optional list of SSH deploy keys. If not set, not deploy keys will be configured</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>path</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>Path to Git repository</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>repoName</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>RepoName ame of Git repository</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>repoType</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.RepoType">
 RepoType
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>RepoType specifies if a repo should be managed by the git controller. A value of &lsquo;unmanaged&rsquo; means it&rsquo;s not manged by the controller</p>
+<p class="tableblock">
 </td>
 </tr>
 </tbody>
@@ -715,89 +876,113 @@ RepoType
 <p>
 <p>Tenant is the Schema for the tenants API</p>
 </p>
-<table>
+<table class="tableblock halign-left valign-top">
 <thead>
 <tr>
-<th>Field</th>
-<th>Description</th>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>metadata</code></br>
 <em>
 <a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#objectmeta-v1-meta">
 Kubernetes meta/v1.ObjectMeta
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 Refer to the Kubernetes API documentation for the fields of the
 <code>metadata</code> field.
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>spec</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.TenantSpec">
 TenantSpec
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <br/>
 <br/>
-<table>
+<table class="tableblock frame-all grid-all stretch">
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>displayName</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>DisplayName is the display name of the tenant.</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>gitRepoURL</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>GitRepoURL git repository storing the tenant configuration. If this is set, no gitRepoTemplate is needed.</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>gitRepoTemplate</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.GitRepoTemplate">
 GitRepoTemplate
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>GitRepoTemplate Template for managing the GitRepo object. If not set, no  GitRepo object will be created.</p>
+<p class="tableblock">
 </td>
 </tr>
 </table>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>status</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.TenantStatus">
 TenantStatus
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p class="tableblock">
 </td>
 </tr>
 </tbody>
@@ -811,47 +996,59 @@ TenantStatus
 <p>
 <p>TenantSpec defines the desired state of Tenant</p>
 </p>
-<table>
+<table class="tableblock halign-left valign-top">
 <thead>
 <tr>
-<th>Field</th>
-<th>Description</th>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>displayName</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>DisplayName is the display name of the tenant.</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>gitRepoURL</code></br>
 <em>
 string
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>GitRepoURL git repository storing the tenant configuration. If this is set, no gitRepoTemplate is needed.</p>
+<p class="tableblock">
 </td>
 </tr>
 <tr>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>gitRepoTemplate</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.GitRepoTemplate">
 GitRepoTemplate
 </a>
 </em>
+</p>
 </td>
-<td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <p>GitRepoTemplate Template for managing the GitRepo object. If not set, no  GitRepo object will be created.</p>
+<p class="tableblock">
 </td>
 </tr>
 </tbody>
@@ -868,5 +1065,5 @@ GitRepoTemplate
 <hr/>
 <p><em>
 Generated with <code>gen-crd-api-reference-docs</code>
-on git commit <code>011ceff</code>.
+on git commit <code>5ffda85</code>.
 </em></p>

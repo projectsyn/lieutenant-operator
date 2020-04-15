@@ -23,19 +23,21 @@
 </p>
 
 {{ if .Members }}
-<table>
+<table class="tableblock halign-left valign-top">
     <thead>
         <tr>
-            <th>Field</th>
-            <th>Description</th>
+            <th class="tableblock halign-left valign-top">Field</th>
+            <th class="tableblock halign-left valign-top">Description</th>
         </tr>
     </thead>
     <tbody>
         {{ if isExportedType . }}
         <tr>
-            <td>
-                <code>apiVersion</code></br>
-                string</td>
+            <td class="tableblock halign-left valign-top">
+                <p class="tableblock">
+                    <code>apiVersion</code></br>
+                    string</td>
+                </p>
             <td>
                 <code>
                     {{apiGroup .}}
@@ -43,9 +45,11 @@
             </td>
         </tr>
         <tr>
-            <td>
-                <code>kind</code></br>
-                string
+            <td class="tableblock halign-left valign-top">
+                <p class="tableblock">
+                    <code>kind</code></br>
+                    string
+                </p>
             </td>
             <td><code>{{.Name.Name}}</code></td>
         </tr>
