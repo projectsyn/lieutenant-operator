@@ -63,10 +63,14 @@ spec:
                     description: DeployKey defines an SSH key to be used for git operations.
                     properties:
                       key:
+                        description: Key is the actual key
                         type: string
                       type:
+                        description: Type defines what type the key is (rsa, ed25519,
+                          etc...)
                         type: string
                       writeAccess:
+                        description: WriteAccess if the key has RW access or not
                         type: boolean
                     type: object
                   description: DeployKeys optional list of SSH deploy keys. If not

@@ -74,10 +74,14 @@ spec:
                     description: DeployKey defines an SSH key to be used for git operations.
                     properties:
                       key:
+                        description: Key is the actual key
                         type: string
                       type:
+                        description: Type defines what type the key is (rsa, ed25519,
+                          etc...)
                         type: string
                       writeAccess:
+                        description: WriteAccess if the key has RW access or not
                         type: boolean
                     type: object
                   description: DeployKeys optional list of SSH deploy keys. If not
@@ -130,10 +134,15 @@ spec:
                 by the Lieutenant API.
               properties:
                 token:
+                  description: Token is the actual token to register the cluster
                   type: string
                 tokenValid:
+                  description: TokenValid indicates if the token is still valid or
+                    was already used.
                   type: boolean
                 validUntil:
+                  description: ValidUntil timespan how long the token is valid. If
+                    the token is used after this timestamp it will be rejected.
                   format: date-time
                   type: string
               required:
