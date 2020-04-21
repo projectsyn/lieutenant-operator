@@ -6,7 +6,7 @@ spec:
   displayName: Big Corp. Production Cluster
   gitRepoTemplate:
     path: cluster
-    repoName: test
+    repoName: cluster1
     apiSecretRef:
       name: example-secret
       namespace: syn-lieutenant
