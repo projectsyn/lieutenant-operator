@@ -140,5 +140,5 @@ func (r *ReconcileCluster) updateTenantGitRepo(tenant types.NamespacedName, file
 		return r.client.Update(context.TODO(), tenantCR)
 	}
 
-	return r.client.Update(context.TODO(), tenantCR)
+	return nil
 }
