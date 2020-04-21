@@ -54,7 +54,7 @@ type GitRepoTemplate struct {
 	DeployKeys map[string]DeployKey `json:"deployKeys,omitempty"`
 	// Path to Git repository
 	Path string `json:"path,omitempty"`
-	// RepoName ame of Git repository
+	// RepoName name of Git repository
 	RepoName string `json:"repoName,omitempty"`
 	// RepoType specifies if a repo should be managed by the git controller. A value of 'unmanaged' means it's not manged by the controller
 	// +kubebuilder:validation:Enum=auto;unmanaged
