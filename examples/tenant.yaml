@@ -6,7 +6,7 @@ spec:
   displayName: Big Corp.
   gitRepoTemplate:
     path: tenant
-    repoName: test
+    repoName: tenant1
     apiSecretRef:
       name: example-secret
       namespace: syn-lieutenant

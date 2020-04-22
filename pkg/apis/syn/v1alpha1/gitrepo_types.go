@@ -49,16 +49,19 @@ type GitRepoSpec struct {
 // controller creating the template instance.
 type GitRepoTemplate struct {
 	// APISecretRef reference to secret containing connection information
-	APISecretRef corev1.SecretReference `json:"apiSecretRef"`
+	APISecretRef corev1.SecretReference `json:"apiSecretRef,omitempty"`
 	// DeployKeys optional list of SSH deploy keys. If not set, not deploy keys will be configured
 	DeployKeys map[string]DeployKey `json:"deployKeys,omitempty"`
 	// Path to Git repository
-	Path string `json:"path"`
-	// RepoName ame of Git repository
-	RepoName string `json:"repoName"`
+	Path string `json:"path,omitempty"`
+	// RepoName name of Git repository
+	RepoName string `json:"repoName,omitempty"`
 	// RepoType specifies if a repo should be managed by the git controller. A value of 'unmanaged' means it's not manged by the controller
 	// +kubebuilder:validation:Enum=auto;unmanaged
 	RepoType RepoType `json:"repoType,omitempty"`
+	// TemplateFiles is a list of files that should be pushed to the repository
+	// after its creation.
+	TemplateFiles map[string]string `json:"templateFiles,omitempty"`
 }
 
 // DeployKey defines an SSH key to be used for git operations.

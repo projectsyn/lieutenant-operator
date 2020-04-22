@@ -13,6 +13,7 @@ import (
 	"github.com/go-logr/logr"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 
+	"github.com/icza/gox/builtinx"
 	"github.com/xanzy/go-gitlab"
 )
 
@@ -268,4 +269,77 @@ func (g *Gitlab) getDeployKeys() (map[string]synv1alpha1.DeployKey, error) {
 	}
 
 	return deployKeys, nil
+}
+
+// CommitTemplateFiles uploads all defined template files onto the repository.
+func (g *Gitlab) CommitTemplateFiles() error {
+
+	if len(g.ops.TemplateFiles) == 0 {
+		return nil
+	}
+
+	filesToApply, err := g.compareFiles()
+	if err != nil {
+		return err
+	}
+
+	if len(filesToApply) == 0 {
+		// we're done here
+		return nil
+	}
+
+	g.log.Info("populating repository with template files")
+
+	co := &gitlab.CreateCommitOptions{
+		AuthorEmail:   builtinx.NewString("lieutenant-operator@syn.local"),
+		AuthorName:    builtinx.NewString("Lieutenant Operator"),
+		Branch:        builtinx.NewString("master"),
+		CommitMessage: builtinx.NewString("Provision templates"),
+	}
+
+	co.Actions = []*gitlab.CommitAction{}
+
+	for name, content := range filesToApply {
+
+		co.Actions = append(co.Actions, &gitlab.CommitAction{
+			Action:   gitlab.FileCreate,
+			FilePath: name,
+			Content:  content,
+		})
+	}
+
+	_, _, err = g.client.Commits.CreateCommit(g.project.ID, co, nil)
+
+	return err
+}
+
+// compareFiles will compare the files of the repositories root with the
+// files that should be created. If there are existing files they will be
+// dropped.
+func (g *Gitlab) compareFiles() (map[string]string, error) {
+
+	newmap := map[string]string{}
+
+	trees, _, err := g.client.Repositories.ListTree(g.project.ID, nil, nil)
+	if err != nil {
+		// if the tree is not found it's probably just because there are no files at all currently...
+		if strings.Contains(err.Error(), "Tree Not Found") {
+			return g.ops.TemplateFiles, nil
+		} else {
+			return newmap, fmt.Errorf("cannot list files in repository: %s", err)
+		}
+	}
+
+	treeMap := map[string]bool{}
+	for _, tree := range trees {
+		treeMap[tree.Path] = true
+	}
+
+	for k, v := range g.ops.TemplateFiles {
+		if _, ok := treeMap[k]; !ok {
+			newmap[k] = v
+		}
+	}
+
+	return newmap, nil
 }

@@ -80,7 +80,7 @@ spec:
                   description: Path to Git repository
                   type: string
                 repoName:
-                  description: RepoName ame of Git repository
+                  description: RepoName name of Git repository
                   type: string
                 repoType:
                   description: RepoType specifies if a repo should be managed by the
@@ -90,10 +90,12 @@ spec:
                   - auto
                   - unmanaged
                   type: string
-              required:
-              - apiSecretRef
-              - path
-              - repoName
+                templateFiles:
+                  additionalProperties:
+                    type: string
+                  description: TemplateFiles is a list of files that should be pushed
+                    to the repository after its creation.
+                  type: object
               type: object
             gitRepoURL:
               description: GitRepoURL git repository storing the tenant configuration.

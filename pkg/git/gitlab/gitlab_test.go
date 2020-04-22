@@ -8,7 +8,6 @@ import (
 
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
 	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
-
 	"github.com/xanzy/go-gitlab"
 )
 
@@ -117,6 +116,16 @@ func testGetCreateServer() *httptest.Server {
 	mux.HandleFunc("/api/v4/namespaces/group1", func(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusOK)
 		_, _ = res.Write([]byte(`{"id":2,"name":"group1","path":"group1","kind":"group","full_path":"group1","parent_id":null,"members_count_with_descendants":2}`))
+	})
+
+	mux.HandleFunc("/api/v4/projects/3/repository/tree", func(res http.ResponseWriter, req *http.Request) {
+		res.WriteHeader(http.StatusOK)
+		_, _ = res.Write([]byte(`[{"id":"a1e8f8d745cc87e3a9248358d9352bb7f9a0aeba","name":"dir1","type":"tree","path":"files/html","mode":"040000"},{"id":"7d70e02340bac451f281cecf0a980907974bd8be","name":"file1","type":"blob","path":"file1","mode":"100644"}]`))
+	})
+
+	mux.HandleFunc("/api/v4/projects/3/repository/commits", func(res http.ResponseWriter, req *http.Request) {
+		res.WriteHeader(http.StatusOK)
+		_, _ = res.Write([]byte(`{"id":"ed899a2f4b50b4370feeea94676502b42383c746","short_id":"ed899a2f4b5","title":"some commit message","author_name":"Example User","author_email":"user@example.com","committer_name":"Example User","committer_email":"user@example.com","created_at":"2016-09-20T09:26:24.000-07:00","message":"some commit message","parent_ids":["ae1d9fb46aa2b07ee9836d49862ec4e2c46fbbba"],"committed_date":"2016-09-20T09:26:24.000-07:00","authored_date":"2016-09-20T09:26:24.000-07:00","stats":{"additions":2,"deletions":2,"total":4},"status":null,"web_url":"https://localhost:8080/thedude/gitlab-foss/-/commit/ed899a2f4b50b4370feeea94676502b42383c746"}`))
 	})
 
 	return httptest.NewServer(mux)
@@ -321,6 +330,68 @@ func TestGitlab_Type(t *testing.T) {
 			g := &Gitlab{}
 			if got := g.Type(); got != tt.want {
 				t.Errorf("Type() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGitlab_CommitTemplateFiles(t *testing.T) {
+	type fields struct {
+		project *gitlab.Project
+		ops     manager.RepoOptions
+	}
+	tests := []struct {
+		name       string
+		fields     fields
+		wantErr    bool
+		httpServer *httptest.Server
+	}{
+		{
+			name:       "set template files",
+			wantErr:    false,
+			httpServer: testGetCreateServer(),
+			fields: fields{
+				project: &gitlab.Project{
+					ID: 3,
+				},
+				ops: manager.RepoOptions{
+					TemplateFiles: map[string]string{
+						"test": "testContent",
+					},
+				},
+			},
+		},
+		{
+			name:       "set existing file",
+			wantErr:    false,
+			httpServer: testGetCreateServer(),
+			fields: fields{
+				project: &gitlab.Project{
+					ID: 3,
+				},
+				ops: manager.RepoOptions{
+					TemplateFiles: map[string]string{
+						"file1": "testContent",
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			tt.fields.ops.URL, _ = url.Parse(tt.httpServer.URL)
+
+			g := &Gitlab{
+				project: tt.fields.project,
+				log:     zap.Logger(),
+				ops:     tt.fields.ops,
+			}
+
+			_ = g.Connect()
+
+			if err := g.CommitTemplateFiles(); (err != nil) != tt.wantErr {
+				t.Errorf("Gitlab.CommitTemplateFiles() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

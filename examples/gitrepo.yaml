@@ -5,6 +5,7 @@ metadata:
 spec:
   tenantRef:
     name: blubb
+    namespace: syn-lieutenant
   apiSecretRef:
     name: example-secret
   path: cluster/subgroup

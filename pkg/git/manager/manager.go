@@ -42,12 +42,13 @@ func NewRepo(opts RepoOptions) (Repo, error) {
 // RepoOptions hold the options for creating a repository. The credentials are required to work. The deploykeys are
 // optional but desired.
 type RepoOptions struct {
-	Credentials Credentials
-	DeployKeys  map[string]synv1alpha1.DeployKey
-	Logger      logr.Logger
-	URL         *url.URL
-	Path        string
-	RepoName    string
+	Credentials   Credentials
+	DeployKeys    map[string]synv1alpha1.DeployKey
+	Logger        logr.Logger
+	URL           *url.URL
+	Path          string
+	RepoName      string
+	TemplateFiles map[string]string
 }
 
 // Credentials holds the authentication information for the API. Most of the times this
@@ -71,6 +72,8 @@ type Repo interface {
 	Read() error
 	Delete() error
 	Connect() error
+	// CommitTemplateFiles uploads given files to the repository
+	CommitTemplateFiles() error
 }
 
 // Implementation is a set of functions needed to get the right git implementation

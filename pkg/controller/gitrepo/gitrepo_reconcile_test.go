@@ -171,3 +171,7 @@ func (t testRepoImplementation) Delete() error {
 func (t testRepoImplementation) Connect() error {
 	return nil
 }
+
+func (t testRepoImplementation) CommitTemplateFiles() error {
+	return nil
+}

@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -56,6 +57,14 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 	err = helpers.CreateOrUpdateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, instance.Spec.TenantRef)
 	if err != nil {
 		reqLogger.Error(err, "Cannot create or update git repo object")
+		return reconcile.Result{}, err
+	}
+
+	repoName := request.NamespacedName
+	repoName.Name = instance.Spec.TenantRef.Name
+
+	err = r.updateTenantGitRepo(repoName, instance.GetName()+".yml")
+	if err != nil {
 		return reconcile.Result{}, err
 	}
 
@@ -108,4 +117,28 @@ func (r *ReconcileCluster) newStatus(cluster *synv1alpha1.Cluster) error {
 	return nil
 }
 
-//TODO: update git if template changes
+func (r *ReconcileCluster) updateTenantGitRepo(tenant types.NamespacedName, filename string) error {
+	tenantCR := &synv1alpha1.Tenant{}
+
+	err := r.client.Get(context.TODO(), tenant, tenantCR)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		} else {
+			return nil
+		}
+	}
+
+	if tenantCR.Spec.GitRepoTemplate.TemplateFiles == nil {
+		tenantCR.Spec.GitRepoTemplate.TemplateFiles = map[string]string{}
+	}
+
+	if _, ok := tenantCR.Spec.GitRepoTemplate.TemplateFiles[filename]; !ok {
+
+		tenantCR.Spec.GitRepoTemplate.TemplateFiles[filename] = ""
+
+		return r.client.Update(context.TODO(), tenantCR)
+	}
+
+	return nil
+}

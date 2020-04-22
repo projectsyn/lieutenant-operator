@@ -289,6 +289,13 @@ func (in *GitRepoTemplate) DeepCopyInto(out *GitRepoTemplate) {
 			(*out)[key] = val
 		}
 	}
+	if in.TemplateFiles != nil {
+		in, out := &in.TemplateFiles, &out.TemplateFiles
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	return
 }
 
