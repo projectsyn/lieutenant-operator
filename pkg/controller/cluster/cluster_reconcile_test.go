@@ -55,7 +55,7 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			tenant := &synv1alpha1.Cluster{
+			cluster := &synv1alpha1.Cluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      tt.fields.objName,
 					Namespace: tt.fields.objNamespace,
@@ -73,7 +73,7 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			}
 
 			objs := []runtime.Object{
-				tenant,
+				cluster,
 				&synv1alpha1.GitRepo{},
 				&synv1alpha1.Tenant{
 					ObjectMeta: metav1.ObjectMeta{
@@ -81,6 +81,7 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 						Namespace: tt.fields.objNamespace,
 					},
 					Spec: synv1alpha1.TenantSpec{
+						DisplayName:     tt.fields.tenantName,
 						GitRepoTemplate: &synv1alpha1.GitRepoTemplate{},
 					},
 				},
@@ -139,7 +140,8 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			assert.Equal(t, roleBinding.Subjects[0].Name, sa.Name)
 
 			testTenant := &synv1alpha1.Tenant{}
-			assert.NoError(t, cl.Get(context.TODO(), types.NamespacedName{Name: tt.fields.tenantName}, testTenant))
+			err = cl.Get(context.TODO(), types.NamespacedName{Name: tt.fields.tenantName, Namespace: tt.fields.objNamespace}, testTenant)
+			assert.NoError(t, err)
 			_, found := testTenant.Spec.GitRepoTemplate.TemplateFiles[tt.fields.objName+".yml"]
 			assert.True(t, found)
 

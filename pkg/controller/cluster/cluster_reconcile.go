@@ -122,11 +122,10 @@ func (r *ReconcileCluster) updateTenantGitRepo(tenant types.NamespacedName, file
 
 	err := r.client.Get(context.TODO(), tenant, tenantCR)
 	if err != nil {
-		if !errors.IsNotFound(err) {
-			return err
-		} else {
+		if errors.IsNotFound(err) {
 			return nil
 		}
+		return err
 	}
 
 	if tenantCR.Spec.GitRepoTemplate.TemplateFiles == nil {

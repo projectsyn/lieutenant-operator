@@ -76,10 +76,13 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 				},
 				Spec: synv1alpha1.GitRepoSpec{
 					GitRepoTemplate: synv1alpha1.GitRepoTemplate{
-						APISecretRef: corev1.SecretReference{},
-						DeployKeys:   nil,
-						Path:         tt.fields.namespace,
-						RepoName:     tt.fields.name,
+						APISecretRef: corev1.SecretReference{
+							Name:      tt.fields.secretName,
+							Namespace: tt.fields.namespace,
+						},
+						DeployKeys: nil,
+						Path:       tt.fields.namespace,
+						RepoName:   tt.fields.name,
 					},
 					TenantRef: corev1.LocalObjectReference{
 						Name: tt.fields.tenantName,
