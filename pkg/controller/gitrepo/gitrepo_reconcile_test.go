@@ -22,6 +22,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+var savedGitRepoOpt manager.RepoOptions
+
 // testSetupClient returns a client containing all objects in objs
 func testSetupClient(objs []runtime.Object) (client.Client, *runtime.Scheme) {
 	s := scheme.Scheme
@@ -31,11 +33,12 @@ func testSetupClient(objs []runtime.Object) (client.Client, *runtime.Scheme) {
 
 func TestReconcileGitRepo_Reconcile(t *testing.T) {
 	type fields struct {
-		name       string
-		namespace  string
-		tenantName string
-		secretName string
-		URL        string
+		name        string
+		namespace   string
+		displayName string
+		tenantName  string
+		secretName  string
+		URL         string
 	}
 	tests := []struct {
 		name    string
@@ -55,11 +58,12 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 		{
 			name: "repo exists",
 			fields: fields{
-				name:       "anothertest",
-				namespace:  "namespace",
-				tenantName: "sometenant",
-				secretName: "testsecret",
-				URL:        "another",
+				name:        "anothertest",
+				namespace:   "namespace",
+				displayName: "desc",
+				tenantName:  "sometenant",
+				secretName:  "testsecret",
+				URL:         "another",
 			},
 		},
 	}
@@ -83,6 +87,7 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 						DeployKeys: nil,
 						Path:       tt.fields.namespace,
 						RepoName:   tt.fields.name,
+						DisplayName:  tt.fields.displayName,
 					},
 					TenantRef: corev1.LocalObjectReference{
 						Name: tt.fields.tenantName,
@@ -130,6 +135,8 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 				assert.NoError(t, err)
 				assert.Equal(t, string(secret.Data[SecretHostKeysName]), gitRepo.Status.HostKeys)
 				assert.Equal(t, synv1alpha1.AutoRepoType, gitRepo.Spec.RepoType)
+				assert.Equal(t, tt.fields.displayName, gitRepo.Spec.DisplayName)
+				assert.Equal(t, tt.fields.displayName, savedGitRepoOpt.DisplayName)
 			}
 		})
 	}
@@ -144,7 +151,8 @@ func (t testRepoImplementation) IsType(URL *url.URL) (bool, error) {
 }
 
 func (t testRepoImplementation) New(options manager.RepoOptions) (manager.Repo, error) {
-	return &testRepoImplementation{}, nil
+	savedGitRepoOpt = options
+	return testRepoImplementation{}, nil
 }
 
 func (t testRepoImplementation) Type() string {

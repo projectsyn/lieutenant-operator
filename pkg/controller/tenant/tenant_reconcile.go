@@ -38,6 +38,10 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 		Kind:    instance.Kind,
 	}
 
+	if len(instance.Spec.GitRepoTemplate.DisplayName) == 0 {
+		instance.Spec.GitRepoTemplate.DisplayName = instance.Spec.DisplayName
+	}
+
 	err = helpers.CreateOrUpdateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, corev1.LocalObjectReference{Name: instance.GetName()})
 	if err != nil {
 		return reconcile.Result{}, err

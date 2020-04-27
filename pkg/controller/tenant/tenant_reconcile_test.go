@@ -88,7 +88,7 @@ func TestCreateGitRepo(t *testing.T) {
 			gitRepo := &synv1alpha1.GitRepo{}
 			err = cl.Get(context.TODO(), gitRepoNamespacedName, gitRepo)
 			assert.NoError(t, err)
-
+			assert.Equal(t, tenant.Spec.DisplayName, gitRepo.Spec.GitRepoTemplate.DisplayName)
 		})
 	}
 }

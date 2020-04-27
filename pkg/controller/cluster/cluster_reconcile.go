@@ -54,6 +54,10 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 		Kind:    instance.Kind,
 	}
 
+	if len(instance.Spec.GitRepoTemplate.DisplayName) == 0 {
+		instance.Spec.GitRepoTemplate.DisplayName = instance.Spec.DisplayName
+	}
+
 	err = helpers.CreateOrUpdateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, instance.Spec.TenantRef)
 	if err != nil {
 		reqLogger.Error(err, "Cannot create or update git repo object")
