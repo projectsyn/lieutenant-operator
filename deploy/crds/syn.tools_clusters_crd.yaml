@@ -87,6 +87,9 @@ spec:
                   description: DeployKeys optional list of SSH deploy keys. If not
                     set, not deploy keys will be configured
                   type: object
+                displayName:
+                  description: DisplayName of Git repository
+                  type: string
                 path:
                   description: Path to Git repository
                   type: string
