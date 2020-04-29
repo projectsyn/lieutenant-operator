@@ -4,10 +4,15 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
+	"path"
+	"sort"
 	"time"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
+	"github.com/projectsyn/lieutenant-operator/pkg/vault"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -66,6 +71,21 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 
 	repoName := request.NamespacedName
 	repoName.Name = instance.Spec.TenantRef.Name
+
+	client, err := vault.NewClient()
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	token, err := r.getServiceAccountToken(instance)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+
+	err = client.SetToken(path.Join(instance.Spec.TenantRef.Name, instance.Name, "steward"), token, reqLogger)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
 
 	err = r.updateTenantGitRepo(repoName, instance.GetName()+".yml")
 	if err != nil {
@@ -144,4 +164,34 @@ func (r *ReconcileCluster) updateTenantGitRepo(tenant types.NamespacedName, file
 	}
 
 	return nil
+}
+
+func (r *ReconcileCluster) getServiceAccountToken(instance metav1.Object) (string, error) {
+	secrets := &corev1.SecretList{}
+
+	err := r.client.List(context.TODO(), secrets)
+	if err != nil {
+		return "", err
+	}
+
+	sortSecrets := helpers.SecretSortList(*secrets)
+
+	sort.Sort(sort.Reverse(sortSecrets))
+
+	for _, secret := range sortSecrets.Items {
+
+		if secret.Type != corev1.SecretTypeServiceAccountToken {
+			continue
+		}
+
+		if secret.Annotations[corev1.ServiceAccountNameKey] == instance.GetName() {
+			if string(secret.Data["token"]) == "" {
+				// We'll skip the secrets if the token is not yet populated.
+				continue
+			}
+			return string(secret.Data["token"]), nil
+		}
+	}
+
+	return "", fmt.Errorf("no matching secrets found")
 }

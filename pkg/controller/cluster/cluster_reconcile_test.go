@@ -4,14 +4,14 @@ import (
 	"context"
 	"reflect"
 	"testing"
+	"time"
 
-	corev1 "k8s.io/api/core/v1"
-
+	"github.com/go-logr/logr"
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
-
-	"github.com/stretchr/testify/assert"
-
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
+	"github.com/projectsyn/lieutenant-operator/pkg/vault"
+	"github.com/stretchr/testify/assert"
+	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -85,6 +85,32 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 						GitRepoTemplate: &synv1alpha1.GitRepoTemplate{},
 					},
 				},
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "somesecret",
+						Annotations: map[string]string{
+							corev1.ServiceAccountNameKey: tt.fields.objName,
+						},
+						CreationTimestamp: metav1.Time{Time: time.Now().Add(15 * time.Second)},
+					},
+					Type: corev1.SecretTypeServiceAccountToken,
+					Data: map[string][]byte{
+						"token": []byte("mysecret"),
+					},
+				},
+				&corev1.Secret{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "somesecret1",
+						Annotations: map[string]string{
+							corev1.ServiceAccountNameKey: tt.fields.objName,
+						},
+						CreationTimestamp: metav1.Time{Time: time.Now()},
+					},
+					Type: corev1.SecretTypeServiceAccountToken,
+					Data: map[string][]byte{
+						"token": []byte("mysecret1"),
+					},
+				},
 			}
 
 			cl, s := testSetupClient(objs)
@@ -97,6 +123,8 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 					Namespace: tt.fields.objNamespace,
 				},
 			}
+
+			vault.SetCustomClient(&TestMockClient{})
 
 			got, err := r.Reconcile(req)
 			if (err != nil) != tt.wantErr {
@@ -146,6 +174,157 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			_, found := testTenant.Spec.GitRepoTemplate.TemplateFiles[tt.fields.objName+".yml"]
 			assert.True(t, found)
 
+		})
+	}
+}
+
+type TestMockClient struct{}
+
+func (m *TestMockClient) SetToken(secretPath, token string, log logr.Logger) error { return nil }
+
+func TestReconcileCluster_getServiceAccountToken(t *testing.T) {
+	type args struct {
+		instance metav1.Object
+		objs     []runtime.Object
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "check secret sorting",
+			args: args{
+				instance: &metav1.ObjectMeta{
+					Name: "someCluster",
+				},
+				objs: []runtime.Object{
+					&corev1.Secret{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "oldersecret",
+							Annotations: map[string]string{
+								corev1.ServiceAccountNameKey: "someCluster",
+							},
+							CreationTimestamp: metav1.Time{Time: time.Now()},
+						},
+						Type: corev1.SecretTypeServiceAccountToken,
+						Data: map[string][]byte{
+							"token": []byte("oldersecret"),
+						},
+					},
+					&corev1.Secret{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "newersecret",
+							Annotations: map[string]string{
+								corev1.ServiceAccountNameKey: "someCluster",
+							},
+							CreationTimestamp: metav1.Time{Time: time.Now().Add(1 * time.Second)},
+						},
+						Type: corev1.SecretTypeServiceAccountToken,
+						Data: map[string][]byte{
+							"token": []byte("newerseccret"),
+						},
+					},
+				},
+			},
+			want:    "newerseccret",
+			wantErr: false,
+		},
+		{
+			name: "check secret not found",
+			args: args{
+				instance: &metav1.ObjectMeta{
+					Name: "someCluster",
+				},
+				objs: []runtime.Object{
+					&corev1.Secret{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "oldersecret",
+							Annotations: map[string]string{
+								corev1.ServiceAccountNameKey: "not",
+							},
+							CreationTimestamp: metav1.Time{Time: time.Now()},
+						},
+						Type: corev1.SecretTypeServiceAccountToken,
+						Data: map[string][]byte{
+							"token": []byte("oldersecret"),
+						},
+					},
+					&corev1.Secret{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "newersecret",
+							Annotations: map[string]string{
+								corev1.ServiceAccountNameKey: "not",
+							},
+							CreationTimestamp: metav1.Time{Time: time.Now().Add(1 * time.Second)},
+						},
+						Type: corev1.SecretTypeServiceAccountToken,
+						Data: map[string][]byte{
+							"token": []byte("newerseccret"),
+						},
+					},
+				},
+			},
+			want:    "",
+			wantErr: true,
+		},
+		{
+			name: "check secret missing token",
+			args: args{
+				instance: &metav1.ObjectMeta{
+					Name: "someCluster",
+				},
+				objs: []runtime.Object{
+					&corev1.Secret{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "oldersecret",
+							Annotations: map[string]string{
+								corev1.ServiceAccountNameKey: "someCluster",
+							},
+							CreationTimestamp: metav1.Time{Time: time.Now()},
+						},
+						Type: corev1.SecretTypeServiceAccountToken,
+						Data: map[string][]byte{
+							"token": []byte("oldersecret"),
+						},
+					},
+					&corev1.Secret{
+						ObjectMeta: metav1.ObjectMeta{
+							Name: "newersecret",
+							Annotations: map[string]string{
+								corev1.ServiceAccountNameKey: "someCluster",
+							},
+							CreationTimestamp: metav1.Time{Time: time.Now().Add(1 * time.Second)},
+						},
+						Type: corev1.SecretTypeServiceAccountToken,
+						Data: map[string][]byte{
+							"non": []byte("newerseccret"),
+						},
+					},
+				},
+			},
+			want:    "oldersecret",
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			cl, s := testSetupClient(tt.args.objs)
+
+			r := &ReconcileCluster{
+				client: cl,
+				scheme: s,
+			}
+			got, err := r.getServiceAccountToken(tt.args.instance)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ReconcileCluster.getServiceAccountToken() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("ReconcileCluster.getServiceAccountToken() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }
