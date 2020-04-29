@@ -61,7 +61,7 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 					Namespace: tt.fields.objNamespace,
 				},
 				Spec: synv1alpha1.ClusterSpec{
-					DisplayName: "test",
+					DisplayName: "desc",
 					GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
 						RepoName: "test",
 						Path:     "test",
@@ -115,6 +115,7 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			gitRepo := &synv1alpha1.GitRepo{}
 			err = cl.Get(context.TODO(), gitRepoNamespacedName, gitRepo)
 			assert.NoError(t, err)
+			assert.Equal(t, cluster.Spec.DisplayName, gitRepo.Spec.GitRepoTemplate.DisplayName)
 
 			newCluster := &synv1alpha1.Cluster{}
 			err = cl.Get(context.TODO(), req.NamespacedName, newCluster)

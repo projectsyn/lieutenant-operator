@@ -88,6 +88,7 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 			Logger:        reqLogger,
 			Path:          instance.Spec.Path,
 			RepoName:      instance.Spec.RepoName,
+			DisplayName:   instance.Spec.DisplayName,
 			URL:           repoURL,
 			TemplateFiles: instance.Spec.TemplateFiles,
 		}

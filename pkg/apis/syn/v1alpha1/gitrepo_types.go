@@ -59,6 +59,8 @@ type GitRepoTemplate struct {
 	// RepoType specifies if a repo should be managed by the git controller. A value of 'unmanaged' means it's not manged by the controller
 	// +kubebuilder:validation:Enum=auto;unmanaged
 	RepoType RepoType `json:"repoType,omitempty"`
+	// DisplayName of Git repository
+	DisplayName string `json:"displayName,omitempty"`
 	// TemplateFiles is a list of files that should be pushed to the repository
 	// after its creation.
 	TemplateFiles map[string]string `json:"templateFiles,omitempty"`

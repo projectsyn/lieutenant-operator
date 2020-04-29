@@ -42,6 +42,7 @@ func (g *Gitlab) Create() error {
 	projectOptions := &gitlab.CreateProjectOptions{
 		Path:        &g.ops.RepoName,
 		Name:        &g.ops.RepoName,
+		Description: &g.ops.DisplayName,
 		NamespaceID: nsID,
 	}
 
@@ -59,9 +60,24 @@ func (g *Gitlab) Read() error {
 	return g.getProject()
 }
 
-// Update will overwrite the deployment keys on the endpoint that differ from the local ones. Currently it will not
+// Update will update the Project Description and
+// will overwrite the deployment keys on the endpoint that differ from the local ones. Currently it will not
 // touch any additional keys that may have been added to the repository.
 func (g *Gitlab) Update() (bool, error) {
+	deployKeysUpdated, err := g.updateDeployKeys()
+	if err != nil {
+		return false, err
+	}
+
+	displayNameUpdated, err := g.updateDisplayName()
+	if err != nil {
+		return false, err
+	}
+
+	return deployKeysUpdated || displayNameUpdated, nil
+}
+
+func (g *Gitlab) updateDeployKeys() (bool, error) {
 	remoteKeys, err := g.getDeployKeys()
 	if err != nil {
 		return false, err
@@ -86,6 +102,26 @@ func (g *Gitlab) Update() (bool, error) {
 	}
 
 	return len(deltaKeys) > 0, nil
+}
+
+func (g *Gitlab) updateDisplayName() (bool, error) {
+	err := g.Read()
+	if err != nil {
+		return false, err
+	}
+
+	remoteDisplayName := g.project.Description
+	isUpdated := strings.Compare(remoteDisplayName, g.ops.DisplayName) != 0
+
+	if isUpdated {
+		project, _, err := g.client.Projects.EditProject(g.project.ID, &gitlab.EditProjectOptions{Description: &g.ops.DisplayName})
+		if err != nil {
+			return false, err
+		}
+		g.project = project
+	}
+
+	return isUpdated, nil
 }
 
 func (g *Gitlab) removeDeployKeys(deleteKeys map[string]synv1alpha1.DeployKey) error {
@@ -184,7 +220,7 @@ func (g *Gitlab) Type() string {
 	return string(synv1alpha1.GitLab)
 }
 
-// New returns a new and empty Gitlab implmentation
+// New returns a new and empty Gitlab implementation
 func (g *Gitlab) New(options manager.RepoOptions) (manager.Repo, error) {
 	return &Gitlab{
 		credentials: options.Credentials,
