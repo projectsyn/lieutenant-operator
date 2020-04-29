@@ -43,7 +43,7 @@ func NewClient() (VaultClient, error) {
 		return instanceClient, nil
 	}
 
-	rawClient, err := api.NewClient(&api.Config{
+	client, err := vault.NewClientFromConfig(&api.Config{
 		Address: os.Getenv(api.EnvVaultAddress),
 	})
 	if err != nil {
@@ -52,12 +52,7 @@ func NewClient() (VaultClient, error) {
 
 	// if we're not in a k8s pod we'll use provided TOKEN env var
 	if _, err = os.Stat(k8sTokenPath); os.IsNotExist(err) {
-		rawClient.SetToken(os.Getenv(api.EnvVaultToken))
-	}
-
-	client, err := vault.NewClientFromRawClient(rawClient, vault.ClientRole("lieutenant-operator"))
-	if err != nil {
-		return nil, err
+		client.RawClient().SetToken(os.Getenv(api.EnvVaultToken))
 	}
 
 	instanceClient = &BankVaultClient{
