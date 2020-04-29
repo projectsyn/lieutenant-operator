@@ -3,7 +3,6 @@ package helpers
 import (
 	"context"
 	"fmt"
-	"reflect"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -25,6 +24,10 @@ func CreateOrUpdateGitRepo(obj metav1.Object, gvk schema.GroupVersionKind, templ
 
 	if tenantRef.Name == "" {
 		return fmt.Errorf("the tenant name is empty")
+	}
+
+	if template.RepoType == synv1alpha1.DefaultRepoType {
+		template.RepoType = synv1alpha1.AutoRepoType
 	}
 
 	repo := &synv1alpha1.GitRepo{
@@ -54,22 +57,22 @@ func CreateOrUpdateGitRepo(obj metav1.Object, gvk schema.GroupVersionKind, templ
 		if err != nil {
 			return fmt.Errorf("could not update existing repo: %v", err)
 		}
+		existingRepo.Spec = repo.Spec
 
-		if !reflect.DeepEqual(existingRepo.Spec, repo.Spec) {
-			existingRepo.Spec = repo.Spec
+		err = client.Update(context.TODO(), existingRepo)
 
-			err = client.Update(context.TODO(), existingRepo)
-		}
 	}
 	return err
 }
 
-// AddTenantLabel adds the tenant label to an object
+// AddTenantLabel adds the tenant label to an object.
 func AddTenantLabel(meta *metav1.ObjectMeta, tenant string) {
 	if meta.Labels == nil {
 		meta.Labels = make(map[string]string)
 	}
-	meta.Labels[apis.LabelNameTenant] = tenant
+	if meta.Labels[apis.LabelNameTenant] != tenant {
+		meta.Labels[apis.LabelNameTenant] = tenant
+	}
 }
 
 func GetGitRepoURLAndHostKeys(obj metav1.Object, client client.Client) (string, string, error) {

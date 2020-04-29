@@ -28,6 +28,9 @@ const (
 // Reconcile will create or delete a git repository based on the event.
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
+
+// ATTENTION: do not manipulate the spec here, this will lead to loops, as the specs are
+// defined in the gitrepotemplates of the other CRDs (tenant, cluster).
 func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling GitRepo")
@@ -43,10 +46,7 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 			}
 			return err
 		}
-		helpers.AddTenantLabel(&instance.ObjectMeta, instance.Spec.TenantRef.Name)
-		if instance.Spec.RepoType == synv1alpha1.DefaultRepoType {
-			instance.Spec.RepoType = synv1alpha1.AutoRepoType
-		}
+
 		secret := &corev1.Secret{}
 		namespacedName := types.NamespacedName{
 			Name:      instance.Spec.APISecretRef.Name,
@@ -136,6 +136,8 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 		if changed {
 			reqLogger.Info("keys differed from CRD, keys re-applied to repository")
 		}
+
+		helpers.AddTenantLabel(&instance.ObjectMeta, instance.Spec.TenantRef.Name)
 
 		err = r.client.Update(context.TODO(), instance)
 		if err != nil {

@@ -113,6 +113,12 @@ func TestCreateOrUpdateGitRepo(t *testing.T) {
 		assert.NoError(t, cl.Get(context.TODO(), namespacedName, checkRepo))
 		assert.Equal(t, tt.args.template, &checkRepo.Spec.GitRepoTemplate)
 
+		checkRepo.Spec.RepoType = synv1alpha1.AutoRepoType
+		assert.NoError(t, cl.Update(context.TODO(), checkRepo))
+		assert.NoError(t, CreateOrUpdateGitRepo(tt.args.obj, tt.args.gvk, tt.args.template, cl, tt.args.tenantRef))
+		finalRepo := &synv1alpha1.GitRepo{}
+		assert.NoError(t, cl.Get(context.TODO(), namespacedName, finalRepo))
+		assert.Equal(t, checkRepo.Spec.GitRepoTemplate, finalRepo.Spec.GitRepoTemplate)
 	}
 }
 

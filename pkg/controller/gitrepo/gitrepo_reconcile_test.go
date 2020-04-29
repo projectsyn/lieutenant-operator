@@ -135,7 +135,7 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 			assert.NoError(t, err)
 			if !tt.wantErr {
 				assert.Equal(t, string(secret.Data[SecretHostKeysName]), gitRepo.Status.HostKeys)
-				assert.Equal(t, synv1alpha1.AutoRepoType, gitRepo.Spec.RepoType)
+				assert.Equal(t, synv1alpha1.DefaultRepoType, gitRepo.Spec.RepoType)
 				assert.Equal(t, tt.fields.displayName, gitRepo.Spec.DisplayName)
 				assert.Equal(t, tt.fields.displayName, savedGitRepoOpt.DisplayName)
 				assert.Equal(t, tt.fields.tenantName, gitRepo.Labels[apis.LabelNameTenant])
