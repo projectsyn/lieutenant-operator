@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
 
 	corev1 "k8s.io/api/core/v1"
@@ -84,10 +85,10 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 							Name:      tt.fields.secretName,
 							Namespace: tt.fields.namespace,
 						},
-						DeployKeys: nil,
-						Path:       tt.fields.namespace,
-						RepoName:   tt.fields.name,
-						DisplayName:  tt.fields.displayName,
+						DeployKeys:  nil,
+						Path:        tt.fields.namespace,
+						RepoName:    tt.fields.name,
+						DisplayName: tt.fields.displayName,
 					},
 					TenantRef: corev1.LocalObjectReference{
 						Name: tt.fields.tenantName,
@@ -129,14 +130,16 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 				t.Errorf("Reconcile() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+			gitRepo := &synv1alpha1.GitRepo{}
+			err = cl.Get(context.TODO(), req.NamespacedName, gitRepo)
+			assert.NoError(t, err)
 			if !tt.wantErr {
-				gitRepo := &synv1alpha1.GitRepo{}
-				err = cl.Get(context.TODO(), req.NamespacedName, gitRepo)
-				assert.NoError(t, err)
 				assert.Equal(t, string(secret.Data[SecretHostKeysName]), gitRepo.Status.HostKeys)
 				assert.Equal(t, synv1alpha1.AutoRepoType, gitRepo.Spec.RepoType)
 				assert.Equal(t, tt.fields.displayName, gitRepo.Spec.DisplayName)
 				assert.Equal(t, tt.fields.displayName, savedGitRepoOpt.DisplayName)
+				assert.Equal(t, tt.fields.tenantName, gitRepo.Labels[apis.LabelNameTenant])
+				assert.Equal(t, synv1alpha1.Created, *gitRepo.Status.Phase)
 			}
 		})
 	}

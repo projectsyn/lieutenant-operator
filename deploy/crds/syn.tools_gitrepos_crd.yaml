@@ -4,6 +4,9 @@ metadata:
   name: gitrepos.syn.tools
 spec:
   additionalPrinterColumns:
+  - JSONPath: .spec.displayName
+    name: Display Name
+    type: string
   - JSONPath: .spec.repoName
     name: Repo Name
     type: string
