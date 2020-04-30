@@ -45,7 +45,7 @@ func NewClient() (VaultClient, error) {
 
 	client, err := vault.NewClientFromConfig(&api.Config{
 		Address: os.Getenv(api.EnvVaultAddress),
-	})
+	}, vault.ClientRole("lieutenant-operator"))
 	if err != nil {
 		return nil, err
 	}
