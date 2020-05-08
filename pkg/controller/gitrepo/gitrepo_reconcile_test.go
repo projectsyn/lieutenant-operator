@@ -52,7 +52,7 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 				name:       "testrep",
 				namespace:  "testnamespace",
 				secretName: "testsecret",
-				URL:        "something",
+				URL:        "some.example.com",
 			},
 			wantErr: true,
 		},
@@ -61,19 +61,19 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 			fields: fields{
 				name:        "anothertest",
 				namespace:   "namespace",
-				displayName: "desc",
+				displayName: "This is the name",
 				tenantName:  "sometenant",
 				secretName:  "testsecret",
-				URL:         "another",
+				URL:         "git.corp.net",
 			},
 		},
 	}
 
-	manager.Register(&testRepoImplementation{})
+	testRepo := &testRepoImplementation{}
+	manager.Register(testRepo)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			repo := &synv1alpha1.GitRepo{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      tt.fields.name,
@@ -140,22 +140,25 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 				assert.Equal(t, tt.fields.displayName, savedGitRepoOpt.DisplayName)
 				assert.Equal(t, tt.fields.tenantName, gitRepo.Labels[apis.LabelNameTenant])
 				assert.Equal(t, synv1alpha1.Created, *gitRepo.Status.Phase)
+				assert.Equal(t, tt.fields.URL+"/"+tt.fields.namespace+"/"+tt.fields.name, gitRepo.Status.URL)
+				assert.Equal(t, synv1alpha1.GitType("test"), gitRepo.Status.Type)
 			}
 		})
 	}
 }
 
 type testRepoImplementation struct {
-	//meh
+	options manager.RepoOptions
 }
 
 func (t testRepoImplementation) IsType(URL *url.URL) (bool, error) {
-	return strings.Contains(URL.String(), "another"), nil
+	return strings.HasPrefix(URL.String(), "git"), nil
 }
 
 func (t testRepoImplementation) New(options manager.RepoOptions) (manager.Repo, error) {
+	t.options = options
 	savedGitRepoOpt = options
-	return testRepoImplementation{}, nil
+	return t, nil
 }
 
 func (t testRepoImplementation) Type() string {
@@ -163,7 +166,7 @@ func (t testRepoImplementation) Type() string {
 }
 
 func (t testRepoImplementation) FullURL() *url.URL {
-	return &url.URL{}
+	return t.options.URL
 }
 
 func (t testRepoImplementation) Create() error {

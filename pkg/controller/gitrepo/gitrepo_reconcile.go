@@ -28,7 +28,6 @@ const (
 // Reconcile will create or delete a git repository based on the event.
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
-
 // ATTENTION: do not manipulate the spec here, this will lead to loops, as the specs are
 // defined in the gitrepotemplates of the other CRDs (tenant, cluster).
 func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Result, error) {
@@ -105,22 +104,11 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 
 		if !r.repoExists(repo) {
 			reqLogger.Info("creating git repo", SecretEndpointName, repoOptions.URL)
-			err = repo.Create()
+			err := repo.Create()
 			if err != nil {
 				return r.handleRepoError(err, instance, repo)
 			}
-
-			err = repo.CommitTemplateFiles()
-			if err != nil {
-				return r.handleRepoError(err, instance, repo)
-
-			}
-
 			reqLogger.Info("successfully created the repository")
-			phase := synv1alpha1.Created
-			instance.Status.Phase = &phase
-			instance.Status.URL = repo.FullURL().String()
-			return r.client.Status().Update(context.TODO(), instance)
 		}
 
 		err = repo.CommitTemplateFiles()
@@ -145,6 +133,8 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 		phase := synv1alpha1.Created
 		instance.Status.Phase = &phase
+		instance.Status.URL = repo.FullURL().String()
+		instance.Status.Type = synv1alpha1.GitType(repo.Type())
 		return r.client.Status().Update(context.TODO(), instance)
 	})
 
