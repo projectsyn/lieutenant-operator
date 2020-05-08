@@ -4,13 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v0.1.1 - 2020-05-08
 ### Added
 - Docs from the SDD
 - Doc generator from CRDs
 - GitRepo file templates
 - Add an empty file for each cluster to the tenant git repo
-- Add the cluster service account token to vault
+- Add the cluster service account token to Vault
+- Implement DisplayName for GitRepo objects
+### Fixed
+- A race condition in the reconcile loop
 
 ## v0.0.5 - 2020-02-27
 ### Fixed
@@ -30,11 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add tenant label to GitRepos
 - Reuse object names for GitRepo names
 ### Fixed
-- Gitlab subgroup handling
+- GitLab subgroup handling
 - GitRepos properly updated from Clusters and Tenants
 
 ## v0.0.3 - 2020-02-10
 ### Added
-- Gitlab implementation for managing git repos
+- GitLab implementation for managing git repos
 - Changelog
 - RBAC management for clusters
