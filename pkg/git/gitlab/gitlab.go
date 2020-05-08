@@ -172,8 +172,10 @@ func (g *Gitlab) getProject() error {
 
 // Connect creates the Gitlab client
 func (g *Gitlab) Connect() error {
-	g.client = gitlab.NewClient(nil, g.credentials.Token)
-	return g.client.SetBaseURL(g.ops.URL.Scheme + "://" + g.ops.URL.Host)
+	c, err := gitlab.NewClient(g.credentials.Token,
+		gitlab.WithBaseURL(g.ops.URL.Scheme+"://"+g.ops.URL.Host))
+	g.client = c
+	return err
 }
 
 // FullURL returns the complete url of this git repository
@@ -361,9 +363,8 @@ func (g *Gitlab) compareFiles() (map[string]string, error) {
 		// if the tree is not found it's probably just because there are no files at all currently...
 		if strings.Contains(err.Error(), "Tree Not Found") {
 			return g.ops.TemplateFiles, nil
-		} else {
-			return newmap, fmt.Errorf("cannot list files in repository: %s", err)
 		}
+		return newmap, fmt.Errorf("cannot list files in repository: %s", err)
 	}
 
 	treeMap := map[string]bool{}
