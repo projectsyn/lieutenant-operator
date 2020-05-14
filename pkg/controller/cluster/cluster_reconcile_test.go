@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -9,6 +10,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
+	"github.com/projectsyn/lieutenant-operator/pkg/controller/tenant"
 	"github.com/projectsyn/lieutenant-operator/pkg/vault"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -171,9 +173,9 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			testTenant := &synv1alpha1.Tenant{}
 			err = cl.Get(context.TODO(), types.NamespacedName{Name: tt.fields.tenantName, Namespace: tt.fields.objNamespace}, testTenant)
 			assert.NoError(t, err)
-			_, found := testTenant.Spec.GitRepoTemplate.TemplateFiles[tt.fields.objName+".yml"]
+			fileContent, found := testTenant.Spec.GitRepoTemplate.TemplateFiles[tt.fields.objName+".yml"]
 			assert.True(t, found)
-
+			assert.Equal(t, fileContent, fmt.Sprintf(clusterClassContent, tt.fields.tenantName, tenant.CommonClassName))
 		})
 	}
 }
