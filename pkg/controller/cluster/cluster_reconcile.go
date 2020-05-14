@@ -5,8 +5,10 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"os"
 	"path"
 	"sort"
+	"strings"
 	"time"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
@@ -80,19 +82,21 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 	repoName := request.NamespacedName
 	repoName.Name = instance.Spec.TenantRef.Name
 
-	client, err := vault.NewClient()
-	if err != nil {
-		return reconcile.Result{}, err
-	}
+	if strings.ToLower(os.Getenv("SKIP_VAULT_SETUP")) != "true" {
+		client, err := vault.NewClient()
+		if err != nil {
+			return reconcile.Result{}, err
+		}
 
-	token, err := r.getServiceAccountToken(instance)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
+		token, err := r.getServiceAccountToken(instance)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
 
-	err = client.SetToken(path.Join(instance.Spec.TenantRef.Name, instance.Name, "steward"), token, reqLogger)
-	if err != nil {
-		return reconcile.Result{}, err
+		err = client.SetToken(path.Join(instance.Spec.TenantRef.Name, instance.Name, "steward"), token, reqLogger)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
 	}
 
 	err = r.updateTenantGitRepo(repoName, instance.GetName())
