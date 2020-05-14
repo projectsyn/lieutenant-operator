@@ -13,6 +13,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
+const (
+	// CommonClassName is the name of the tenant's common class
+	CommonClassName = "common"
+)
+
 // Reconcile The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result, error) {
@@ -40,6 +45,14 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 
 	if len(instance.Spec.GitRepoTemplate.DisplayName) == 0 {
 		instance.Spec.GitRepoTemplate.DisplayName = instance.Spec.DisplayName
+	}
+
+	commonClassFile := CommonClassName + ".yml"
+	if instance.Spec.GitRepoTemplate.TemplateFiles == nil {
+		instance.Spec.GitRepoTemplate.TemplateFiles = map[string]string{}
+	}
+	if _, ok := instance.Spec.GitRepoTemplate.TemplateFiles[commonClassFile]; !ok {
+		instance.Spec.GitRepoTemplate.TemplateFiles[commonClassFile] = ""
 	}
 
 	err = helpers.CreateOrUpdateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, corev1.LocalObjectReference{Name: instance.GetName()})
