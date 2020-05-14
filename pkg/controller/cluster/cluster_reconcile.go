@@ -5,11 +5,14 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"os"
 	"path"
 	"sort"
+	"strings"
 	"time"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
+	synTenant "github.com/projectsyn/lieutenant-operator/pkg/controller/tenant"
 	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
 	"github.com/projectsyn/lieutenant-operator/pkg/vault"
 	corev1 "k8s.io/api/core/v1"
@@ -17,7 +20,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+)
+
+const (
+	clusterClassContent = `classes:
+- %s.%s
+`
 )
 
 // Reconcile reads that state of the cluster for a Cluster object and makes changes based on the state read
@@ -72,22 +82,24 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 	repoName := request.NamespacedName
 	repoName.Name = instance.Spec.TenantRef.Name
 
-	client, err := vault.NewClient()
-	if err != nil {
-		return reconcile.Result{}, err
+	if strings.ToLower(os.Getenv("SKIP_VAULT_SETUP")) != "true" {
+		client, err := vault.NewClient()
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+
+		token, err := r.getServiceAccountToken(instance)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+
+		err = client.SetToken(path.Join(instance.Spec.TenantRef.Name, instance.Name, "steward"), token, reqLogger)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
 	}
 
-	token, err := r.getServiceAccountToken(instance)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	err = client.SetToken(path.Join(instance.Spec.TenantRef.Name, instance.Name, "steward"), token, reqLogger)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-
-	err = r.updateTenantGitRepo(repoName, instance.GetName()+".yml")
+	err = r.updateTenantGitRepo(repoName, instance.GetName())
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -141,29 +153,27 @@ func (r *ReconcileCluster) newStatus(cluster *synv1alpha1.Cluster) error {
 	return nil
 }
 
-func (r *ReconcileCluster) updateTenantGitRepo(tenant types.NamespacedName, filename string) error {
-	tenantCR := &synv1alpha1.Tenant{}
+func (r *ReconcileCluster) updateTenantGitRepo(tenant types.NamespacedName, clusterName string) error {
+	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		tenantCR := &synv1alpha1.Tenant{}
 
-	err := r.client.Get(context.TODO(), tenant, tenantCR)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil
+		err := r.client.Get(context.TODO(), tenant, tenantCR)
+		if err != nil {
+			return err
 		}
-		return err
-	}
 
-	if tenantCR.Spec.GitRepoTemplate.TemplateFiles == nil {
-		tenantCR.Spec.GitRepoTemplate.TemplateFiles = map[string]string{}
-	}
+		if tenantCR.Spec.GitRepoTemplate.TemplateFiles == nil {
+			tenantCR.Spec.GitRepoTemplate.TemplateFiles = map[string]string{}
+		}
 
-	if _, ok := tenantCR.Spec.GitRepoTemplate.TemplateFiles[filename]; !ok {
-
-		tenantCR.Spec.GitRepoTemplate.TemplateFiles[filename] = ""
-
-		return r.client.Update(context.TODO(), tenantCR)
-	}
-
-	return nil
+		clusterClassFile := clusterName + ".yml"
+		if _, ok := tenantCR.Spec.GitRepoTemplate.TemplateFiles[clusterClassFile]; !ok {
+			fileContent := fmt.Sprintf(clusterClassContent, tenant.Name, synTenant.CommonClassName)
+			tenantCR.Spec.GitRepoTemplate.TemplateFiles[clusterClassFile] = fileContent
+			return r.client.Update(context.TODO(), tenantCR)
+		}
+		return nil
+	})
 }
 
 func (r *ReconcileCluster) getServiceAccountToken(instance metav1.Object) (string, error) {

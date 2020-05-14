@@ -2,13 +2,17 @@ package cluster
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"reflect"
+	"strconv"
 	"testing"
 	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
+	"github.com/projectsyn/lieutenant-operator/pkg/controller/tenant"
 	"github.com/projectsyn/lieutenant-operator/pkg/vault"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -36,15 +40,27 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 		objNamespace string
 	}
 	tests := []struct {
-		name    string
-		want    reconcile.Result
-		wantErr bool
-		fields  fields
+		name      string
+		want      reconcile.Result
+		wantErr   bool
+		skipVault bool
+		fields    fields
 	}{
 		{
 			name:    "Check cluster state after creation",
 			want:    reconcile.Result{},
 			wantErr: false,
+			fields: fields{
+				tenantName:   "test-tenant",
+				objName:      "test-object",
+				objNamespace: "tenant",
+			},
+		},
+		{
+			name:      "Check skip Vault",
+			want:      reconcile.Result{},
+			skipVault: true,
+			wantErr:   false,
 			fields: fields{
 				tenantName:   "test-tenant",
 				objName:      "test-object",
@@ -123,8 +139,10 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 					Namespace: tt.fields.objNamespace,
 				},
 			}
+			testMockClient := &TestMockClient{}
+			vault.SetCustomClient(testMockClient)
 
-			vault.SetCustomClient(&TestMockClient{})
+			os.Setenv("SKIP_VAULT_SETUP", strconv.FormatBool(tt.skipVault))
 
 			got, err := r.Reconcile(req)
 			if (err != nil) != tt.wantErr {
@@ -157,6 +175,13 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			err = cl.Get(context.TODO(), req.NamespacedName, sa)
 			assert.NoError(t, err)
 
+			if tt.skipVault {
+				assert.Empty(t, testMockClient.token)
+			} else {
+				saToken, err := r.getServiceAccountToken(newCluster)
+				assert.NoError(t, err)
+				assert.Equal(t, testMockClient.token, saToken)
+			}
 			role := &rbacv1.Role{}
 			err = cl.Get(context.TODO(), req.NamespacedName, role)
 			assert.NoError(t, err)
@@ -171,16 +196,21 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			testTenant := &synv1alpha1.Tenant{}
 			err = cl.Get(context.TODO(), types.NamespacedName{Name: tt.fields.tenantName, Namespace: tt.fields.objNamespace}, testTenant)
 			assert.NoError(t, err)
-			_, found := testTenant.Spec.GitRepoTemplate.TemplateFiles[tt.fields.objName+".yml"]
+			fileContent, found := testTenant.Spec.GitRepoTemplate.TemplateFiles[tt.fields.objName+".yml"]
 			assert.True(t, found)
-
+			assert.Equal(t, fileContent, fmt.Sprintf(clusterClassContent, tt.fields.tenantName, tenant.CommonClassName))
 		})
 	}
 }
 
-type TestMockClient struct{}
+type TestMockClient struct {
+	token string
+}
 
-func (m *TestMockClient) SetToken(secretPath, token string, log logr.Logger) error { return nil }
+func (m *TestMockClient) SetToken(secretPath, token string, log logr.Logger) error {
+	m.token = token
+	return nil
+}
 
 func TestReconcileCluster_getServiceAccountToken(t *testing.T) {
 	type args struct {

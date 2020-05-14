@@ -89,6 +89,9 @@ func TestCreateGitRepo(t *testing.T) {
 			err = cl.Get(context.TODO(), gitRepoNamespacedName, gitRepo)
 			assert.NoError(t, err)
 			assert.Equal(t, tenant.Spec.DisplayName, gitRepo.Spec.GitRepoTemplate.DisplayName)
+			fileContent, found := gitRepo.Spec.GitRepoTemplate.TemplateFiles[CommonClassName+".yml"]
+			assert.True(t, found)
+			assert.Equal(t, "", fileContent)
 		})
 	}
 }
