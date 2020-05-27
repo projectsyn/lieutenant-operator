@@ -34,6 +34,10 @@ import (
 	_ "github.com/projectsyn/lieutenant-operator/pkg/git"
 )
 
+const (
+	defaultSyncInterval = 5 * time.Minute
+)
+
 // Change below variables to serve metrics on different host or port.
 var (
 	Version                   = "unreleased"
@@ -96,7 +100,17 @@ func main() {
 		os.Exit(1)
 	}
 
-	duration := 30 * time.Second
+	duration := defaultSyncInterval
+	if str, ok := os.LookupEnv("LIEUTENANT_SYNC_DURATION"); ok {
+		if d, err := time.ParseDuration(str); err != nil {
+			log.Error(err, "failed to parse LIEUTENANT_SYNC_DURATION")
+		} else if d > 30*time.Second {
+			duration = d
+		} else {
+			log.Info("LIEUTENANT_SYNC_DURATION is less than 30s, setting to 30s")
+			duration = 30 * time.Second
+		}
+	}
 
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
