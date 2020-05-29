@@ -4,9 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## unreleased
+## v0.1.4 - 2020-05-29
 ### Added
-- Ability to configure sync interval
+- Ability to configure sync interval ([#62])
 
 ## v0.1.3 - 2020-05-15
 ### Added
@@ -53,3 +53,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitLab implementation for managing git repos
 - Changelog
 - RBAC management for clusters
+
+[#62]: https://github.com/projectsyn/lieutenant-operator/pull/62
