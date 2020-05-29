@@ -7,7 +7,7 @@ require (
 	github.com/banzaicloud/bank-vaults/pkg/sdk v0.3.0
 	github.com/go-logr/logr v0.1.0
 	github.com/hashicorp/vault/api v1.0.4
-	github.com/icza/gox v0.0.0-20200320174535-a6ff52ab3d90
+	github.com/icza/gox v0.0.0-20200525134802-370c390b446f
 	github.com/imdario/mergo v0.3.9 // indirect
 	github.com/operator-framework/operator-sdk v0.17.1
 	github.com/spf13/pflag v1.0.5
