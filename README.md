@@ -6,15 +6,14 @@ Kubernetes Operator which implements the backend for [Lieutenant API](https://gi
 
 ## Deployment
 
-Deployment artifacts are available under `deploy/`. Please amend them to
-your environment.
+A Kustomize setup is available under `deploy/`.
 
 Example:
 
 ```
 kubectl create ns syn-lieutenant
-kubectl -n syn-lieutenant apply -f deploy/crds/
-kubectl -n syn-lieutenant apply -f deploy/
+kubectl -n syn-lieutenant apply -k deploy/crds/
+kubectl -n syn-lieutenant apply -k deploy/
 ```
 
 Some example data to test the operator is available under `examples/`.
