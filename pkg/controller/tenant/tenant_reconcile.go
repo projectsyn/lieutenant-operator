@@ -24,47 +24,52 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling Tenant")
 
-	// Fetch the Tenant instance
-	instance := &synv1alpha1.Tenant{}
-	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
-			return reconcile.Result{}, nil
+	err := retry.OnError(retry.DefaultBackoff, errors.IsNotFound, func() error {
+		// Fetch the Tenant instance
+		instance := &synv1alpha1.Tenant{}
+		err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				// Request object not found, could have been deleted after reconcile request.
+				// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+				// Return and don't requeue
+				return nil
+			}
+			// Error reading the object - requeue the request.
+			return err
 		}
-		// Error reading the object - requeue the request.
-		return reconcile.Result{}, err
-	}
 
-	gvk := schema.GroupVersionKind{
-		Version: instance.APIVersion,
-		Kind:    instance.Kind,
-	}
+		gvk := schema.GroupVersionKind{
+			Version: instance.APIVersion,
+			Kind:    instance.Kind,
+		}
 
-	if len(instance.Spec.GitRepoTemplate.DisplayName) == 0 {
-		instance.Spec.GitRepoTemplate.DisplayName = instance.Spec.DisplayName
-	}
+		if len(instance.Spec.GitRepoTemplate.DisplayName) == 0 {
+			instance.Spec.GitRepoTemplate.DisplayName = instance.Spec.DisplayName
+		}
 
-	commonClassFile := CommonClassName + ".yml"
-	if instance.Spec.GitRepoTemplate.TemplateFiles == nil {
-		instance.Spec.GitRepoTemplate.TemplateFiles = map[string]string{}
-	}
-	if _, ok := instance.Spec.GitRepoTemplate.TemplateFiles[commonClassFile]; !ok {
-		instance.Spec.GitRepoTemplate.TemplateFiles[commonClassFile] = ""
-	}
+		commonClassFile := CommonClassName + ".yml"
+		if instance.Spec.GitRepoTemplate.TemplateFiles == nil {
+			instance.Spec.GitRepoTemplate.TemplateFiles = map[string]string{}
+		}
+		if _, ok := instance.Spec.GitRepoTemplate.TemplateFiles[commonClassFile]; !ok {
+			instance.Spec.GitRepoTemplate.TemplateFiles[commonClassFile] = ""
+		}
 
-	err = helpers.CreateOrUpdateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, corev1.LocalObjectReference{Name: instance.GetName()})
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	err = retry.OnError(retry.DefaultBackoff, errors.IsNotFound, func() error {
+		instance.Spec.GitRepoTemplate.DeletionPolicy = instance.Spec.DeletionPolicy
+
+		err = helpers.CreateOrUpdateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, corev1.LocalObjectReference{Name: instance.GetName()})
+		if err != nil {
+			return err
+		}
+
 		instance.Spec.GitRepoURL, _, err = helpers.GetGitRepoURLAndHostKeys(instance, r.client)
-		return err
+		if err != nil {
+			return err
+		}
+
+		helpers.AddDeletionProtection(instance)
+		return r.client.Update(context.TODO(), instance)
 	})
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	return reconcile.Result{}, r.client.Update(context.TODO(), instance)
+	return reconcile.Result{}, err
 }

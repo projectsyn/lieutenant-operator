@@ -7,6 +7,7 @@ spec:
   gitRepoTemplate:
     path: tenant
     repoName: tenant1
+    deletionPolicy: Delete
     apiSecretRef:
       name: example-secret
       # namespace: syn-lieutenant

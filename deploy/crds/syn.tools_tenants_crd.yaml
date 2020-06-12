@@ -38,6 +38,16 @@ spec:
         spec:
           description: TenantSpec defines the desired state of Tenant
           properties:
+            deletionPolicy:
+              description: 'DeletionPolicy defines how the external resources should
+                be treated upon CR deletion. Retain: will not delete any external
+                resources Delete: will delete the external resources Archive: will
+                archive the external resources, if it supports that'
+              enum:
+              - Delete
+              - Retain
+              - Archive
+              type: string
             displayName:
               description: DisplayName is the display name of the tenant.
               type: string
@@ -58,6 +68,16 @@ spec:
                         name must be unique.
                       type: string
                   type: object
+                deletionPolicy:
+                  description: 'DeletionPolicy defines how the external resources
+                    should be treated upon CR deletion. Retain: will not delete any
+                    external resources Delete: will delete the external resources
+                    Archive: will archive the external resources, if it supports that'
+                  enum:
+                  - Delete
+                  - Retain
+                  - Archive
+                  type: string
                 deployKeys:
                   additionalProperties:
                     description: DeployKey defines an SSH key to be used for git operations.

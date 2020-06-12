@@ -102,9 +102,9 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 					Namespace: tt.fields.namespace,
 				},
 				Data: map[string][]byte{
-					SecretEndpointName: []byte(tt.fields.URL),
-					SecretTokenName:    []byte("secret"),
-					SecretHostKeysName: []byte("somekey"),
+					manager.SecretEndpointName: []byte(tt.fields.URL),
+					manager.SecretTokenName:    []byte("secret"),
+					manager.SecretHostKeysName: []byte("somekey"),
 				},
 			}
 
@@ -134,7 +134,7 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 			err = cl.Get(context.TODO(), req.NamespacedName, gitRepo)
 			assert.NoError(t, err)
 			if !tt.wantErr {
-				assert.Equal(t, string(secret.Data[SecretHostKeysName]), gitRepo.Status.HostKeys)
+				assert.Equal(t, string(secret.Data[manager.SecretHostKeysName]), gitRepo.Status.HostKeys)
 				assert.Equal(t, synv1alpha1.DefaultRepoType, gitRepo.Spec.RepoType)
 				assert.Equal(t, tt.fields.displayName, gitRepo.Spec.DisplayName)
 				assert.Equal(t, tt.fields.displayName, savedGitRepoOpt.DisplayName)
@@ -159,6 +159,14 @@ func (t testRepoImplementation) New(options manager.RepoOptions) (manager.Repo, 
 	t.options = options
 	savedGitRepoOpt = options
 	return t, nil
+}
+
+func (t testRepoImplementation) RemoveFile(path string) error {
+	return nil
+}
+
+func (t testRepoImplementation) Remove() error {
+	return nil
 }
 
 func (t testRepoImplementation) Type() string {

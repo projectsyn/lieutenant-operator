@@ -3,17 +3,30 @@ package helpers
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
 
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
+	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
+
+const (
+	protectionSettingEnvVar = "LIEUTENANT_DELETE_PROTECTION"
+)
+
+type DeletionState struct {
+	FinalizerRemoved bool
+	Deleted          bool
+}
 
 // CreateOrUpdateGitRepo will create the gitRepo object if it doesn't already exist. If the owner object itself is a tenant tenantRef can be set nil.
 func CreateOrUpdateGitRepo(obj metav1.Object, gvk schema.GroupVersionKind, template *synv1alpha1.GitRepoTemplate, client client.Client, tenantRef corev1.LocalObjectReference) error {
@@ -24,6 +37,10 @@ func CreateOrUpdateGitRepo(obj metav1.Object, gvk schema.GroupVersionKind, templ
 
 	if tenantRef.Name == "" {
 		return fmt.Errorf("the tenant name is empty")
+	}
+
+	if template.DeletionPolicy == "" {
+		template.DeletionPolicy = GetDeletionPolicy()
 	}
 
 	if template.RepoType == synv1alpha1.DefaultRepoType {
@@ -44,6 +61,8 @@ func CreateOrUpdateGitRepo(obj metav1.Object, gvk schema.GroupVersionKind, templ
 		},
 	}
 
+	AddDeletionProtection(repo)
+
 	err := client.Create(context.TODO(), repo)
 	if err != nil && errors.IsAlreadyExists(err) {
 		existingRepo := &synv1alpha1.GitRepo{}
@@ -62,6 +81,13 @@ func CreateOrUpdateGitRepo(obj metav1.Object, gvk schema.GroupVersionKind, templ
 		err = client.Update(context.TODO(), existingRepo)
 
 	}
+
+	for file, content := range template.TemplateFiles {
+		if content == manager.DeletionMagicString {
+			delete(template.TemplateFiles, file)
+		}
+	}
+
 	return err
 }
 
@@ -101,4 +127,72 @@ func (s SecretSortList) Less(i, j int) bool {
 	}
 
 	return s.Items[i].CreationTimestamp.Before(&s.Items[j].CreationTimestamp)
+}
+
+// Checks if the slice of strings contains a specific string
+func SliceContainsString(list []string, s string) bool {
+	for _, v := range list {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
+
+// HandleDeletion will handle the finalizers if the object was deleted.
+// It will return true, if the finalizer was removed. If the object was
+// removed the reconcile can be returned.
+func HandleDeletion(instance metav1.Object, finalizerName string, client client.Client) DeletionState {
+	if instance.GetDeletionTimestamp().IsZero() {
+		return DeletionState{FinalizerRemoved: false, Deleted: false}
+	}
+
+	annotationValue, exists := instance.GetAnnotations()[DeleteProtectionAnnotation]
+
+	var protected bool
+	var err error
+	if exists {
+		protected, err = strconv.ParseBool(annotationValue)
+		// Assume true if it can't be parsed
+		if err != nil {
+			protected = true
+			// We need to reset the error again, so we don't trigger any unwanted side effects...
+			err = nil
+		}
+	} else {
+		protected = false
+	}
+
+	if SliceContainsString(instance.GetFinalizers(), finalizerName) && !protected {
+
+		controllerutil.RemoveFinalizer(instance, finalizerName)
+
+		return DeletionState{Deleted: true, FinalizerRemoved: true}
+	}
+
+	return DeletionState{Deleted: true, FinalizerRemoved: false}
+}
+
+func AddDeletionProtection(instance metav1.Object) {
+	config := os.Getenv(protectionSettingEnvVar)
+
+	protected, err := strconv.ParseBool(config)
+	if err != nil {
+		protected = true
+	}
+
+	if protected {
+		annotations := instance.GetAnnotations()
+
+		if annotations == nil {
+			annotations = make(map[string]string)
+		}
+
+		if _, ok := annotations[DeleteProtectionAnnotation]; !ok {
+			annotations[DeleteProtectionAnnotation] = "true"
+		}
+
+		instance.SetAnnotations(annotations)
+	}
+
 }

@@ -3,26 +3,19 @@ package gitrepo
 import (
 	"context"
 	"fmt"
-	"net/url"
 
 	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
 	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 const (
-	// SecretTokenName is the name of the secret entry containing the token
-	SecretTokenName = "token"
-	// SecretHostKeysName is the name of the secret entry containing the SSH host keys
-	SecretHostKeysName = "hostKeys"
-	// SecretEndpointName is the name of the secret entry containing the api endpoint
-	SecretEndpointName = "endpoint"
+	finalizerName = "gitrepo.lieutenant.syn.tools"
 )
 
 // Reconcile will create or delete a git repository based on the event.
@@ -46,69 +39,31 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 			return err
 		}
 
-		secret := &corev1.Secret{}
-		namespacedName := types.NamespacedName{
-			Name:      instance.Spec.APISecretRef.Name,
-			Namespace: instance.Namespace,
-		}
-
-		if len(instance.Spec.APISecretRef.Namespace) > 0 {
-			namespacedName.Namespace = instance.Spec.APISecretRef.Namespace
-		}
-
-		err = r.client.Get(context.TODO(), namespacedName, secret)
-		if err != nil {
-			return fmt.Errorf("error getting git secret: %v", err)
-		}
-
-		if hostKeys, ok := secret.Data[SecretHostKeysName]; ok {
-			instance.Status.HostKeys = string(hostKeys)
-		}
-
-		if _, ok := secret.Data[SecretEndpointName]; !ok {
-			return fmt.Errorf("secret %s does not contain endpoint data", secret.GetName())
-		}
-
-		if _, ok := secret.Data[SecretTokenName]; !ok {
-			return fmt.Errorf("secret %s does not contain token", secret.GetName())
-		}
-
-		repoURL, err := url.Parse(string(secret.Data[SecretEndpointName]) + "/" + instance.Spec.Path + "/" + instance.Spec.RepoName)
-
+		repo, hostKeys, err := manager.GetGitClient(&instance.Spec.GitRepoTemplate, instance.GetNamespace(), reqLogger, r.client)
 		if err != nil {
 			return err
 		}
 
-		repoOptions := manager.RepoOptions{
-			Credentials: manager.Credentials{
-				Token: string(secret.Data[SecretTokenName]),
-			},
-			DeployKeys:    instance.Spec.DeployKeys,
-			Logger:        reqLogger,
-			Path:          instance.Spec.Path,
-			RepoName:      instance.Spec.RepoName,
-			DisplayName:   instance.Spec.DisplayName,
-			URL:           repoURL,
-			TemplateFiles: instance.Spec.TemplateFiles,
-		}
-
-		repo, err := manager.NewRepo(repoOptions)
-		if err != nil {
-			return err
-		}
-
-		err = repo.Connect()
-		if err != nil {
-			return err
-		}
+		instance.Status.HostKeys = hostKeys
 
 		if !r.repoExists(repo) {
-			reqLogger.Info("creating git repo", SecretEndpointName, repoOptions.URL)
+			reqLogger.Info("creating git repo", manager.SecretEndpointName, repo.FullURL())
 			err := repo.Create()
 			if err != nil {
 				return r.handleRepoError(err, instance, repo)
 			}
 			reqLogger.Info("successfully created the repository")
+		}
+
+		deleted := helpers.HandleDeletion(instance, finalizerName, r.client)
+		if deleted.FinalizerRemoved {
+			err := repo.Remove()
+			if err != nil {
+				return err
+			}
+		}
+		if deleted.Deleted {
+			return r.client.Update(context.TODO(), instance)
 		}
 
 		err = repo.CommitTemplateFiles()
@@ -126,6 +81,9 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 
 		helpers.AddTenantLabel(&instance.ObjectMeta, instance.Spec.TenantRef.Name)
+		helpers.AddDeletionProtection(instance)
+
+		controllerutil.AddFinalizer(instance, finalizerName)
 
 		err = r.client.Update(context.TODO(), instance)
 		if err != nil {

@@ -1,0 +1,50 @@
+= Configuration
+
+== Permissions for other systems
+
+In order for the operator to work correctly it will need specific permissions in other systems.
+
+=== Gitlab
+
+These are the settings needed for the Gitlab API token.
+
+image::gitlab_settings.png[]
+
+=== Vault
+[source,hcl]
+----
+path "kv/data/*" {
+  capabilities = ["read", "create", "update", "delete"]
+}
+
+path "kv/metadata/*" {
+  capabilities = ["read", "create", "update", "delete", "list"]
+}
+
+path "kv/delete/*" {
+  capabilities = ["update"]
+}
+----
+
+== Environment variables
+
+[cols=",",options="header",]
+|===
+
+a| Environment Variable
+
+a| Description
+
+| VAULT_ADDR | Sets the address to the Vault instance
+
+| VAULT_TOKEN | Sets the Vault token to be used, ony recommended for testing. in production the K8s authentication should be used.
+
+| SKIP_VAULT_SETUP | Doesn't create any Vault secrets. Recommended for testing only.
+
+| DEFAULT_DELETION_POLICY | Sets what deletion policy for external resources (Git, Vault) should be used by default.
+
+| LIEUTENANT_SYNC_DURATION | Defines with what frequence the CRs will be synced. Default: 5m
+
+| LIEUTENANT_DELETE_PROTECTION | Defines whether the annotation to protect for accidental deletion should be set by default. Default: true
+
+|===

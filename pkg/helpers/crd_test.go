@@ -2,22 +2,21 @@ package helpers
 
 import (
 	"context"
+	"os"
 	"testing"
+	"time"
 
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/client-go/kubernetes/scheme"
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-
+	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
-	"github.com/projectsyn/lieutenant-operator/pkg/apis"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestAddTenantLabel(t *testing.T) {
@@ -127,4 +126,138 @@ func testSetupClient(objs []runtime.Object) client.Client {
 	s := scheme.Scheme
 	s.AddKnownTypes(synv1alpha1.SchemeGroupVersion, objs...)
 	return fake.NewFakeClient(objs...)
+}
+
+func TestHandleDeletion(t *testing.T) {
+	type args struct {
+		instance      metav1.Object
+		finalizerName string
+	}
+	tests := []struct {
+		name string
+		args args
+		want DeletionState
+	}{
+		{
+			name: "Normal deletion",
+			want: DeletionState{Deleted: true, FinalizerRemoved: true},
+			args: args{
+				instance: &synv1alpha1.Cluster{
+					ObjectMeta: metav1.ObjectMeta{
+						DeletionTimestamp: &metav1.Time{Time: time.Now()},
+						Finalizers: []string{
+							"test",
+						},
+					},
+				},
+				finalizerName: "test",
+			},
+		},
+		{
+			name: "Deletion protection set",
+			want: DeletionState{Deleted: true, FinalizerRemoved: false},
+			args: args{
+				instance: &synv1alpha1.Cluster{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							DeleteProtectionAnnotation: "true",
+						},
+						DeletionTimestamp: &metav1.Time{Time: time.Now()},
+						Finalizers: []string{
+							"test",
+						},
+					},
+				},
+				finalizerName: "test",
+			},
+		},
+		{
+			name: "Nonsense annotation value",
+			want: DeletionState{Deleted: true, FinalizerRemoved: false},
+			args: args{
+				instance: &synv1alpha1.Cluster{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							DeleteProtectionAnnotation: "trugadse",
+						},
+						DeletionTimestamp: &metav1.Time{Time: time.Now()},
+						Finalizers: []string{
+							"test",
+						},
+					},
+				},
+				finalizerName: "test",
+			},
+		},
+		{
+			name: "Object not deleted",
+			want: DeletionState{Deleted: false, FinalizerRemoved: false},
+			args: args{
+				instance:      &synv1alpha1.Cluster{},
+				finalizerName: "test",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			client := testSetupClient([]runtime.Object{&synv1alpha1.Cluster{}})
+
+			got := HandleDeletion(tt.args.instance, tt.args.finalizerName, client)
+			if got != tt.want {
+				t.Errorf("HandleDeletion() = %v, want %v", got, tt.want)
+			}
+
+		})
+	}
+}
+
+func TestAddDeletionProtection(t *testing.T) {
+	type args struct {
+		instance metav1.Object
+		enable   string
+		result   string
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "Add deletion protection",
+			args: args{
+				instance: &synv1alpha1.Cluster{},
+				enable:   "true",
+				result:   "true",
+			},
+		},
+		{
+			name: "Don't add deletion protection",
+			args: args{
+				instance: &synv1alpha1.Cluster{},
+				enable:   "false",
+				result:   "",
+			},
+		},
+		{
+			name: "Invalid setting",
+			args: args{
+				instance: &synv1alpha1.Cluster{},
+				enable:   "gaga",
+				result:   "true",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			os.Setenv(protectionSettingEnvVar, tt.args.enable)
+
+			AddDeletionProtection(tt.args.instance)
+
+			result := tt.args.instance.GetAnnotations()[DeleteProtectionAnnotation]
+			if result != tt.args.result {
+				t.Errorf("AddDeletionProtection() value = %v, wantValue %v", result, tt.args.result)
+			}
+		})
+	}
 }

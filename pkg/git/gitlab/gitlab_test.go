@@ -114,7 +114,7 @@ func testGetCreateServer() *httptest.Server {
 	mux.HandleFunc("/api/v4/projects", func(res http.ResponseWriter, req *http.Request) {
 		createProjectOptions := gitlab.CreateProjectOptions{}
 		buf := new(bytes.Buffer)
-		buf.ReadFrom(req.Body)
+		_, _ = buf.ReadFrom(req.Body)
 		err := json.Unmarshal(buf.Bytes(), &createProjectOptions)
 		response := http.StatusOK
 		if err != nil {
@@ -244,7 +244,7 @@ func TestGitlab_Delete(t *testing.T) {
 
 			_ = g.Connect()
 
-			if err := g.Delete(); (err != nil) != tt.wantErr {
+			if err := g.delete(); (err != nil) != tt.wantErr {
 				t.Errorf("Delete() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -274,7 +274,7 @@ func testGetUpdateServer(fail bool) *httptest.Server {
 	mux.HandleFunc("/api/v4/projects/3", func(res http.ResponseWriter, req *http.Request) {
 		editProjectOptions := gitlab.EditProjectOptions{}
 		buf := new(bytes.Buffer)
-		buf.ReadFrom(req.Body)
+		_, _ = buf.ReadFrom(req.Body)
 		err := json.Unmarshal(buf.Bytes(), &editProjectOptions)
 		response := http.StatusOK
 		if err != nil {

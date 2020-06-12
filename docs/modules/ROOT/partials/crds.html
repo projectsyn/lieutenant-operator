@@ -236,6 +236,26 @@ Facts
 <p class="tableblock">
 </td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>deletionPolicy</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.DeletionPolicy">
+DeletionPolicy
+</a>
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>DeletionPolicy defines how the external resources should be treated upon CR deletion.
+Retain: will not delete any external resources
+Delete: will delete the external resources
+Archive: will archive the external resources, if it supports that</p>
+<p class="tableblock">
+</td>
+</tr>
 </table>
 <p class="tableblock">
 </td>
@@ -386,6 +406,26 @@ Facts
 <p class="tableblock">
 </td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>deletionPolicy</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.DeletionPolicy">
+DeletionPolicy
+</a>
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>DeletionPolicy defines how the external resources should be treated upon CR deletion.
+Retain: will not delete any external resources
+Delete: will delete the external resources
+Archive: will archive the external resources, if it supports that</p>
+<p class="tableblock">
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="syn.tools/v1alpha1.ClusterStatus">ClusterStatus
@@ -424,6 +464,17 @@ BootstrapToken
 </tr>
 </tbody>
 </table>
+<h3 id="syn.tools/v1alpha1.DeletionPolicy">DeletionPolicy
+(<code>string</code> alias)</p></h3>
+<p>
+(<em>Appears on:</em>
+<a href="#syn.tools/v1alpha1.ClusterSpec">ClusterSpec</a>, 
+<a href="#syn.tools/v1alpha1.GitRepoTemplate">GitRepoTemplate</a>, 
+<a href="#syn.tools/v1alpha1.TenantSpec">TenantSpec</a>)
+</p>
+<p>
+<p>DeletionPolicy defines the type deletion policy</p>
+</p>
 <h3 id="syn.tools/v1alpha1.DeployKey">DeployKey
 </h3>
 <p>
@@ -882,6 +933,26 @@ after its creation.</p>
 <p class="tableblock">
 </td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>deletionPolicy</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.DeletionPolicy">
+DeletionPolicy
+</a>
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>DeletionPolicy defines how the external resources should be treated upon CR deletion.
+Retain: will not delete any external resources
+Delete: will delete the external resources
+Archive: will archive the external resources, if it supports that</p>
+<p class="tableblock">
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="syn.tools/v1alpha1.GitType">GitType
@@ -996,6 +1067,26 @@ GitRepoTemplate
 <p class="tableblock">
 </td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>deletionPolicy</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.DeletionPolicy">
+DeletionPolicy
+</a>
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>DeletionPolicy defines how the external resources should be treated upon CR deletion.
+Retain: will not delete any external resources
+Delete: will delete the external resources
+Archive: will archive the external resources, if it supports that</p>
+<p class="tableblock">
+</td>
+</tr>
 </table>
 <p class="tableblock">
 </td>
@@ -1079,6 +1170,26 @@ GitRepoTemplate
 <td class="tableblock halign-left valign-top">
 <p class="tableblock">
 <p>GitRepoTemplate Template for managing the GitRepo object. If not set, no  GitRepo object will be created.</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>deletionPolicy</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.DeletionPolicy">
+DeletionPolicy
+</a>
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>DeletionPolicy defines how the external resources should be treated upon CR deletion.
+Retain: will not delete any external resources
+Delete: will delete the external resources
+Archive: will archive the external resources, if it supports that</p>
 <p class="tableblock">
 </td>
 </tr>
