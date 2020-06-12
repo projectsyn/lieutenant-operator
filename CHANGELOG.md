@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v0.1.5 - 2020-06-12
+### Added
+- Kustomize setup ([#71])
+
 ## v0.1.4 - 2020-05-29
 ### Added
 - Ability to configure sync interval ([#62])
@@ -55,3 +59,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RBAC management for clusters
 
 [#62]: https://github.com/projectsyn/lieutenant-operator/pull/62
+[#71]: https://github.com/projectsyn/lieutenant-operator/pull/71
