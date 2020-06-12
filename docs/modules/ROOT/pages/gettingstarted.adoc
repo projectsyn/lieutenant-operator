@@ -6,6 +6,6 @@ The main interaction point with the operator is through the API.
 [source,shell]
 --
 kubectl create ns syn-lieutenant
-kubectl -n syn-lieutenant apply -f deploy/crds/
-kubectl -n syn-lieutenant apply -f deploy/
+kubectl -n syn-lieutenant apply -k deploy/crds/
+kubectl -n syn-lieutenant apply -k deploy/
 --
