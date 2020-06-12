@@ -2,7 +2,7 @@
 
 image::syn.png[]
 
-This is the documentation of the Lieutenant Operator project.
+Welcome to the documentation of the Lieutenant Operator - a Project Syn tool.
 
 The operator manages following CRDs.
 
