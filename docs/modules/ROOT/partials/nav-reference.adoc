@@ -1,0 +1,1 @@
+* xref:lieutenant-operator:ROOT:crds-html.adoc[CRDs]
