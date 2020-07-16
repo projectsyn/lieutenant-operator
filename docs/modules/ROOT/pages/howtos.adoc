@@ -1,0 +1,140 @@
+= How-to Guides
+
+== Configure Vault
+
+Visit https://yourvault/ui/vault/policies/acl and click `Create ACL Policy`. Then paste following Policy into the field:
+
+[source,hcl]
+----
+include::partial$policy.hcl[]
+----
+
+Name it `lieutenant-operator`.
+
+Then create a new secret engine. Visit https://yourvault/ui/vault/secrets and click `Enable new engine`. Select KV and click next. The path needs to be `kv` and the `Version` needs to be 2. Click `Enable Engine`.
+
+== Get GitLab Token
+
+Visit the GitLab instance you'd like to use. Login with the user that has the permissions necessary to write to the group you want to store your SYN repositories.
+
+Visit https://yourgitlab/profile/personal_access_tokens and create a token with the following settings:
+
+image::gitlab_settings.png[]
+
+== Add Secret with Endpoint Information
+
+Before any other things can be created we need to specify the git endpoints first.
+
+[source,yaml]
+....
+apiVersion: v1
+stringData:
+  endpoint: http://10.144.1.197:8080
+  token: Bvi1s19qp25Wt-rtGfMy
+kind: Secret
+metadata:
+  name: lieutenant-secret
+  namespace: syn-lieutenant
+type: Opaque
+....
+
+To create a token please see <<Get GitLab Token>>. Save the file as `secret.yaml` and then apply it with `kubectl apply -f secret.yaml`.
+
+== Create a Tenant
+
+Following manifest will create a tenant:
+
+[source,yaml]
+....
+apiVersion: syn.tools/v1alpha1
+kind: Tenant
+metadata:
+  name: t-aezoo6
+  namespace: syn-lieutenant
+spec:
+  displayName: Big Corp.
+  gitRepoTemplate:
+    path: tenant
+    repoName: tenant1
+    deletionPolicy: Delete
+    apiSecretRef:
+      name: lieutenant-secret
+      namespace: syn-lieutenant
+    deployKeys:
+      test:
+        type: ssh-ed25519
+        key: AAAACxxxx
+        writeAccess: true
+....
+
+Please be aware that you first need to have a valid secret containing the endpoint information. See <<Add Secret with Endpoint Information>>.
+
+== Create a Cluster
+
+Following manifest will create a cluster:
+
+[source,yaml]
+....
+apiVersion: syn.tools/v1alpha1
+kind: Cluster
+metadata:
+  name: c-ae3os1
+  namespace: syn-lieutenant
+  annotations:
+    syn.tools/protected-delete: "false"
+spec:
+  displayName: Another Big Corp. Production Cluster
+  deletionPolicy: Delete
+  gitRepoTemplate:
+    path: cluster
+    repoName: cluster2
+    deletionPolicy: Delete
+    apiSecretRef:
+      name: lieutenant-secret
+      namespace: syn-lieutenant
+    deployKeys:
+      test:
+        type: ssh-ed25519
+        key: AAAACxxxx
+        writeAccess: true
+  tenantRef:
+    name: t-aezoo6
+  tokenLifeTime: 4h
+  facts:
+    distribution: openshift3
+    cloud: cloudscale
+    region: rma1
+....
+
+Please be aware that you first need to have a valid secret containing the endpoint information. See <<Add Secret with Endpoint Information>>.
+
+== Create a Git Repository
+
+It's usually not necessary to create a Git Repository manually, as they're automatically created through a cluster or tenant. But if you need an operator managed git repository you can do that with the following manifest.
+
+Following manifest will create a Git Repository:
+
+[source,yaml]
+....
+apiVersion: syn.tools/v1alpha1
+kind: GitRepo
+metadata:
+  name: example-gitrepo2
+  namespace: syn-lieutenant
+spec:
+  tenantRef:
+    name: foo
+    namespace: syn-lieutenant
+  apiSecretRef:
+    name: lieutenant-secret
+  path: cluster/subgroup
+  repoName: bar
+  deployKeys:
+    test:
+      type: ssh-ed25519
+      key: AAAACxxxx
+      writeAccess: true
+      writeAccess: false
+....
+
+Please be aware that you first need to have a valid secret containing the endpoint information. See <<Add Secret with Endpoint Information>>.

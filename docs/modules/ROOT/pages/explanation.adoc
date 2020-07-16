@@ -1,0 +1,84 @@
+= Explanations
+
+== What does the operator do exactly?
+
+The main interaction point with the operator is through the API. The operator's job is to keep inventory about all the clusters and tenants that are managed using SYN. It will also bootstrap the Vault secrets and Git repositories necessary for SYN to work correctly.
+
+== Operator Common
+
+The first iteration is a single Operator consisting of several
+controllers, sharing CR Go structs as the objects depend on each other.
+A later iteration could split these controllers into their own Operator
+if it makes sense then. The Operator will be implemented using the
+https://github.com/operator-framework/operator-sdk/[operator-sdk] in Go.
+
+== Handled CRDs
+
+The CRds that the operator is handling are currently living in these groups and versions.
+
+[cols=",",options="header",]
+|===
+a|
+Property
+
+a|
+Value
+
+|API group |`syn.tools`
+|API version |`v1alpha1`
+|===
+
+[cols=",",options="header",]
+|===
+
+a|
+CRD
+
+a|
+Description
+
+|_Tenant_ |When a tenant is created, a _GitRepo_ object
+is created to create the *tenant configuration repository*.
+
+|_GitRepo_ a|
+Git repository management (CRUD repositories on GitLab, GitHub and Gitea).
+Lieutenant manages the CR objects and queries the status fields to get
+the status.
+
+The Operator manages the following objects:
+
+_GitRepo_
+
+* Create Git repository +
+** By default on http://git.vshn.net/[git.vshn.net] GitLab
+** Supported are GitLab, GitHub and Gitea APIs
+** SSH key delivered by Steward is configured as deploy key
+* Delete Git repository
+* Update Git repository when configuration changes
+** Only SSH deploy key change supported
+
+|_Cluster_ a|
+When a _Cluster_ object is created:
+
+* a _GitRepo_ object is created to create the *cluster catalog
+configuration repository*.
+* a _Proxy_ object is created to provision an Inlets endpoint for the
+cluster
+
+When a _Cluster_ object is deleted:
+
+* All created objects are deleted by ownerReference mechanisms
+
+|_Proxy_ a|
+Manages the deployment and configuration of an Inlets server per Syn
+Kubernetes cluster.
+
+Details tbd
+
+|===
+
+
+== References
+
+* Operator SDK -
+https://github.com/operator-framework/operator-sdk/[https://github.com/operator-framework/operator-sdk]
