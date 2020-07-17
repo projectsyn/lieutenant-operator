@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path"
 	"reflect"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/go-logr/logr"
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pkg/controller/tenant"
@@ -176,11 +176,12 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			assert.NoError(t, err)
 
 			if tt.skipVault {
-				assert.Empty(t, testMockClient.token)
+				assert.Empty(t, testMockClient.secrets)
 			} else {
 				saToken, err := r.getServiceAccountToken(newCluster)
+				saSecrets := []vault.VaultSecret{{Value: saToken, Path: path.Join(tt.fields.tenantName, tt.fields.objName, "steward")}}
 				assert.NoError(t, err)
-				assert.Equal(t, testMockClient.token, saToken)
+				assert.Equal(t, testMockClient.secrets, saSecrets)
 			}
 			role := &rbacv1.Role{}
 			err = cl.Get(context.TODO(), req.NamespacedName, role)
@@ -204,11 +205,15 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 }
 
 type TestMockClient struct {
-	token string
+	secrets []vault.VaultSecret
 }
 
-func (m *TestMockClient) SetToken(secretPath, token string, log logr.Logger) error {
-	m.token = token
+func (m *TestMockClient) AddSecrets(secrets []vault.VaultSecret) error {
+	m.secrets = secrets
+	return nil
+}
+
+func (m *TestMockClient) RemoveSecrets(secrets []vault.VaultSecret) error {
 	return nil
 }
 

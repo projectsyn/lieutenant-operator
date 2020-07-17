@@ -24,6 +24,12 @@ type ClusterSpec struct {
 	TokenLifeTime string `json:"tokenLifeTime,omitempty"`
 	// Facts are key/value pairs for statically configured facts
 	Facts *Facts `json:"facts,omitempty"`
+	// DeletionPolicy defines how the external resources should be treated upon CR deletion.
+	// Retain: will not delete any external resources
+	// Delete: will delete the external resources
+	// Archive: will archive the external resources, if it supports that
+	// +kubebuilder:validation:Enum=Delete;Retain;Archive
+	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
 }
 
 // BootstrapToken this key is used only once for Steward to register.

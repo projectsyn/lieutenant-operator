@@ -41,6 +41,16 @@ spec:
         spec:
           description: ClusterSpec defines the desired state of Cluster
           properties:
+            deletionPolicy:
+              description: 'DeletionPolicy defines how the external resources should
+                be treated upon CR deletion. Retain: will not delete any external
+                resources Delete: will delete the external resources Archive: will
+                archive the external resources, if it supports that'
+              enum:
+              - Delete
+              - Retain
+              - Archive
+              type: string
             displayName:
               description: DisplayName of cluster which could be different from metadata.name.
                 Allows cluster renaming should it be needed.
@@ -69,6 +79,16 @@ spec:
                         name must be unique.
                       type: string
                   type: object
+                deletionPolicy:
+                  description: 'DeletionPolicy defines how the external resources
+                    should be treated upon CR deletion. Retain: will not delete any
+                    external resources Delete: will delete the external resources
+                    Archive: will archive the external resources, if it supports that'
+                  enum:
+                  - Delete
+                  - Retain
+                  - Archive
+                  type: string
                 deployKeys:
                   additionalProperties:
                     description: DeployKey defines an SSH key to be used for git operations.

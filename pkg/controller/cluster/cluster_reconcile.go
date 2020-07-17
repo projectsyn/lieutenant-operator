@@ -11,8 +11,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-logr/logr"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	synTenant "github.com/projectsyn/lieutenant-operator/pkg/controller/tenant"
+	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
 	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
 	"github.com/projectsyn/lieutenant-operator/pkg/vault"
 	corev1 "k8s.io/api/core/v1"
@@ -21,6 +23,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -28,6 +31,7 @@ const (
 	clusterClassContent = `classes:
 - %s.%s
 `
+	finalizerName = "cluster.lieutenant.syn.tools"
 )
 
 // Reconcile reads that state of the cluster for a Cluster object and makes changes based on the state read
@@ -38,82 +42,119 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling Cluster")
 
-	instance := &synv1alpha1.Cluster{}
+	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
 
-	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return reconcile.Result{}, nil
-		}
-		return reconcile.Result{}, err
-	}
+		instance := &synv1alpha1.Cluster{}
 
-	if err := r.createClusterRBAC(*instance); err != nil {
-		return reconcile.Result{}, err
-	}
-
-	if instance.Status.BootstrapToken == nil {
-		reqLogger.Info("Adding status to Cluster object")
-		err := r.newStatus(instance)
+		err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 		if err != nil {
-			return reconcile.Result{}, err
+			if errors.IsNotFound(err) {
+				return nil
+			}
+			return err
 		}
-	}
 
-	if time.Now().After(instance.Status.BootstrapToken.ValidUntil.Time) {
-		instance.Status.BootstrapToken.TokenValid = false
-	}
+		if err := r.createClusterRBAC(*instance); err != nil {
+			return err
+		}
 
-	gvk := schema.GroupVersionKind{
-		Version: instance.APIVersion,
-		Kind:    instance.Kind,
-	}
+		if instance.Status.BootstrapToken == nil {
+			reqLogger.Info("Adding status to Cluster object")
+			err := r.newStatus(instance)
+			if err != nil {
+				return err
+			}
+		}
 
-	if len(instance.Spec.GitRepoTemplate.DisplayName) == 0 {
-		instance.Spec.GitRepoTemplate.DisplayName = instance.Spec.DisplayName
-	}
+		if time.Now().After(instance.Status.BootstrapToken.ValidUntil.Time) {
+			instance.Status.BootstrapToken.TokenValid = false
+		}
 
-	err = helpers.CreateOrUpdateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, instance.Spec.TenantRef)
-	if err != nil {
-		reqLogger.Error(err, "Cannot create or update git repo object")
-		return reconcile.Result{}, err
-	}
+		gvk := schema.GroupVersionKind{
+			Version: instance.APIVersion,
+			Kind:    instance.Kind,
+		}
 
-	repoName := request.NamespacedName
-	repoName.Name = instance.Spec.TenantRef.Name
+		if len(instance.Spec.GitRepoTemplate.DisplayName) == 0 {
+			instance.Spec.GitRepoTemplate.DisplayName = instance.Spec.DisplayName
+		}
 
-	if strings.ToLower(os.Getenv("SKIP_VAULT_SETUP")) != "true" {
-		client, err := vault.NewClient()
+		instance.Spec.GitRepoTemplate.DeletionPolicy = instance.Spec.DeletionPolicy
+
+		err = helpers.CreateOrUpdateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, instance.Spec.TenantRef)
 		if err != nil {
-			return reconcile.Result{}, err
+			reqLogger.Error(err, "Cannot create or update git repo object")
+			return err
 		}
 
-		token, err := r.getServiceAccountToken(instance)
+		repoName := request.NamespacedName
+		repoName.Name = instance.Spec.TenantRef.Name
+
+		var vaultClient vault.VaultClient = nil
+		secretPath := path.Join(instance.Spec.TenantRef.Name, instance.Name, "steward")
+
+		deletionPolicy := instance.Spec.DeletionPolicy
+		if deletionPolicy == "" {
+			deletionPolicy = helpers.GetDeletionPolicy()
+		}
+
+		vaultClient, err = vault.NewClient(deletionPolicy, reqLogger)
 		if err != nil {
-			return reconcile.Result{}, err
+			return err
 		}
 
-		err = client.SetToken(path.Join(instance.Spec.TenantRef.Name, instance.Name, "steward"), token, reqLogger)
+		if strings.ToLower(os.Getenv("SKIP_VAULT_SETUP")) != "true" {
+
+			token, err := r.getServiceAccountToken(instance)
+			if err != nil {
+				return err
+			}
+
+			err = vaultClient.AddSecrets([]vault.VaultSecret{{Path: secretPath, Value: token}})
+			if err != nil {
+				return err
+			}
+
+		}
+
+		deleted := helpers.HandleDeletion(instance, finalizerName, r.client)
+		if deleted.FinalizerRemoved {
+			if vaultClient != nil {
+				err := vaultClient.RemoveSecrets([]vault.VaultSecret{{Path: path.Dir(secretPath), Value: ""}})
+				if err != nil {
+					return err
+				}
+			}
+			err = r.removeClusterFileFromTenant(instance.GetName(), repoName, reqLogger)
+			if err != nil {
+				return err
+			}
+		}
+		if deleted.Deleted {
+			return r.client.Update(context.TODO(), instance)
+		}
+
+		err = r.updateTenantGitRepo(repoName, instance.GetName())
 		if err != nil {
-			return reconcile.Result{}, err
+			return err
 		}
-	}
 
-	err = r.updateTenantGitRepo(repoName, instance.GetName())
-	if err != nil {
-		return reconcile.Result{}, err
-	}
+		helpers.AddTenantLabel(&instance.ObjectMeta, instance.Spec.TenantRef.Name)
+		helpers.AddDeletionProtection(instance)
+		controllerutil.AddFinalizer(instance, finalizerName)
 
-	helpers.AddTenantLabel(&instance.ObjectMeta, instance.Spec.TenantRef.Name)
-	instance.Spec.GitRepoURL, instance.Spec.GitHostKeys, err = helpers.GetGitRepoURLAndHostKeys(instance, r.client)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	err = r.client.Status().Update(context.TODO(), instance)
-	if err != nil {
-		return reconcile.Result{}, err
-	}
-	return reconcile.Result{}, r.client.Update(context.TODO(), instance)
+		instance.Spec.GitRepoURL, instance.Spec.GitHostKeys, err = helpers.GetGitRepoURLAndHostKeys(instance, r.client)
+		if err != nil {
+			return err
+		}
+		err = r.client.Status().Update(context.TODO(), instance)
+		if err != nil {
+			return err
+		}
+		return r.client.Update(context.TODO(), instance)
+	})
+
+	return reconcile.Result{}, err
 }
 
 func (r *ReconcileCluster) generateToken() (string, error) {
@@ -153,11 +194,15 @@ func (r *ReconcileCluster) newStatus(cluster *synv1alpha1.Cluster) error {
 	return nil
 }
 
+func (r *ReconcileCluster) getTenantCR(tenant types.NamespacedName) (*synv1alpha1.Tenant, error) {
+	tenantCR := &synv1alpha1.Tenant{}
+	return tenantCR, r.client.Get(context.TODO(), tenant, tenantCR)
+}
+
 func (r *ReconcileCluster) updateTenantGitRepo(tenant types.NamespacedName, clusterName string) error {
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		tenantCR := &synv1alpha1.Tenant{}
 
-		err := r.client.Get(context.TODO(), tenant, tenantCR)
+		tenantCR, err := r.getTenantCR(tenant)
 		if err != nil {
 			return err
 		}
@@ -204,4 +249,28 @@ func (r *ReconcileCluster) getServiceAccountToken(instance metav1.Object) (strin
 	}
 
 	return "", fmt.Errorf("no matching secrets found")
+}
+
+func (r *ReconcileCluster) removeClusterFileFromTenant(clusterName string, tenantInfo types.NamespacedName, reqLogger logr.Logger) error {
+
+	tenantCR, err := r.getTenantCR(tenantInfo)
+	if err != nil {
+		return err
+	}
+
+	fileName := clusterName + ".yml"
+
+	if tenantCR.Spec.GitRepoTemplate.TemplateFiles == nil {
+		return nil
+	}
+
+	if _, ok := tenantCR.Spec.GitRepoTemplate.TemplateFiles[fileName]; ok {
+		tenantCR.Spec.GitRepoTemplate.TemplateFiles[fileName] = manager.DeletionMagicString
+		err := r.client.Update(context.TODO(), tenantCR)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
