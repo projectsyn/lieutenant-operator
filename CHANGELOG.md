@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 ### Added
 - The operator can now remove external resources: Vault, Git Repository and Files in a repository
+### Changed
+- Documentation structure
 
 ## v0.1.5 - 2020-06-12
 ### Added

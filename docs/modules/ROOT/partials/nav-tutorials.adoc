@@ -1,1 +1,0 @@
-* xref:lieutenant-operator:ROOT:gettingstarted.adoc[Getting Started]

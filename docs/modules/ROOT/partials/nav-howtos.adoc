@@ -1,0 +1,2 @@
+* xref:lieutenant-operator:ROOT:install.adoc[Installation]
+* xref:lieutenant-operator:ROOT:howtos.adoc[How Tos]

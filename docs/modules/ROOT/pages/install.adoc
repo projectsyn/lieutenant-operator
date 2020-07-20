@@ -1,0 +1,19 @@
+= Tutorials
+
+== Install Operator
+[source,shell]
+--
+kubectl create ns syn-lieutenant
+kubectl -n syn-lieutenant apply -k deploy/crds/
+kubectl -n syn-lieutenant apply -k deploy/
+--
+
+Check that the operator is running.
+
+[source,shell]
+--
+kubectl get -n syn-lieutenant pods
+
+NAME                                   READY   STATUS    RESTARTS   AGE
+lieutenant-operator-85fc5c986b-vn2h7   1/1     Running   0          8s
+--
