@@ -98,12 +98,12 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 			deletionPolicy = helpers.GetDeletionPolicy()
 		}
 
-		vaultClient, err = vault.NewClient(deletionPolicy, reqLogger)
-		if err != nil {
-			return err
-		}
-
 		if strings.ToLower(os.Getenv("SKIP_VAULT_SETUP")) != "true" {
+
+			vaultClient, err = vault.NewClient(deletionPolicy, reqLogger)
+			if err != nil {
+				return err
+			}
 
 			token, err := r.getServiceAccountToken(instance)
 			if err != nil {
