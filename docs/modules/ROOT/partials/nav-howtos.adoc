@@ -1,2 +1,5 @@
-* xref:lieutenant-operator:ROOT:install.adoc[Installation]
-* xref:lieutenant-operator:ROOT:howtos.adoc[How Tos]
+* xref:lieutenant-operator:ROOT:how-tos/installation.adoc[Installation]
+* xref:lieutenant-operator:ROOT:how-tos/vault.adoc[Vault Configuration]
+* xref:lieutenant-operator:ROOT:how-tos/create-tenant.adoc[Create a Tenant]
+* xref:lieutenant-operator:ROOT:how-tos/create-cluster.adoc[Create a Cluster]
+* xref:lieutenant-operator:ROOT:how-tos/create-gitrepo.adoc[Create a Git Repository]

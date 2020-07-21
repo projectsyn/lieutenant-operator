@@ -1,3 +1,6 @@
+= CRD Documentation
+:notitle:
+
 ++++
 include::partial$crds.html[]
 ++++

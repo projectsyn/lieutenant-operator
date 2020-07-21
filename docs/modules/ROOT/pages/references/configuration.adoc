@@ -1,26 +1,36 @@
 = Configuration
 
-This section is the configuration reference for the operator.
+Lieutenant Operator is configured via environment variables:
 
-== Environment variables
-
-[cols=",",options="header",]
+[cols=",,",options="header",]
 |===
 
-a| Environment Variable
+|Environment Variable
+|Description
+|Default
 
-a| Description
+|VAULT_ADDR
+|Sets the address to the Vault instance
+|
 
-| VAULT_ADDR | Sets the address to the Vault instance
+|VAULT_TOKEN
+|Sets the Vault token to be used, only recommended for testing. In production the https://www.vaultproject.io/docs/auth/kubernetes[K8s authentication] should be used by omitting the setting.
+|
 
-| VAULT_TOKEN | Sets the Vault token to be used, only recommended for testing. In production the https://www.vaultproject.io/docs/auth/kubernetes[K8s authentication] should be used by omitting the setting.
+|SKIP_VAULT_SETUP
+|Doesn't create any Vault secrets. Recommended for testing only.
+|false
 
-| SKIP_VAULT_SETUP | Doesn't create any Vault secrets. Recommended for testing only.
+|DEFAULT_DELETION_POLICY
+|Sets what deletion policy for external resources (Git, Vault) should be used by default. One of `Archive`, `Delete`, `Retain`. See xref:explanation/deletion.adoc[Explanation/Object Deletion] for more information.
+|Archive
 
-| DEFAULT_DELETION_POLICY | Sets what deletion policy for external resources (Git, Vault) should be used by default. One of `Archive`, `Delete`, `Retain`
+|LIEUTENANT_DELETE_PROTECTION
+|Defines whether the annotation to protect for accidental deletion should be set by default. See xref:explanation/deletion.adoc[Explanation/Object Deletion] for more information.
+|true
 
-| LIEUTENANT_SYNC_DURATION | Defines with what frequency the CRs will be synced. Default: 5m
-
-| LIEUTENANT_DELETE_PROTECTION | Defines whether the annotation to protect for accidental deletion should be set by default. Default: true
+|LIEUTENANT_SYNC_DURATION
+|Defines with what frequency the CRs will be synced
+|5m
 
 |===

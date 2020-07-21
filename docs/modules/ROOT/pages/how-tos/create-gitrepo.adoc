@@ -1,0 +1,30 @@
+= Create a Git Repository
+
+It's usually not necessary to create a Git Repository manually, as they're automatically created through a cluster or tenant. But if you need an operator managed git repository you can do that with the following manifest.
+
+The following example manifest will create a Git Repository:
+
+[source,yaml]
+....
+apiVersion: syn.tools/v1alpha1
+kind: GitRepo
+metadata:
+  name: example-gitrepo2
+  namespace: lieutenant
+spec:
+  tenantRef:
+    name: foo
+    namespace: lieutenant
+  apiSecretRef:
+    name: lieutenant-secret
+  path: cluster/subgroup
+  repoName: bar
+  deployKeys:
+    test:
+      type: ssh-ed25519
+      key: AAAACxxxx
+      writeAccess: true
+      writeAccess: false
+....
+
+Please be aware that you first need to have a valid secret containing the endpoint information, see xref:how-tos/gitlab-connection.adoc[Connection to GitLab].
