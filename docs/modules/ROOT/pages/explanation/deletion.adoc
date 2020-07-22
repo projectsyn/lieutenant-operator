@@ -1,0 +1,34 @@
+= Object Deletion
+
+Object deletion is considered a dangerous activity which could lead into dataloss, therefore Lieutenant Operator implements a safeguard and a configuration per object what to do with external resources.
+
+== Deletion Protection
+
+The annotation `syn.tools/protected-delete` controls if an object can be deleted or not. As long as this annotation holds the value `true`, the finalizer will block the object from being deleted.
+
+The Operator automatically annotates objects as configured in the environment variable `LIEUTENANT_DELETE_PROTECTION` (see xref:references/configuration.adoc[References/Configuration]).
+
+== Deletion Policy
+
+The deletion policy defines how external resources (for example Git repositories, Vault secrets) are handled when an object gets deleted.
+
+[cols=",,",options="header",]
+|===
+
+|Policy
+|Git repo
+|Vault secret
+
+|_Archive_
+|Archival of Git repository
+|Secret https://www.vaultproject.io/docs/secrets/kv/kv-v2#deleting-and-destroying-data[soft deletion]
+
+|_Delete_
+|Deletion of Git repository
+|Secret https://www.vaultproject.io/docs/secrets/kv/kv-v2#deleting-and-destroying-data[hard deletion]
+
+|_Retain_
+|Do nothing
+|Do nothing
+
+|===

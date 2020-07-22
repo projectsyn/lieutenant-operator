@@ -1,0 +1,22 @@
+= Connection to GitLab
+
+For the Lieutenant Operator to be able to connect to the GitLab API, the following configuration needs to be made.
+
+== Get GitLab Token
+
+. Visit the GitLab instance you'd like to use.
+. Login with the user that has the permissions necessary to write to the group you want to store your Project Syn repositories.
+. Visit `\https://yourgitlab/profile/personal_access_tokens` and create a token with the following settings:
++
+image::gitlab_settings.png[]
+
+== Add Secret with Endpoint Information
+
+Before any other things can be created we need to specify the Git repository API endpoint first:
+
+[source,shell]
+....
+kubectl -n lieutenant create secret generic lieutenant-secret \
+  --from-literal endpoint=http://10.144.1.197:8080 \
+  --from-literal token=<token>
+....

@@ -1,0 +1,16 @@
+= Installation of the Operator
+
+The Operator provides a Kustomize folder which allows for easy installation:
+
+[source,shell]
+--
+kubectl create namespace lieutenant
+
+# CRDs (global scope)
+kubectl apply -k github.com/projectsyn/lieutenant-operator/deploy/crds
+
+# Operator deployment
+kubectl -n lieutenant apply -k github.com/projectsyn/lieutenant-operator/deploy
+--
+
+The deployment artefact are to be found in the https://github.com/projectsyn/lieutenant-operator/tree/master/deploy[`/deploy`] folder.
