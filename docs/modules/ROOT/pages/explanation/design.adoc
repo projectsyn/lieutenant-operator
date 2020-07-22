@@ -43,7 +43,7 @@ _GitRepo_
 
 * Create Git repository +
 ** By default on http://git.vshn.net/[git.vshn.net] GitLab
-** Supported are GitLab, GitHub and Gitea APIs
+** Supported is GitLab. Support for GitHub and Gitea is planned.
 ** SSH key delivered by Steward is configured as deploy key
 * Delete Git repository
 * Update Git repository when configuration changes

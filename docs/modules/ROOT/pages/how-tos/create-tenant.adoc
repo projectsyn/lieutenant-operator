@@ -18,11 +18,6 @@ spec:
     apiSecretRef:
       name: lieutenant-secret
       namespace: lieutenant
-    deployKeys:
-      test:
-        type: ssh-ed25519
-        key: AAAACxxxx
-        writeAccess: true
 ....
 
 Please be aware that you first need to have a valid secret containing the endpoint information, see xref:how-tos/gitlab-connection.adoc[Connection to GitLab].
