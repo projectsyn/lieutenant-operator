@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The operator can now remove external resources: Vault, Git Repository and Files in a repository
 ### Changed
 - Documentation structure
+### Fixed
+- Vault nilpointer if `SKIP_VAULT_SETUP` is set
 
 ## v0.1.5 - 2020-06-12
 ### Added
