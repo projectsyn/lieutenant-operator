@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Documentation structure
 ### Fixed
 - Vault nilpointer if `SKIP_VAULT_SETUP` is set
+- Fix broken `gitlab.com` detection due to CloudFlare checking
 
 ## v0.1.5 - 2020-06-12
 ### Added

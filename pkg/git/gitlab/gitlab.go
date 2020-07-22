@@ -230,15 +230,19 @@ func (g *Gitlab) FullURL() *url.URL {
 // it will return false.
 func (g *Gitlab) IsType(URL *url.URL) (bool, error) {
 
+	if strings.Contains(URL.Host, "gitlab.com") {
+		return true, nil
+	}
+
 	httpClient := &http.Client{
 		Timeout: 10 * time.Second,
 	}
 
-	gitlabURL := URL.Scheme + "://" + URL.Host + "/users/sign_in'"
+	gitlabURL := URL.Scheme + "://" + URL.Host + "/users/sign_in"
 
 	resp, err := httpClient.Get(gitlabURL)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("can't query gitlab login page: %w", err)
 	}
 
 	if resp.StatusCode == http.StatusNotFound {
@@ -246,7 +250,7 @@ func (g *Gitlab) IsType(URL *url.URL) (bool, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return false, fmt.Errorf("status code was %d", resp.StatusCode)
+		return false, fmt.Errorf("gitlab detection status code was %d", resp.StatusCode)
 	}
 
 	return true, nil
