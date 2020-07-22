@@ -14,7 +14,6 @@ metadata:
 spec:
   tenantRef:
     name: foo
-    namespace: lieutenant
   apiSecretRef:
     name: lieutenant-secret
   path: cluster/subgroup
@@ -24,7 +23,6 @@ spec:
       type: ssh-ed25519
       key: AAAACxxxx
       writeAccess: true
-      writeAccess: false
 ....
 
 Please be aware that you first need to have a valid secret containing the endpoint information, see xref:how-tos/gitlab-connection.adoc[Connection to GitLab].

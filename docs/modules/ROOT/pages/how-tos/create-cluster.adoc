@@ -15,10 +15,10 @@ spec:
   displayName: Another Big Corp. Production Cluster
   deletionPolicy: Delete
   gitRepoTemplate:
-    path: cluster
-    repoName: cluster2
+    path: cluster-catalogs # path (org/group) to repo
+    repoName: cluster2 # name of the repo to create
     deletionPolicy: Delete
-    apiSecretRef:
+    apiSecretRef: # reference to a secret containing credentials for the git provider
       name: lieutenant-secret
       namespace: lieutenant
     deployKeys:
