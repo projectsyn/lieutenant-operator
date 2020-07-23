@@ -1,0 +1,16 @@
+= Vault Configuration
+
+To configure Vault so that Lieutenant Operator can use it, follow these steps:
+
+. Visit `\https://yourvault/ui/vault/policies/acl` and click `Create ACL Policy`. Then paste following policy into the field:
++
+[source,hcl]
+----
+include::partial$policy.hcl[]
+----
++
+Name it `lieutenant-operator`
+. Create a new secret engine by visiting `\https://yourvault/ui/vault/secrets` and clicking on `Enable new engine`.
+.. Select KV
+.. Click next, the path needs to be `kv` and the `Version` needs to be 2
+.. Click `Enable Engine`

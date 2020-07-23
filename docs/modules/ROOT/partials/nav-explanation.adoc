@@ -1,1 +1,2 @@
-* xref:lieutenant-operator:ROOT:explanation.adoc[Various]
+* xref:lieutenant-operator:ROOT:explanation/design.adoc[Operator Design]
+* xref:lieutenant-operator:ROOT:explanation/deletion.adoc[Object Deletion]

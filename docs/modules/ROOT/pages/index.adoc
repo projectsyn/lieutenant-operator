@@ -1,4 +1,4 @@
-= Project SYN: Lieutenant Operator
+= Lieutenant Operator
 
 Welcome to the documentation of the Lieutenant Operator - a Project Syn tool.
 
@@ -7,3 +7,9 @@ image::syn.png[]
 Keeping inventory about tenants and clusters. It's the "database" for the link:https://github.com/projectsyn/lieutenant-api[lieutenant-api]. It primarily holds information about the tenants and clusters.
 
 It also handles the management of some requirements like Git repositories and secret management: it can automatically populate Git repositories with skeleton files when a new cluster is added. It will also generate a token to be used by link:https://github.com/projectsyn/steward[Steward].
+
+The main interaction point with the Lieutenant Operator is through the https://syn.tools/lieutenant-api/[Lieutenant API].
+
+The operator is written in Go using the https://github.com/operator-framework/operator-sdk/[Operator SDK].
+
+TIP: To get started fast, have a look at the tutorial https://syn.tools/syn/getting-started.html[Getting Started with Project Syn].

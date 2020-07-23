@@ -60,6 +60,9 @@ docker:
 .PHONY: docs
 docs: generate $(web_dir)/index.html
 
+.PHONY: docs-html
+docs-html: $(web_dir)/index.html
+
 $(web_dir)/index.html: playbook.yml $(pages)
 	$(antora_cmd) $(antora_opts) $<
 
