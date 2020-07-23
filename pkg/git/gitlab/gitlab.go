@@ -2,10 +2,8 @@ package gitlab
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/projectsyn/lieutenant-operator/pkg/git/helpers"
 	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
@@ -225,33 +223,10 @@ func (g *Gitlab) FullURL() *url.URL {
 	return sshURL
 }
 
-// IsType determines if the given url can be handled by this concrete implementation.
-// This is done by a simple http query to the login page of gitlab. If any errors occur anywhere
-// it will return false.
+// TODO: this will be deprecated in favour of a fixed type definition in the
+// CRD. As there's currently only the GitLab implementation this is a workaround
+// for the brittle detection.
 func (g *Gitlab) IsType(URL *url.URL) (bool, error) {
-
-	if strings.Contains(URL.Host, "gitlab.com") {
-		return true, nil
-	}
-
-	httpClient := &http.Client{
-		Timeout: 10 * time.Second,
-	}
-
-	gitlabURL := URL.Scheme + "://" + URL.Host + "/users/sign_in"
-
-	resp, err := httpClient.Get(gitlabURL)
-	if err != nil {
-		return false, fmt.Errorf("can't query gitlab login page: %w", err)
-	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		return false, nil
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return false, fmt.Errorf("gitlab detection status code was %d", resp.StatusCode)
-	}
 
 	return true, nil
 }
