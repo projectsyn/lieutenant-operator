@@ -73,36 +73,6 @@ func TestGitlab_Read(t *testing.T) {
 	}
 }
 
-func TestGitlab_IsType(t *testing.T) {
-	tests := []struct {
-		name       string
-		want       bool
-		httpServer *httptest.Server
-	}{
-		{
-			name:       "is gitlab",
-			want:       true,
-			httpServer: testGetHTTPServer(http.StatusOK, []byte("")),
-		},
-		{
-			name:       "is not Gitlab",
-			want:       false,
-			httpServer: testGetHTTPServer(http.StatusNotFound, []byte("")),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			defer tt.httpServer.Close()
-			g := &Gitlab{}
-			serverURL, _ := url.Parse(tt.httpServer.URL)
-			if got, _ := g.IsType(serverURL); got != tt.want {
-				t.Errorf("IsType() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-
-}
-
 func testGetCreateServer() *httptest.Server {
 	mux := http.NewServeMux()
 
