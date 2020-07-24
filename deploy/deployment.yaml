@@ -12,7 +12,7 @@ spec:
           image: docker.io/projectsyn/lieutenant-operator:latest
           imagePullPolicy: Always
           command:
-          - lieutenant-operator
+            - lieutenant-operator
           env:
             - name: WATCH_NAMESPACE
               valueFrom:
