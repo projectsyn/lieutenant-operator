@@ -64,8 +64,7 @@ A high-level description about the idea behind the objects:
 |_Tenant_
 a|When a _Tenant_ is created:
 
-* a _GitRepo_ object
-is created to create the *tenant configuration repository*.
+* a _GitRepo_ object is created to create the *tenant configuration repository*.
 
 When a _Tenant_ object is deleted:
 
@@ -74,8 +73,7 @@ When a _Tenant_ object is deleted:
 |_Cluster_
 a|When a _Cluster_ object is created:
 
-* a _GitRepo_ object is created to create the *cluster catalog
-configuration repository*.
+* a _GitRepo_ object is created to create the *cluster catalog configuration repository*.
 
 When a _Cluster_ object is deleted:
 
