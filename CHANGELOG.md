@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Changed
+
+- Apply the default Syn project meta files ([#90])
+
 ## [v0.2.0] - 2020-07-23
 ### Added
 - The operator can now remove external resources: Vault, Git Repository and Files in a repository ([#76])
@@ -83,3 +88,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#84]: https://github.com/projectsyn/lieutenant-operator/pull/84
 [#85]: https://github.com/projectsyn/lieutenant-operator/pull/85
 [#88]: https://github.com/projectsyn/lieutenant-operator/pull/88
+[#90]: https://github.com/projectsyn/lieutenant-operator/pull/90
