@@ -1,5 +1,38 @@
 = Operator Design
 
+[ditaa, cloudscale, svg]
+....
+                   +--------------+
+                   |Lieutenant API|
+                   +-------+------+
+                           |
+Lieutenant Operator        v
+/--------------------------+------------------------------\
+|                                                         |
+|                 +-----------------+              c1AB   |
+|                 |Tenant     cBLU  |                     |
+|                 +----+-------+----+                     |
+|                      ^       |                          |
+|                      |       |                          |
+|          +-----------+       +--------+                 |
+|          |Belongs to                  |                 |
+|          |                            |                 |
+|          |                            | Generates       |
+|  +-------+---------+                  | Tenant          |
+|  |Cluster   cBLU   |                  | configuration   |
+|  +-------+---------+                  | Git repository  |
+|          |                            |                 |
+|          | Generates                  |                 |
+|          | Cluster Catalog            |                 |
+|          | Git repository             |                 |
+|          v                            v                 |
+|  +-------+--------+          +--------+-------+         |
+|  |GitRepo   cBLU  |          |GitRepo    cBLU |         |
+|  +----------------+          +----------------+         |
+|                                                         |
+\---------------------------------------------------------/
+....
+
 == API Group and Version
 
 The CRDs that the operator is handling are living in these groups and versions:
@@ -29,34 +62,29 @@ A high-level description about the idea behind the objects:
 |Description
 
 |_Tenant_
-a|When a tenant is created, a _GitRepo_ object
-is created to create the *tenant configuration repository*.
+a|When a _Tenant_ is created:
 
-|_GitRepo_
-a|Git repository management (CRUD repositories on GitLab, GitHub and Gitea).
-Lieutenant manages the CR objects and queries the status fields to get
-the status.
+* a _GitRepo_ object is created to create the *tenant configuration repository*.
 
-The Operator manages the following objects:
+When a _Tenant_ object is deleted:
 
-_GitRepo_
-
-* Create Git repository +
-** By default on http://git.vshn.net/[git.vshn.net] GitLab
-** Supported is GitLab. Support for GitHub and Gitea is planned.
-** SSH key delivered by Steward is configured as deploy key
-* Delete Git repository
-* Update Git repository when configuration changes
-** Only SSH deploy key change supported
+* All created objects are deleted by `ownerReference` mechanisms
 
 |_Cluster_
 a|When a _Cluster_ object is created:
 
-* a _GitRepo_ object is created to create the *cluster catalog
-configuration repository*.
+* a _GitRepo_ object is created to create the *cluster catalog configuration repository*.
 
 When a _Cluster_ object is deleted:
 
 * All created objects are deleted by `ownerReference` mechanisms
+
+|_GitRepo_
+a|Git repository management. Currently supported is GitLab. Support for GitHub and Gitea is planned.
+
+* _Create_ Git repository
+** SSH key delivered by Steward is configured as deploy key
+* _Delete_ or archive Git repository
+* _Update_ Git repository when configuration changes
 
 |===
