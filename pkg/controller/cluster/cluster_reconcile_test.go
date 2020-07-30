@@ -12,7 +12,7 @@ import (
 
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
-	"github.com/projectsyn/lieutenant-operator/pkg/controller/tenant"
+	"github.com/projectsyn/lieutenant-operator/pkg/pipeline"
 	"github.com/projectsyn/lieutenant-operator/pkg/vault"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -267,7 +267,7 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			if tt.skipVault {
 				assert.Empty(t, testMockClient.secrets)
 			} else {
-				saToken, err := r.getServiceAccountToken(newCluster)
+				saToken, err := pipeline.GetServiceAccountToken(newCluster, &pipeline.ExecutionContext{Client: cl})
 				saSecrets := []vault.VaultSecret{{Value: saToken, Path: path.Join(tt.fields.tenantName, tt.fields.objName, "steward")}}
 				assert.NoError(t, err)
 				assert.Equal(t, testMockClient.secrets, saSecrets)
@@ -288,7 +288,7 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			assert.NoError(t, err)
 			fileContent, found := testTenant.Spec.GitRepoTemplate.TemplateFiles[tt.fields.objName+".yml"]
 			assert.True(t, found)
-			assert.Equal(t, fileContent, fmt.Sprintf(clusterClassContent, tt.fields.tenantName, tenant.CommonClassName))
+			assert.Equal(t, fileContent, fmt.Sprintf(clusterClassContent, tt.fields.tenantName, pipeline.CommonClassName))
 		})
 	}
 }
@@ -435,13 +435,9 @@ func TestReconcileCluster_getServiceAccountToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			cl, s := testSetupClient(tt.args.objs)
+			cl, _ := testSetupClient(tt.args.objs)
 
-			r := &ReconcileCluster{
-				client: cl,
-				scheme: s,
-			}
-			got, err := r.getServiceAccountToken(tt.args.instance)
+			got, err := pipeline.GetServiceAccountToken(tt.args.instance, &pipeline.ExecutionContext{Client: cl})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ReconcileCluster.getServiceAccountToken() error = %v, wantErr %v", err, tt.wantErr)
 				return

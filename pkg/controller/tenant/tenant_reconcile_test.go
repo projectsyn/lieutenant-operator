@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
+	"github.com/projectsyn/lieutenant-operator/pkg/pipeline"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -20,7 +21,7 @@ import (
 func testSetupClient(objs []runtime.Object) (client.Client, *runtime.Scheme) {
 	s := scheme.Scheme
 	s.AddKnownTypes(synv1alpha1.SchemeGroupVersion, objs...)
-	return fake.NewFakeClient(objs...), s
+	return fake.NewFakeClientWithScheme(s, objs...), s
 }
 
 func TestHandleNilGitRepoTemplate(t *testing.T) {
@@ -118,7 +119,7 @@ func TestCreateGitRepo(t *testing.T) {
 			err = cl.Get(context.TODO(), gitRepoNamespacedName, gitRepo)
 			assert.NoError(t, err)
 			assert.Equal(t, tenant.Spec.DisplayName, gitRepo.Spec.GitRepoTemplate.DisplayName)
-			fileContent, found := gitRepo.Spec.GitRepoTemplate.TemplateFiles[CommonClassName+".yml"]
+			fileContent, found := gitRepo.Spec.GitRepoTemplate.TemplateFiles[pipeline.CommonClassName+".yml"]
 			assert.True(t, found)
 			assert.Equal(t, "", fileContent)
 		})

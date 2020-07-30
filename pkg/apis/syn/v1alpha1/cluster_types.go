@@ -81,3 +81,29 @@ type ClusterList struct {
 func init() {
 	SchemeBuilder.Register(&Cluster{}, &ClusterList{})
 }
+
+// GetGitTemplate returns the git repository template
+func (c *Cluster) GetGitTemplate() *GitRepoTemplate {
+	return c.Spec.GitRepoTemplate
+}
+
+// GetTenantRef returns the tenant of this CR
+func (c *Cluster) GetTenantRef() corev1.LocalObjectReference {
+	return c.Spec.TenantRef
+}
+
+// GetDeletionPolicy returns the object's deletion policy
+func (c *Cluster) GetDeletionPolicy() DeletionPolicy {
+	return c.Spec.DeletionPolicy
+}
+
+// GetDisplayName returns the display name of the object
+func (c *Cluster) GetDisplayName() string {
+	return c.Spec.DisplayName
+}
+
+// SetGitRepoURLAndHostKeys
+func (c *Cluster) SetGitRepoURLAndHostKeys(URL, hostKeys string) {
+	c.Spec.GitRepoURL = URL
+	c.Spec.GitHostKeys = hostKeys
+}

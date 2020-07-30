@@ -4,20 +4,12 @@ import (
 	"context"
 	"os"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/util/retry"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
-	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
-	"k8s.io/apimachinery/pkg/api/equality"
+	"github.com/projectsyn/lieutenant-operator/pkg/pipeline"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-)
-
-const (
-	// CommonClassName is the name of the tenant's common class
-	CommonClassName = "common"
 )
 
 // Reconcile The Controller will requeue the Request to be processed again if the returned error is non-nil or
@@ -32,56 +24,23 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 		err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 		if err != nil {
 			if errors.IsNotFound(err) {
-				// Request object not found, could have been deleted after reconcile request.
-				// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-				// Return and don't requeue
 				return nil
 			}
-			// Error reading the object - requeue the request.
 			return err
 		}
 		instanceCopy := instance.DeepCopy()
 
-		if instance.Spec.GitRepoTemplate != nil {
-			if len(instance.Spec.GitRepoTemplate.DisplayName) == 0 {
-				instance.Spec.GitRepoTemplate.DisplayName = instance.Spec.DisplayName
-			}
-
-			commonClassFile := CommonClassName + ".yml"
-			if instance.Spec.GitRepoTemplate.TemplateFiles == nil {
-				instance.Spec.GitRepoTemplate.TemplateFiles = map[string]string{}
-			}
-			if _, ok := instance.Spec.GitRepoTemplate.TemplateFiles[commonClassFile]; !ok {
-				instance.Spec.GitRepoTemplate.TemplateFiles[commonClassFile] = ""
-			}
-
-			instance.Spec.GitRepoTemplate.DeletionPolicy = instance.Spec.DeletionPolicy
-
-			result, err := helpers.CreateOrUpdateGitRepo(instance, r.scheme, instance.Spec.GitRepoTemplate, r.client, corev1.LocalObjectReference{Name: instance.GetName()})
-			if err != nil {
-				return err
-			}
-
-			if result != controllerutil.OperationResultCreated {
-				instance.Spec.GitRepoURL, _, err = helpers.GetGitRepoURLAndHostKeys(instance, r.client)
-				if err != nil {
-					return err
-				}
-			}
+		data := &pipeline.ExecutionContext{
+			Client:        r.client,
+			Log:           reqLogger,
+			FinalizerName: "",
 		}
 
-		// Set URL of global git repo from default
-		defaultGlobalGitRepoURL := os.Getenv("DEFAULT_GLOBAL_GIT_REPO_URL")
-		if len(instance.Spec.GlobalGitRepoURL) == 0 && len(defaultGlobalGitRepoURL) > 0 {
-			instance.Spec.GlobalGitRepoURL = defaultGlobalGitRepoURL
+		err = pipeline.ReconcileTenant(instance, data)
+		if err != nil {
+			return err
 		}
 
-		helpers.AddDeletionProtection(instance)
-		if !equality.Semantic.DeepEqual(instanceCopy, instance) {
-			if err := r.client.Update(context.TODO(), instance); err != nil {
-				return err
-			}
-		}
 		return nil
 	})
 	return reconcile.Result{}, err

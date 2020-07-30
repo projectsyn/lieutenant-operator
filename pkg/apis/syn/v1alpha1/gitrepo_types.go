@@ -130,3 +130,28 @@ type GitRepoList struct {
 func init() {
 	SchemeBuilder.Register(&GitRepo{}, &GitRepoList{})
 }
+
+// GetGitTemplate returns the git repository template
+func (g *GitRepo) GetGitTemplate() *GitRepoTemplate {
+	return &g.Spec.GitRepoTemplate
+}
+
+// GetTenantRef returns the tenant of this CR
+func (g *GitRepo) GetTenantRef() corev1.LocalObjectReference {
+	return g.Spec.TenantRef
+}
+
+// GetDeletionPolicy returns the object's deletion policy
+func (g *GitRepo) GetDeletionPolicy() DeletionPolicy {
+	return g.Spec.DeletionPolicy
+}
+
+// GetDisplayName returns the display name of the object
+func (g *GitRepo) GetDisplayName() string {
+	return g.Spec.DisplayName
+}
+
+// SetGitRepoURLAndHostKeys is currenlty a noop for gitrepo
+func (g *GitRepo) SetGitRepoURLAndHostKeys(URL, hostKeys string) {
+	//NOOP
+}
