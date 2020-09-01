@@ -5,7 +5,6 @@ VERSION ?= $(shell git describe --tags --always --dirty --match=v* || (echo "com
 
 IMAGE_NAME ?= docker.io/projectsyn/$(BINARY_NAME):$(VERSION)
 
-# Antora variables
 # Go parameters
 GOCMD   ?= go
 GOBUILD ?= $(GOCMD) build

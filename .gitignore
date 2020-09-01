@@ -1,7 +1,3 @@
-# Antora related stuff
-.cache
-_antora
-
 build/_output/*
 .vscode/
 .idea/
