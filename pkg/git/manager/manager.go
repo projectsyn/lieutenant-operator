@@ -1,12 +1,29 @@
 package manager
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/go-logr/logr"
+)
+
+const (
+	// SecretTokenName is the name of the secret entry containing the token
+	SecretTokenName = "token"
+	// SecretHostKeysName is the name of the secret entry containing the SSH host keys
+	SecretHostKeysName = "hostKeys"
+	// SecretEndpointName is the name of the secret entry containing the api endpoint
+	SecretEndpointName = "endpoint"
+	// DeletionMagicString defines when a file should be deleted from the repository
+	//TODO it will be replaced with somethin better in the futur TODO
+	DeletionMagicString = "{delete}"
 )
 
 var (
@@ -41,15 +58,17 @@ func NewRepo(opts RepoOptions) (Repo, error) {
 
 // RepoOptions hold the options for creating a repository. The credentials are required to work. The deploykeys are
 // optional but desired.
+// If not provided DeletionPolicy will default to archive.
 type RepoOptions struct {
-	Credentials       Credentials
-	DeployKeys        map[string]synv1alpha1.DeployKey
-	Logger            logr.Logger
-	URL               *url.URL
-	Path              string
-	RepoName          string
-	DisplayName   	  string
-	TemplateFiles     map[string]string
+	Credentials    Credentials
+	DeployKeys     map[string]synv1alpha1.DeployKey
+	Logger         logr.Logger
+	URL            *url.URL
+	Path           string
+	RepoName       string
+	DisplayName    string
+	TemplateFiles  map[string]string
+	DeletionPolicy synv1alpha1.DeletionPolicy
 }
 
 // Credentials holds the authentication information for the API. Most of the times this
@@ -71,9 +90,12 @@ type Repo interface {
 	// Read will read the repository and populate it with the deployed keys. It will throw an
 	// error if the repo is not found on the server.
 	Read() error
-	Delete() error
+	// Remove will remove the git project according to the recycle policy
+	Remove() error
 	Connect() error
-	// CommitTemplateFiles uploads given files to the repository
+	// CommitTemplateFiles uploads given files to the repository.
+	// files that contain exactly the deletion magic string should be removed
+	// when calling this function. TODO: will be replaced with something better in the future.
 	CommitTemplateFiles() error
 }
 
@@ -84,4 +106,75 @@ type Implementation interface {
 	IsType(URL *url.URL) (bool, error)
 	// New returns a clean new Repo implementation with the given URL
 	New(options RepoOptions) (Repo, error)
+}
+
+// CommitFile contains all information about a file that should be committed to git
+// TODO migrate to the CRDs in the future.
+type CommitFile struct {
+	FileName string
+	Content  string
+	Delete   bool
+}
+
+// GetGitClient will return a git client from a provided template. This does a lot more
+// plumbing than the simple NewClient() call. If you're needing a git client from a
+// reconcile function, this is the way to go.
+func GetGitClient(instance *synv1alpha1.GitRepoTemplate, namespace string, reqLogger logr.Logger, client client.Client) (Repo, string, error) {
+	secret := &corev1.Secret{}
+	namespacedName := types.NamespacedName{
+		Name:      instance.APISecretRef.Name,
+		Namespace: namespace,
+	}
+
+	if len(instance.APISecretRef.Namespace) > 0 {
+		namespacedName.Namespace = instance.APISecretRef.Namespace
+	}
+
+	err := client.Get(context.TODO(), namespacedName, secret)
+	if err != nil {
+		return nil, "", fmt.Errorf("error getting git secret: %v", err)
+	}
+
+	hostKeysString := ""
+	if hostKeys, ok := secret.Data[SecretHostKeysName]; ok {
+		hostKeysString = string(hostKeys)
+	}
+
+	if _, ok := secret.Data[SecretEndpointName]; !ok {
+		return nil, "", fmt.Errorf("secret %s does not contain endpoint data", secret.GetName())
+	}
+
+	if _, ok := secret.Data[SecretTokenName]; !ok {
+		return nil, "", fmt.Errorf("secret %s does not contain token", secret.GetName())
+	}
+
+	repoURL, err := url.Parse(string(secret.Data[SecretEndpointName]) + "/" + instance.Path + "/" + instance.RepoName)
+
+	if err != nil {
+		return nil, "", err
+	}
+
+	repoOptions := RepoOptions{
+		Credentials: Credentials{
+			Token: string(secret.Data[SecretTokenName]),
+		},
+		DeployKeys:     instance.DeployKeys,
+		Logger:         reqLogger,
+		Path:           instance.Path,
+		RepoName:       instance.RepoName,
+		DisplayName:    instance.DisplayName,
+		URL:            repoURL,
+		TemplateFiles:  instance.TemplateFiles,
+		DeletionPolicy: instance.DeletionPolicy,
+	}
+
+	repo, err := NewRepo(repoOptions)
+	if err != nil {
+		return nil, "", err
+	}
+
+	err = repo.Connect()
+
+	return repo, hostKeysString, err
+
 }

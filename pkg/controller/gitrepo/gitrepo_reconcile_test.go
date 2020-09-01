@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
 
 	corev1 "k8s.io/api/core/v1"
@@ -51,7 +52,7 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 				name:       "testrep",
 				namespace:  "testnamespace",
 				secretName: "testsecret",
-				URL:        "something",
+				URL:        "some.example.com",
 			},
 			wantErr: true,
 		},
@@ -60,19 +61,19 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 			fields: fields{
 				name:        "anothertest",
 				namespace:   "namespace",
-				displayName: "desc",
+				displayName: "This is the name",
 				tenantName:  "sometenant",
 				secretName:  "testsecret",
-				URL:         "another",
+				URL:         "git.corp.net",
 			},
 		},
 	}
 
-	manager.Register(&testRepoImplementation{})
+	testRepo := &testRepoImplementation{}
+	manager.Register(testRepo)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			repo := &synv1alpha1.GitRepo{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      tt.fields.name,
@@ -84,10 +85,10 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 							Name:      tt.fields.secretName,
 							Namespace: tt.fields.namespace,
 						},
-						DeployKeys: nil,
-						Path:       tt.fields.namespace,
-						RepoName:   tt.fields.name,
-						DisplayName:  tt.fields.displayName,
+						DeployKeys:  nil,
+						Path:        tt.fields.namespace,
+						RepoName:    tt.fields.name,
+						DisplayName: tt.fields.displayName,
 					},
 					TenantRef: corev1.LocalObjectReference{
 						Name: tt.fields.tenantName,
@@ -101,9 +102,9 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 					Namespace: tt.fields.namespace,
 				},
 				Data: map[string][]byte{
-					SecretEndpointName: []byte(tt.fields.URL),
-					SecretTokenName:    []byte("secret"),
-					SecretHostKeysName: []byte("somekey"),
+					manager.SecretEndpointName: []byte(tt.fields.URL),
+					manager.SecretTokenName:    []byte("secret"),
+					manager.SecretHostKeysName: []byte("somekey"),
 				},
 			}
 
@@ -129,30 +130,43 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 				t.Errorf("Reconcile() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+			gitRepo := &synv1alpha1.GitRepo{}
+			err = cl.Get(context.TODO(), req.NamespacedName, gitRepo)
+			assert.NoError(t, err)
 			if !tt.wantErr {
-				gitRepo := &synv1alpha1.GitRepo{}
-				err = cl.Get(context.TODO(), req.NamespacedName, gitRepo)
-				assert.NoError(t, err)
-				assert.Equal(t, string(secret.Data[SecretHostKeysName]), gitRepo.Status.HostKeys)
-				assert.Equal(t, synv1alpha1.AutoRepoType, gitRepo.Spec.RepoType)
+				assert.Equal(t, string(secret.Data[manager.SecretHostKeysName]), gitRepo.Status.HostKeys)
+				assert.Equal(t, synv1alpha1.DefaultRepoType, gitRepo.Spec.RepoType)
 				assert.Equal(t, tt.fields.displayName, gitRepo.Spec.DisplayName)
 				assert.Equal(t, tt.fields.displayName, savedGitRepoOpt.DisplayName)
+				assert.Equal(t, tt.fields.tenantName, gitRepo.Labels[apis.LabelNameTenant])
+				assert.Equal(t, synv1alpha1.Created, *gitRepo.Status.Phase)
+				assert.Equal(t, tt.fields.URL+"/"+tt.fields.namespace+"/"+tt.fields.name, gitRepo.Status.URL)
+				assert.Equal(t, synv1alpha1.GitType("test"), gitRepo.Status.Type)
 			}
 		})
 	}
 }
 
 type testRepoImplementation struct {
-	//meh
+	options manager.RepoOptions
 }
 
 func (t testRepoImplementation) IsType(URL *url.URL) (bool, error) {
-	return strings.Contains(URL.String(), "another"), nil
+	return strings.HasPrefix(URL.String(), "git"), nil
 }
 
 func (t testRepoImplementation) New(options manager.RepoOptions) (manager.Repo, error) {
+	t.options = options
 	savedGitRepoOpt = options
-	return testRepoImplementation{}, nil
+	return t, nil
+}
+
+func (t testRepoImplementation) RemoveFile(path string) error {
+	return nil
+}
+
+func (t testRepoImplementation) Remove() error {
+	return nil
 }
 
 func (t testRepoImplementation) Type() string {
@@ -160,7 +174,7 @@ func (t testRepoImplementation) Type() string {
 }
 
 func (t testRepoImplementation) FullURL() *url.URL {
-	return &url.URL{}
+	return t.options.URL
 }
 
 func (t testRepoImplementation) Create() error {

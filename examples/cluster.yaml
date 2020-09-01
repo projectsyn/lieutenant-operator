@@ -2,14 +2,18 @@ apiVersion: syn.tools/v1alpha1
 kind: Cluster
 metadata:
   name: c-ae3oso
+  annotations:
+    syn.tools/protected-delete: "false"
 spec:
   displayName: Big Corp. Production Cluster
+  deletionPolicy: Delete
   gitRepoTemplate:
     path: cluster
     repoName: cluster1
+    deletionPolicy: Delete
     apiSecretRef:
       name: example-secret
-      namespace: syn-lieutenant
+      # namespace: syn-lieutenant
     deployKeys:
       test:
         type: ssh-ed25519

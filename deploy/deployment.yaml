@@ -4,21 +4,15 @@ metadata:
   name: lieutenant-operator
 spec:
   replicas: 1
-  selector:
-    matchLabels:
-      name: lieutenant-operator
   template:
-    metadata:
-      labels:
-        name: lieutenant-operator
     spec:
       serviceAccountName: lieutenant-operator
       containers:
         - name: lieutenant-operator
-          image: docker.io/projectsyn/lieutenant-operator:v0.0.3
-          command:
-          - lieutenant-operator
+          image: docker.io/projectsyn/lieutenant-operator:latest
           imagePullPolicy: Always
+          command:
+            - lieutenant-operator
           env:
             - name: WATCH_NAMESPACE
               valueFrom:
@@ -29,4 +23,13 @@ spec:
                 fieldRef:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
-              value: "lieutenant-operator"
+              value: lieutenant-operator
+          securityContext:
+            runAsNonRoot: true
+          resources:
+            requests:
+              cpu: 200m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 128Mi

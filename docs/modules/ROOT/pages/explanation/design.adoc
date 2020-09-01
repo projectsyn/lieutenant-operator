@@ -1,0 +1,90 @@
+= Operator Design
+
+[ditaa, cloudscale, svg]
+....
+                   +--------------+
+                   |Lieutenant API|
+                   +-------+------+
+                           |
+Lieutenant Operator        v
+/--------------------------+------------------------------\
+|                                                         |
+|                 +-----------------+              c1AB   |
+|                 |Tenant     cBLU  |                     |
+|                 +----+-------+----+                     |
+|                      ^       |                          |
+|                      |       |                          |
+|          +-----------+       +--------+                 |
+|          |Belongs to                  |                 |
+|          |                            |                 |
+|          |                            | Generates       |
+|  +-------+---------+                  | Tenant          |
+|  |Cluster   cBLU   |                  | configuration   |
+|  +-------+---------+                  | Git repository  |
+|          |                            |                 |
+|          | Generates                  |                 |
+|          | Cluster Catalog            |                 |
+|          | Git repository             |                 |
+|          v                            v                 |
+|  +-------+--------+          +--------+-------+         |
+|  |GitRepo   cBLU  |          |GitRepo    cBLU |         |
+|  +----------------+          +----------------+         |
+|                                                         |
+\---------------------------------------------------------/
+....
+
+== API Group and Version
+
+The CRDs that the operator is handling are living in these groups and versions:
+
+[cols=",",options="header",]
+|===
+a|
+Property
+
+a|
+Value
+
+|API group |`syn.tools`
+|API version |`v1alpha1`
+|===
+
+The API documentation of these CRDs can be found under xref:references/crds-html.adoc[References/CRDs].
+
+== CRD Description
+
+A high-level description about the idea behind the objects:
+
+[cols=",",options="header",]
+|===
+
+|CRD
+|Description
+
+|_Tenant_
+a|When a _Tenant_ is created:
+
+* a _GitRepo_ object is created to create the *tenant configuration repository*.
+
+When a _Tenant_ object is deleted:
+
+* All created objects are deleted by `ownerReference` mechanisms
+
+|_Cluster_
+a|When a _Cluster_ object is created:
+
+* a _GitRepo_ object is created to create the *cluster catalog configuration repository*.
+
+When a _Cluster_ object is deleted:
+
+* All created objects are deleted by `ownerReference` mechanisms
+
+|_GitRepo_
+a|Git repository management. Currently supported is GitLab. Support for GitHub and Gitea is planned.
+
+* _Create_ Git repository
+** SSH key delivered by Steward is configured as deploy key
+* _Delete_ or archive Git repository
+* _Update_ Git repository when configuration changes
+
+|===

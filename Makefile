@@ -1,3 +1,13 @@
+MAKEFLAGS += --warn-undefined-variables
+SHELL := bash
+.SHELLFLAGS := -eu -o pipefail -c
+.DEFAULT_GOAL := all
+.DELETE_ON_ERROR:
+.SUFFIXES:
+
+DOCKER_CMD   ?= docker
+DOCKER_ARGS  ?= --rm --user "$$(id -u)" -v "$${PWD}:/src" --workdir /src
+
 # Project parameters
 BINARY_NAME ?= lieutenant-operator
 
@@ -5,15 +15,22 @@ VERSION ?= $(shell git describe --tags --always --dirty --match=v* || (echo "com
 
 IMAGE_NAME ?= docker.io/projectsyn/$(BINARY_NAME):$(VERSION)
 
+# Linting parameters
+YAML_FILES      ?= $(shell find . -type f -name '*.yaml' -or -name '*.yml' -not -name 'syn.tools_*_crd.yaml')
+YAMLLINT_ARGS   ?= --no-warnings
+YAMLLINT_CONFIG ?= .yamllint.yml
+YAMLLINT_IMAGE  ?= docker.io/cytopia/yamllint:latest
+YAMLLINT_DOCKER ?= $(DOCKER_CMD) run $(DOCKER_ARGS) $(YAMLLINT_IMAGE)
+
+
 # Go parameters
 GOCMD   ?= go
 GOBUILD ?= $(GOCMD) build
 GOCLEAN ?= $(GOCMD) clean
 GOTEST  ?= $(GOCMD) test
-GOGET   ?= $(GOCMD) get
 
 .PHONY: all
-all: test build
+all: lint test build
 
 .PHONY: generate
 generate:
@@ -44,3 +61,11 @@ clean:
 docker:
 	DOCKER_BUILDKIT=1 docker build -t $(IMAGE_NAME) .
 	@echo built image $(IMAGE_NAME)
+
+.PHONY: lint
+lint: lint_yaml lint_adoc
+
+.PHONY: lint_yaml
+lint_yaml: $(YAML_FILES)
+	$(YAMLLINT_DOCKER) -f parsable -c $(YAMLLINT_CONFIG) $(YAMLLINT_ARGS) -- $?
+

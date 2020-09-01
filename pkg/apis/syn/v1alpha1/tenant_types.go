@@ -12,6 +12,12 @@ type TenantSpec struct {
 	GitRepoURL string `json:"gitRepoURL,omitempty"`
 	// GitRepoTemplate Template for managing the GitRepo object. If not set, no  GitRepo object will be created.
 	GitRepoTemplate *GitRepoTemplate `json:"gitRepoTemplate,omitempty"`
+	// DeletionPolicy defines how the external resources should be treated upon CR deletion.
+	// Retain: will not delete any external resources
+	// Delete: will delete the external resources
+	// Archive: will archive the external resources, if it supports that
+	// +kubebuilder:validation:Enum=Delete;Retain;Archive
+	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
 }
 
 // TenantStatus defines the observed state of Tenant

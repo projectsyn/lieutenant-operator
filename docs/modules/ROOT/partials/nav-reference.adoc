@@ -1,0 +1,2 @@
+* xref:lieutenant-operator:ROOT:references/crds-html.adoc[CRDs]
+* xref:lieutenant-operator:ROOT:references/configuration.adoc[Configuration]

@@ -1,0 +1,38 @@
+= Create a Cluster
+
+The following example manifest will create a cluster:
+
+[source,yaml]
+....
+apiVersion: syn.tools/v1alpha1
+kind: Cluster
+metadata:
+  name: c-ae3os1
+  namespace: lieutenant
+  annotations:
+    syn.tools/protected-delete: "false"
+spec:
+  displayName: Another Big Corp. Production Cluster
+  deletionPolicy: Delete
+  gitRepoTemplate:
+    path: cluster-catalogs # path (org/group) to repo
+    repoName: cluster2 # name of the repo to create
+    deletionPolicy: Delete
+    apiSecretRef: # reference to a secret containing credentials for the git provider
+      name: lieutenant-secret
+      namespace: lieutenant
+    deployKeys:
+      test:
+        type: ssh-ed25519
+        key: AAAACxxxx
+        writeAccess: true
+  tenantRef:
+    name: t-aezoo6
+  tokenLifeTime: 4h
+  facts:
+    distribution: openshift3
+    cloud: cloudscale
+    region: rma1
+....
+
+Please be aware that you first need to have a valid secret containing the endpoint information, see xref:how-tos/gitlab-connection.adoc[Connection to GitLab].

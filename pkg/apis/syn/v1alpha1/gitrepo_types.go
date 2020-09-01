@@ -24,9 +24,12 @@ const (
 
 // GitPhase enum values
 const (
-	Created      = GitPhase("created")
-	Failed       = GitPhase("failed")
-	PhaseUnknown = GitPhase("")
+	Created       GitPhase       = "created"
+	Failed        GitPhase       = "failed"
+	PhaseUnknown  GitPhase       = ""
+	ArchivePolicy DeletionPolicy = "Archive"
+	DeletePolicy  DeletionPolicy = "Delete"
+	RetainPolicy  DeletionPolicy = "Retain"
 )
 
 // GitPhase is the enum for the git phase status
@@ -37,6 +40,9 @@ type GitType string
 
 // RepoType specifies the type of the repo
 type RepoType string
+
+// DeletionPolicy defines the type deletion policy
+type DeletionPolicy string
 
 // GitRepoSpec defines the desired state of GitRepo
 type GitRepoSpec struct {
@@ -64,6 +70,12 @@ type GitRepoTemplate struct {
 	// TemplateFiles is a list of files that should be pushed to the repository
 	// after its creation.
 	TemplateFiles map[string]string `json:"templateFiles,omitempty"`
+	// DeletionPolicy defines how the external resources should be treated upon CR deletion.
+	// Retain: will not delete any external resources
+	// Delete: will delete the external resources
+	// Archive: will archive the external resources, if it supports that
+	// +kubebuilder:validation:Enum=Delete;Retain;Archive
+	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
 }
 
 // DeployKey defines an SSH key to be used for git operations.
@@ -94,6 +106,7 @@ type GitRepoStatus struct {
 // GitRepo is the Schema for the gitrepos API
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=gitrepos,scope=Namespaced
+// +kubebuilder:printcolumn:name="Display Name",type="string",JSONPath=".spec.displayName"
 // +kubebuilder:printcolumn:name="Repo Name",type="string",JSONPath=".spec.repoName"
 // +kubebuilder:printcolumn:name="Phase",type="string",JSONPath=".status.phase"
 // +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp"

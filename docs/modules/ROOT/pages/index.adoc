@@ -1,81 +1,15 @@
 = Lieutenant Operator
 
+Welcome to the documentation of the Lieutenant Operator - a Project Syn tool.
+
 image::syn.png[]
 
-This is the documentation of the Lieutenant Operator project.
+Keeping inventory about tenants and clusters. It's the "database" for the link:https://github.com/projectsyn/lieutenant-api[lieutenant-api]. It primarily holds information about the tenants and clusters.
 
-The operator manages following CRDs.
+It also handles the management of some requirements like Git repositories and secret management: it can automatically populate Git repositories with skeleton files when a new cluster is added. It will also generate a token to be used by link:https://github.com/projectsyn/steward[Steward].
 
-[cols=",",options="header",]
-|===
+The main interaction point with the Lieutenant Operator is through the https://syn.tools/lieutenant-api/[Lieutenant API].
 
-a|
-CRD
+The operator is written in Go using the https://github.com/operator-framework/operator-sdk/[Operator SDK].
 
-a|
-Description
-
-|_Tenant_ |When a tenant is created, a _GitRepo_ object
-is created to create the *tenant configuration repository*.
-
-|_GitRepo_ a|
-Git repository management (CRUD repos on GitLab, GitHub and Gitea).
-Lieutenant manages the CR objects and queries the status fields to get
-the status.
-
-The Operator manages the following objects:
-
-_GitRepo_
-
-* Create Git repository +
-** By default on http://git.vshn.net/[git.vshn.net] GitLab
-** Supported are GitLab, GitHub and Gitea APIs
-** SSH key delivered by Steward is configured as deploy key
-* Delete Git repository
-* Update Git repository when configuration changes
-** Only SSH deploy key change supported
-
-|_Cluster_ a|
-When a _Cluster_ object is created:
-
-* a _GitRepo_ object is created to create the *cluster catalog
-configuration repository*.
-* a _Proxy_ object is created to provision an Inlets endpoint for the
-cluster
-
-When a _Cluster_ object is deleted:
-
-* All created objects are deleted by ownerReference mechanisms
-
-|_Proxy_ a|
-Manages the deployment and configuration of an Inlets server per Syn
-Kubernetes cluster.
-
-Details tbd
-
-|===
-
-==== Operator Common
-
-The first iteration is a single Operator consisting of several
-controllers, sharing CR Go structs as the objects depend on each other.
-A later iteration could split these controllers into their own Operator
-if it makes sense then. The Operator will be implemented using the
-https://github.com/operator-framework/operator-sdk/[operator-sdk] in Go.
-
-[cols=",",options="header",]
-|===
-a|
-Property
-
-a|
-Value
-
-|API group |`syn.tools`
-|API version |`v1alpha1`
-|===
-
-== References
-
-* Operator SDK -
-https://github.com/operator-framework/operator-sdk/[https://github.com/operator-framework/operator-sdk]
+TIP: To get started fast, have a look at the tutorial https://syn.tools/syn/getting-started.html[Getting Started with Project Syn].

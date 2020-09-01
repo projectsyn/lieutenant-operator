@@ -2,10 +2,8 @@ package gitlab
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/projectsyn/lieutenant-operator/pkg/git/helpers"
 	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
@@ -21,7 +19,8 @@ func init() {
 	manager.Register(&Gitlab{})
 }
 
-// Gitlab holds the necessary information to communincate with a Gitlab server
+// Gitlab holds the necessary information to communincate with a Gitlab server.
+// Each Gitlab instance will handle exactly one project.
 type Gitlab struct {
 	client      *gitlab.Client
 	credentials manager.Credentials
@@ -141,8 +140,42 @@ func (g *Gitlab) removeDeployKeys(deleteKeys map[string]synv1alpha1.DeployKey) e
 	return err
 }
 
-// Delete deletes the project handled by the gitlab instance
-func (g *Gitlab) Delete() error {
+// Remove removes the project according to the recycle policy.
+// Delete -> project gets deleted
+// Archive -> project gets archived
+// Retain -> nothing happens
+func (g *Gitlab) Remove() error {
+	switch g.ops.DeletionPolicy {
+	case synv1alpha1.DeletePolicy:
+		g.log.Info("deleting", "project", g.project.Name)
+		return g.delete()
+	case synv1alpha1.ArchivePolicy:
+		g.log.Info("archiving", "project", g.project.Name)
+		return g.archive()
+	default:
+		g.log.Info("retaining", "project", g.project.Name)
+		return nil
+	}
+}
+
+// archive archives the project handled by this gitlab instance
+func (g *Gitlab) archive() error {
+	err := g.getProject()
+	if err != nil {
+		return err
+	}
+
+	if g.project == nil {
+		return fmt.Errorf("no project %v found, can't archive", g.ops.Path)
+	}
+
+	_, _, err = g.client.Projects.ArchiveProject(g.project.ID)
+
+	return err
+}
+
+// delete deletes the project handled by the gitlab instance
+func (g *Gitlab) delete() error {
 	// make sure to have the latest version of the project
 	err := g.getProject()
 	if err != nil {
@@ -172,8 +205,10 @@ func (g *Gitlab) getProject() error {
 
 // Connect creates the Gitlab client
 func (g *Gitlab) Connect() error {
-	g.client = gitlab.NewClient(nil, g.credentials.Token)
-	return g.client.SetBaseURL(g.ops.URL.Scheme + "://" + g.ops.URL.Host)
+	c, err := gitlab.NewClient(g.credentials.Token,
+		gitlab.WithBaseURL(g.ops.URL.Scheme+"://"+g.ops.URL.Host))
+	g.client = c
+	return err
 }
 
 // FullURL returns the complete url of this git repository
@@ -188,29 +223,10 @@ func (g *Gitlab) FullURL() *url.URL {
 	return sshURL
 }
 
-// IsType determines if the given url can be handled by this concrete implementation.
-// This is done by a simple http query to the login page of gitlab. If any errors occur anywhere
-// it will return false.
+// TODO: this will be deprecated in favour of a fixed type definition in the
+// CRD. As there's currently only the GitLab implementation this is a workaround
+// for the brittle detection.
 func (g *Gitlab) IsType(URL *url.URL) (bool, error) {
-
-	httpClient := &http.Client{
-		Timeout: 10 * time.Second,
-	}
-
-	gitlabURL := URL.Scheme + "://" + URL.Host + "/users/sign_in'"
-
-	resp, err := httpClient.Get(gitlabURL)
-	if err != nil {
-		return false, err
-	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		return false, nil
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return false, fmt.Errorf("status code was %d", resp.StatusCode)
-	}
 
 	return true, nil
 }
@@ -314,34 +330,35 @@ func (g *Gitlab) CommitTemplateFiles() error {
 		return nil
 	}
 
-	filesToApply, err := g.compareFiles()
+	filesToCommit, err := g.compareFiles()
 	if err != nil {
 		return err
 	}
 
-	if len(filesToApply) == 0 {
+	if len(filesToCommit) == 0 {
 		// we're done here
 		return nil
 	}
 
 	g.log.Info("populating repository with template files")
 
-	co := &gitlab.CreateCommitOptions{
-		AuthorEmail:   builtinx.NewString("lieutenant-operator@syn.local"),
-		AuthorName:    builtinx.NewString("Lieutenant Operator"),
-		Branch:        builtinx.NewString("master"),
-		CommitMessage: builtinx.NewString("Provision templates"),
-	}
+	co := g.getCommitOptions()
 
-	co.Actions = []*gitlab.CommitAction{}
+	for _, file := range filesToCommit {
+		action := &gitlab.CommitAction{
+			FilePath: file.FileName,
+			Content:  file.Content,
+		}
 
-	for name, content := range filesToApply {
+		if file.Delete {
+			g.log.Info("deleting file from repository", "file", action.FilePath, "repository", g.project.Name)
+			action.Action = gitlab.FileDelete
+		} else {
+			g.log.Info("writing file to repository", "file", action.FilePath, "repository", g.project.Name)
+			action.Action = gitlab.FileCreate
+		}
 
-		co.Actions = append(co.Actions, &gitlab.CommitAction{
-			Action:   gitlab.FileCreate,
-			FilePath: name,
-			Content:  content,
-		})
+		co.Actions = append(co.Actions, action)
 	}
 
 	_, _, err = g.client.Commits.CreateCommit(g.project.ID, co, nil)
@@ -352,30 +369,62 @@ func (g *Gitlab) CommitTemplateFiles() error {
 // compareFiles will compare the files of the repositories root with the
 // files that should be created. If there are existing files they will be
 // dropped.
-func (g *Gitlab) compareFiles() (map[string]string, error) {
+func (g *Gitlab) compareFiles() ([]manager.CommitFile, error) {
 
-	newmap := map[string]string{}
+	files := []manager.CommitFile{}
 
 	trees, _, err := g.client.Repositories.ListTree(g.project.ID, nil, nil)
 	if err != nil {
 		// if the tree is not found it's probably just because there are no files at all currently...
+		// So we have to apply all pending ones.
 		if strings.Contains(err.Error(), "Tree Not Found") {
-			return g.ops.TemplateFiles, nil
-		} else {
-			return newmap, fmt.Errorf("cannot list files in repository: %s", err)
+
+			for name, content := range g.ops.TemplateFiles {
+				files = append(files, manager.CommitFile{
+					FileName: name,
+					Content:  content,
+				})
+			}
+
+			return files, nil
 		}
+		return files, fmt.Errorf("cannot list files in repository: %s", err)
 	}
 
-	treeMap := map[string]bool{}
+	compareMap := map[string]bool{}
 	for _, tree := range trees {
-		treeMap[tree.Path] = true
+		compareMap[tree.Path] = true
 	}
 
-	for k, v := range g.ops.TemplateFiles {
-		if _, ok := treeMap[k]; !ok {
-			newmap[k] = v
+	for name, content := range g.ops.TemplateFiles {
+		if _, ok := compareMap[name]; ok && content == manager.DeletionMagicString {
+			files = append(files, manager.CommitFile{
+				FileName: name,
+				Content:  content,
+				Delete:   true,
+			})
+		} else if !ok && content != manager.DeletionMagicString {
+			files = append(files, manager.CommitFile{
+				FileName: name,
+				Content:  content,
+			})
 		}
+
 	}
 
-	return newmap, nil
+	return files, nil
+}
+
+func (g *Gitlab) getCommitOptions() *gitlab.CreateCommitOptions {
+
+	co := &gitlab.CreateCommitOptions{
+		AuthorEmail:   builtinx.NewString("lieutenant-operator@syn.local"),
+		AuthorName:    builtinx.NewString("Lieutenant Operator"),
+		Branch:        builtinx.NewString("master"),
+		CommitMessage: builtinx.NewString("Update cluster files"),
+	}
+
+	co.Actions = []*gitlab.CommitAction{}
+
+	return co
 }

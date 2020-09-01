@@ -4,12 +4,15 @@ go 1.13
 
 require (
 	github.com/ahmetb/gen-crd-api-reference-docs v0.2.0
+	github.com/banzaicloud/bank-vaults/pkg/sdk v0.3.1
 	github.com/go-logr/logr v0.1.0
-	github.com/icza/gox v0.0.0-20200320174535-a6ff52ab3d90
-	github.com/operator-framework/operator-sdk v0.17.0
+	github.com/hashicorp/vault/api v1.0.4
+	github.com/icza/gox v0.0.0-20200609211944-3a8f67025601
+	github.com/imdario/mergo v0.3.9 // indirect
+	github.com/operator-framework/operator-sdk v0.17.1
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.5.1
-	github.com/xanzy/go-gitlab v0.26.0
+	github.com/stretchr/testify v1.6.1
+	github.com/xanzy/go-gitlab v0.32.1
 	k8s.io/api v0.17.4
 	k8s.io/apimachinery v0.17.4
 	k8s.io/client-go v12.0.0+incompatible
