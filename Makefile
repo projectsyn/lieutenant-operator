@@ -15,9 +15,7 @@ VERSION ?= $(shell git describe --tags --always --dirty --match=v* || (echo "com
 
 IMAGE_NAME ?= docker.io/projectsyn/$(BINARY_NAME):$(VERSION)
 
-# Antora variables
-ANTORA_CMD  ?= $(DOCKER_CMD) run $(DOCKER_ARGS) --volume "$${PWD}":/antora vshn/antora:1.3
-ANTORA_ARGS ?= --cache-dir=.cache/antora
+ANTORA_PREVIEW_CMD ?= $(DOCKER_CMD) run --rm --publish 2020:2020 --volume "${PWD}":/antora vshn/antora-preview:2.3.3 --style=syn --antora=docs
 
 VALE_CMD  ?= $(DOCKER_CMD) run $(DOCKER_ARGS) --volume "$${PWD}"/docs/modules:/pages vshn/vale:2.1.1
 VALE_ARGS ?= --minAlertLevel=error --config=/pages/ROOT/pages/.vale.ini /pages
@@ -69,22 +67,17 @@ docker:
 	DOCKER_BUILDKIT=1 docker build -t $(IMAGE_NAME) .
 	@echo built image $(IMAGE_NAME)
 
-.PHONY: docs
-docs: generate $(web_dir)/index.html
-
-.PHONY: docs-html
-docs-html: $(web_dir)/index.html
-
-$(web_dir)/index.html: playbook.yml $(pages)
-	$(ANTORA_CMD) $(ANTORA_ARGS) $<
-
 .PHONY: lint
-lint: lint_yaml lint_adoc
+lint: lint_yaml docs-vale
 
 .PHONY: lint_yaml
 lint_yaml: $(YAML_FILES)
 	$(YAMLLINT_DOCKER) -f parsable -c $(YAMLLINT_CONFIG) $(YAMLLINT_ARGS) -- $?
 
-.PHONY: lint_adoc
-lint_adoc:
+.PHONY: docs-serve
+docs-serve:
+	$(ANTORA_PREVIEW_CMD)
+
+.PHONY: docs-vale
+docs-vale:
 	$(VALE_CMD) $(VALE_ARGS)
