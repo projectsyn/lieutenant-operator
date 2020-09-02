@@ -15,9 +15,7 @@ VERSION ?= $(shell git describe --tags --always --dirty --match=v* || (echo "com
 
 IMAGE_NAME ?= docker.io/projectsyn/$(BINARY_NAME):$(VERSION)
 
-# Antora variables
-ANTORA_CMD  ?= $(DOCKER_CMD) run $(DOCKER_ARGS) --volume "$${PWD}":/antora vshn/antora:1.3
-ANTORA_ARGS ?= --cache-dir=.cache/antora
+ANTORA_PREVIEW_CMD ?= $(DOCKER_CMD) run --rm --publish 2020:2020 --volume "${PWD}":/antora vshn/antora-preview:2.3.3 --style=syn --antora=docs
 
 VALE_CMD  ?= $(DOCKER_CMD) run $(DOCKER_ARGS) --volume "$${PWD}"/docs/modules:/pages vshn/vale:2.1.1
 VALE_ARGS ?= --minAlertLevel=error --config=/pages/ROOT/pages/.vale.ini /pages
@@ -70,13 +68,8 @@ docker:
 	@echo built image $(IMAGE_NAME)
 
 .PHONY: docs
-docs: generate $(web_dir)/index.html
-
-.PHONY: docs-html
-docs-html: $(web_dir)/index.html
-
-$(web_dir)/index.html: playbook.yml $(pages)
-	$(ANTORA_CMD) $(ANTORA_ARGS) $<
+docs:
+	$(ANTORA_PREVIEW_CMD)
 
 .PHONY: lint
 lint: lint_yaml lint_adoc

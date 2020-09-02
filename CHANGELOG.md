@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Apply the default Syn project meta files ([#90])
+- Replaced playbook.yml with custom command
 
 ## [v0.2.0] - 2020-07-23
 ### Added
