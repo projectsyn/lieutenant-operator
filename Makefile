@@ -67,10 +67,6 @@ docker:
 	DOCKER_BUILDKIT=1 docker build -t $(IMAGE_NAME) .
 	@echo built image $(IMAGE_NAME)
 
-.PHONY: docs
-docs:
-	$(ANTORA_PREVIEW_CMD)
-
 .PHONY: lint
 lint: lint_yaml lint_adoc
 
@@ -78,6 +74,10 @@ lint: lint_yaml lint_adoc
 lint_yaml: $(YAML_FILES)
 	$(YAMLLINT_DOCKER) -f parsable -c $(YAMLLINT_CONFIG) $(YAMLLINT_ARGS) -- $?
 
-.PHONY: lint_adoc
-lint_adoc:
+.PHONY: docs-serve
+docs-serve:
+	$(ANTORA_PREVIEW_CMD)
+
+.PHONY: docs-vale
+docs-vale:
 	$(VALE_CMD) $(VALE_ARGS)
