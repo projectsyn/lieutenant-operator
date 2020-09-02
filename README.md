@@ -18,7 +18,7 @@ Documentation for this component is written using [Asciidoc][asciidoc] and [Anto
 It is located in the [docs/](docs) folder.
 The [Divio documentation structure](https://documentation.divio.com/) is used to organize its content.
 
-You can use the `make docs` command and then browse to http://localhost:2020 to preview the documentation.
+You can use the `make docs-serve` command and then browse to http://localhost:2020 to preview the documentation.
 
 ## Deployment
 
