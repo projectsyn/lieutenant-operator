@@ -68,7 +68,7 @@ docker:
 	@echo built image $(IMAGE_NAME)
 
 .PHONY: lint
-lint: lint_yaml lint_adoc
+lint: lint_yaml docs-vale
 
 .PHONY: lint_yaml
 lint_yaml: $(YAML_FILES)
