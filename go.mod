@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/vault/api v1.0.4
 	github.com/icza/gox v0.0.0-20200609211944-3a8f67025601
 	github.com/imdario/mergo v0.3.9 // indirect
-	github.com/operator-framework/operator-sdk v0.17.1
+	github.com/operator-framework/operator-sdk v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1
 	github.com/xanzy/go-gitlab v0.32.1
