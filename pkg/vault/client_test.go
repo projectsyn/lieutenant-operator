@@ -85,6 +85,7 @@ func TestBankVaultClient_AddSecrets(t *testing.T) {
 	}
 	tests := []struct {
 		name       string
+		mountPath  string
 		args       args
 		wantErr    bool
 		statusCode int
@@ -94,6 +95,29 @@ func TestBankVaultClient_AddSecrets(t *testing.T) {
 			name: "test SetToken",
 			args: args{
 				secrets: []VaultSecret{{Path: "1234/6789", Value: ""}},
+				token:   "test",
+				log:     zap.Logger(),
+			},
+			body: `{
+				"data": {
+				  "data": {
+					"foo": "bar"
+				  },
+				  "metadata": {
+					"created_time": "2018-03-22T02:24:06.945319214Z",
+					"deletion_time": "",
+					"destroyed": false,
+					"version": 2
+				  }
+				}
+			  }`,
+			statusCode: 200,
+		},
+		{
+			name:      "test different path",
+			mountPath: "clusters/kv",
+			args: args{
+				secrets: []VaultSecret{{Path: "some/test", Value: ""}},
 				token:   "test",
 				log:     zap.Logger(),
 			},
@@ -131,6 +155,7 @@ func TestBankVaultClient_AddSecrets(t *testing.T) {
 
 			os.Setenv(api.EnvVaultToken, "myroot")
 			os.Setenv(api.EnvVaultAddress, server.URL)
+			os.Setenv("VAULT_SECRET_ENGINE_PATH", tt.mountPath)
 
 			defer server.Close()
 

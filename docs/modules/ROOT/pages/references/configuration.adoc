@@ -17,6 +17,10 @@ Lieutenant Operator is configured via environment variables:
 |Sets the Vault token to be used, only recommended for testing. In production the https://www.vaultproject.io/docs/auth/kubernetes[K8s authentication] should be used by omitting the setting.
 |
 
+|VAULT_SECRET_ENGINE_PATH
+|Configures the mount path of the KV secret engine to be used.
+|`kv`
+
 |SKIP_VAULT_SETUP
 |Doesn't create any Vault secrets. Recommended for testing only.
 |false
