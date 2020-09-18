@@ -45,8 +45,8 @@ spec:
           description: GitRepoSpec defines the desired state of GitRepo
           properties:
             apiSecretRef:
-              description: APISecretRef reference to secret containing connection
-                information
+              description: APISecretRef pointing to the secret containing information
+                for connecting to the API of the git server
               properties:
                 name:
                   description: Name is unique within a namespace to reference a secret

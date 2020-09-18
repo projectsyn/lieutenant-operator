@@ -67,8 +67,8 @@ spec:
               description: GitRepoTemplate template for managing the GitRepo object.
               properties:
                 apiSecretRef:
-                  description: APISecretRef reference to secret containing connection
-                    information
+                  description: APISecretRef pointing to the secret containing information
+                    for connecting to the API of the git server
                   properties:
                     name:
                       description: Name is unique within a namespace to reference

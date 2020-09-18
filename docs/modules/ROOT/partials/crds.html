@@ -278,6 +278,44 @@ ClusterStatus
 </tr>
 </tbody>
 </table>
+<h3 id="syn.tools/v1alpha1.ClusterCatalog">ClusterCatalog
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#syn.tools/v1alpha1.TenantSpec">TenantSpec</a>)
+</p>
+<p>
+<p>ClusterCatalog defines configuration for cluster catalogs of this tenant</p>
+</p>
+<table class="tableblock halign-left valign-top">
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>gitRepoTemplate</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.TenantClusterCatalogTemplate">
+TenantClusterCatalogTemplate
+</a>
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>GitRepoTemplate defines the template to be used for the catalog git repos of this tenant.
+Go template directives can be used in these strings. The <code>ClusterID</code>, <code>TenantID</code> and
+all cluster facts can be used within the template.</p>
+<p class="tableblock">
+</td>
+</tr>
+</tbody>
+</table>
 <h3 id="syn.tools/v1alpha1.ClusterSpec">ClusterSpec
 </h3>
 <p>
@@ -834,7 +872,7 @@ Kubernetes core/v1.SecretReference
 </td>
 <td class="tableblock halign-left valign-top">
 <p class="tableblock">
-<p>APISecretRef reference to secret containing connection information</p>
+<p>APISecretRef pointing to the secret containing information for connecting to the API of the git server</p>
 <p class="tableblock">
 </td>
 </tr>
@@ -1063,7 +1101,7 @@ GitRepoTemplate
 </td>
 <td class="tableblock halign-left valign-top">
 <p class="tableblock">
-<p>GitRepoTemplate Template for managing the GitRepo object. If not set, no  GitRepo object will be created.</p>
+<p>GitRepoTemplate Template for managing the GitRepo object. If not set, no GitRepo object will be created.</p>
 <p class="tableblock">
 </td>
 </tr>
@@ -1087,6 +1125,23 @@ Archive: will archive the external resources, if it supports that</p>
 <p class="tableblock">
 </td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>clusterCatalog</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.ClusterCatalog">
+ClusterCatalog
+</a>
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>ClusterCatalog defines configuration for cluster catalogs of this tenant</p>
+<p class="tableblock">
+</td>
+</tr>
 </table>
 <p class="tableblock">
 </td>
@@ -1104,6 +1159,72 @@ TenantStatus
 </td>
 <td class="tableblock halign-left valign-top">
 <p class="tableblock">
+<p class="tableblock">
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="syn.tools/v1alpha1.TenantClusterCatalogTemplate">TenantClusterCatalogTemplate
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#syn.tools/v1alpha1.ClusterCatalog">ClusterCatalog</a>)
+</p>
+<p>
+<p>TenantClusterCatalogTemplate defines the template to be used for the catalog git repos of a tenant</p>
+</p>
+<table class="tableblock halign-left valign-top">
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>path</code></br>
+<em>
+string
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>Path to Git repository</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>repoName</code></br>
+<em>
+string
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>RepoName of Git repository</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>apiSecretRef</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#secretreference-v1-core">
+Kubernetes core/v1.SecretReference
+</a>
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>APISecretRef pointing to the secret containing information for connecting to the API of the git server</p>
 <p class="tableblock">
 </td>
 </tr>
@@ -1169,7 +1290,7 @@ GitRepoTemplate
 </td>
 <td class="tableblock halign-left valign-top">
 <p class="tableblock">
-<p>GitRepoTemplate Template for managing the GitRepo object. If not set, no  GitRepo object will be created.</p>
+<p>GitRepoTemplate Template for managing the GitRepo object. If not set, no GitRepo object will be created.</p>
 <p class="tableblock">
 </td>
 </tr>
@@ -1190,6 +1311,23 @@ DeletionPolicy
 Retain: will not delete any external resources
 Delete: will delete the external resources
 Archive: will archive the external resources, if it supports that</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>clusterCatalog</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.ClusterCatalog">
+ClusterCatalog
+</a>
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>ClusterCatalog defines configuration for cluster catalogs of this tenant</p>
 <p class="tableblock">
 </td>
 </tr>

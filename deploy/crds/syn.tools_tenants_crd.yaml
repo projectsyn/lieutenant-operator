@@ -38,6 +38,37 @@ spec:
         spec:
           description: TenantSpec defines the desired state of Tenant
           properties:
+            clusterCatalog:
+              description: ClusterCatalog defines configuration for cluster catalogs
+                of this tenant
+              properties:
+                gitRepoTemplate:
+                  description: GitRepoTemplate defines the template to be used for
+                    the catalog git repos of this tenant. Go template directives can
+                    be used in these strings. The `ClusterID`, `TenantID` and all
+                    cluster facts can be used within the template.
+                  properties:
+                    apiSecretRef:
+                      description: APISecretRef pointing to the secret containing
+                        information for connecting to the API of the git server
+                      properties:
+                        name:
+                          description: Name is unique within a namespace to reference
+                            a secret resource.
+                          type: string
+                        namespace:
+                          description: Namespace defines the space within which the
+                            secret name must be unique.
+                          type: string
+                      type: object
+                    path:
+                      description: Path to Git repository
+                      type: string
+                    repoName:
+                      description: RepoName of Git repository
+                      type: string
+                  type: object
+              type: object
             deletionPolicy:
               description: 'DeletionPolicy defines how the external resources should
                 be treated upon CR deletion. Retain: will not delete any external
@@ -53,11 +84,11 @@ spec:
               type: string
             gitRepoTemplate:
               description: GitRepoTemplate Template for managing the GitRepo object.
-                If not set, no  GitRepo object will be created.
+                If not set, no GitRepo object will be created.
               properties:
                 apiSecretRef:
-                  description: APISecretRef reference to secret containing connection
-                    information
+                  description: APISecretRef pointing to the secret containing information
+                    for connecting to the API of the git server
                   properties:
                     name:
                       description: Name is unique within a namespace to reference

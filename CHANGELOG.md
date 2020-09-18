@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v0.2.2] - 2020-09-10
 ### Fixed
 - Update latest image tag in deployment ([#104])
+### Added
+- Define git repo URL template for tenant ([#108])
 
 ## [v0.2.1] - 2020-09-10
 ### Changed
@@ -100,3 +102,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#100]: https://github.com/projectsyn/lieutenant-operator/pull/100
 [#103]: https://github.com/projectsyn/lieutenant-operator/pull/103
 [#104]: https://github.com/projectsyn/lieutenant-operator/pull/104
+[#108]: https://github.com/projectsyn/lieutenant-operator/pull/108

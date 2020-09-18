@@ -35,7 +35,7 @@ const (
 )
 
 // Reconcile reads that state of the cluster for a Cluster object and makes changes based on the state read
-// and what is in the Cluster.Spec
+// and what is in the Cluster.Spec.
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Result, error) {
@@ -80,6 +80,8 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 		}
 
 		instance.Spec.GitRepoTemplate.DeletionPolicy = instance.Spec.DeletionPolicy
+
+		//if instance.Spec.GitRepoTemplate
 
 		err = helpers.CreateOrUpdateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, instance.Spec.TenantRef)
 		if err != nil {

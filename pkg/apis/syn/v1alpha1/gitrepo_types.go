@@ -54,7 +54,7 @@ type GitRepoSpec struct {
 // GitRepoTemplate is used for templating git repos, it does not contain the tenantRef as it will be added by the
 // controller creating the template instance.
 type GitRepoTemplate struct {
-	// APISecretRef reference to secret containing connection information
+	// APISecretRef pointing to the secret containing information for connecting to the API of the git server
 	APISecretRef corev1.SecretReference `json:"apiSecretRef,omitempty"`
 	// DeployKeys optional list of SSH deploy keys. If not set, not deploy keys will be configured
 	DeployKeys map[string]DeployKey `json:"deployKeys,omitempty"`

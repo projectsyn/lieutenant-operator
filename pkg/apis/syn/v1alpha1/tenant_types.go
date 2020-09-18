@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -10,7 +11,7 @@ type TenantSpec struct {
 	DisplayName string `json:"displayName"`
 	// GitRepoURL git repository storing the tenant configuration. If this is set, no gitRepoTemplate is needed.
 	GitRepoURL string `json:"gitRepoURL,omitempty"`
-	// GitRepoTemplate Template for managing the GitRepo object. If not set, no  GitRepo object will be created.
+	// GitRepoTemplate Template for managing the GitRepo object. If not set, no GitRepo object will be created.
 	GitRepoTemplate *GitRepoTemplate `json:"gitRepoTemplate,omitempty"`
 	// DeletionPolicy defines how the external resources should be treated upon CR deletion.
 	// Retain: will not delete any external resources
@@ -18,6 +19,26 @@ type TenantSpec struct {
 	// Archive: will archive the external resources, if it supports that
 	// +kubebuilder:validation:Enum=Delete;Retain;Archive
 	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
+	// ClusterCatalog defines configuration for cluster catalogs of this tenant
+	ClusterCatalog ClusterCatalog `json:"clusterCatalog,omitempty"`
+}
+
+// ClusterCatalog defines configuration for cluster catalogs of this tenant
+type ClusterCatalog struct {
+	// GitRepoTemplate defines the template to be used for the catalog git repos of this tenant.
+	// Go template directives can be used in these strings. The `ClusterID`, `TenantID` and
+	// all cluster facts can be used within the template.
+	GitRepoTemplate TenantClusterCatalogTemplate `json:"gitRepoTemplate,omitempty"`
+}
+
+// TenantClusterCatalogTemplate defines the template to be used for the catalog git repos of a tenant
+type TenantClusterCatalogTemplate struct {
+	// Path to Git repository
+	Path string `json:"path,omitempty"`
+	// RepoName of Git repository
+	RepoName string `json:"repoName,omitempty"`
+	// APISecretRef pointing to the secret containing information for connecting to the API of the git server
+	APISecretRef corev1.SecretReference `json:"apiSecretRef,omitempty"`
 }
 
 // TenantStatus defines the observed state of Tenant
