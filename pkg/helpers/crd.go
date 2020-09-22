@@ -23,9 +23,12 @@ const (
 	protectionSettingEnvVar = "LIEUTENANT_DELETE_PROTECTION"
 )
 
+// DeletionState of an object
 type DeletionState struct {
+	// FinalizerRemoved but not yet deleted
 	FinalizerRemoved bool
-	Deleted          bool
+	// Deleted and gone
+	Deleted bool
 }
 
 // CreateOrUpdateGitRepo will create the gitRepo object if it doesn't already exist. If the owner object itself is a tenant tenantRef can be set nil.
@@ -101,6 +104,7 @@ func AddTenantLabel(meta *metav1.ObjectMeta, tenant string) {
 	}
 }
 
+// GetGitRepoURLAndHostKeys gets the URL and host keys for a Git repo
 func GetGitRepoURLAndHostKeys(obj metav1.Object, client client.Client) (string, string, error) {
 	gitRepo := &synv1alpha1.GitRepo{}
 	repoNamespacedName := types.NamespacedName{
@@ -115,6 +119,7 @@ func GetGitRepoURLAndHostKeys(obj metav1.Object, client client.Client) (string, 
 	return gitRepo.Status.URL, gitRepo.Status.HostKeys, nil
 }
 
+// SecretSortList is a list of secrets
 type SecretSortList corev1.SecretList
 
 func (s SecretSortList) Len() int      { return len(s.Items) }
@@ -129,7 +134,7 @@ func (s SecretSortList) Less(i, j int) bool {
 	return s.Items[i].CreationTimestamp.Before(&s.Items[j].CreationTimestamp)
 }
 
-// Checks if the slice of strings contains a specific string
+// SliceContainsString checks if the slice of strings contains a specific string
 func SliceContainsString(list []string, s string) bool {
 	for _, v := range list {
 		if v == s {
@@ -173,6 +178,7 @@ func HandleDeletion(instance metav1.Object, finalizerName string, client client.
 	return DeletionState{Deleted: true, FinalizerRemoved: false}
 }
 
+// AddDeletionProtection annotation to an object
 func AddDeletionProtection(instance metav1.Object) {
 	config := os.Getenv(protectionSettingEnvVar)
 

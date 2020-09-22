@@ -363,3 +363,75 @@ func TestReconcileCluster_getServiceAccountToken(t *testing.T) {
 		})
 	}
 }
+
+func TestClusterCatalogTemplate(t *testing.T) {
+	clusterName := "c-test-1234"
+	tenantName := "t-acme-corp"
+	tenant := &synv1alpha1.Tenant{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: tenantName,
+		},
+		Spec: synv1alpha1.TenantSpec{
+			DisplayName: "Some tenant",
+			GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
+				Path:     "tenants",
+				RepoName: tenantName,
+			},
+			ClusterCatalog: synv1alpha1.ClusterCatalog{
+				GitRepoTemplate: synv1alpha1.TenantClusterCatalogTemplate{
+					Path:     `clusters/{{ index .Facts "cloud" }}/` + tenantName,
+					RepoName: "cluster-{{ .ClusterID }}",
+					APISecretRef: corev1.SecretReference{
+						Name: "git-{{ .TenantID }}",
+					},
+				},
+			},
+		},
+	}
+	cluster := &synv1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: clusterName,
+		},
+		Spec: synv1alpha1.ClusterSpec{
+			DisplayName: "This is a test cluster",
+			TenantRef: corev1.LocalObjectReference{
+				Name: tenant.Name,
+			},
+			Facts: &synv1alpha1.Facts{
+				"cloud": "cloudscale",
+			},
+		},
+	}
+
+	objs := []runtime.Object{
+		cluster,
+		tenant,
+		&synv1alpha1.GitRepo{},
+	}
+
+	cl, s := testSetupClient(objs)
+
+	r := &ReconcileCluster{client: cl, scheme: s}
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name: cluster.Name,
+		},
+	}
+	testMockClient := &TestMockClient{}
+	vault.SetCustomClient(testMockClient)
+
+	os.Setenv("SKIP_VAULT_SETUP", "true")
+
+	_, err := r.Reconcile(req)
+	assert.NoError(t, err)
+
+	newCluster := &synv1alpha1.Cluster{}
+	err = cl.Get(context.TODO(), req.NamespacedName, newCluster)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "cluster-"+clusterName, newCluster.Spec.GitRepoTemplate.RepoName)
+	assert.Equal(t, "clusters/cloudscale/"+tenantName, newCluster.Spec.GitRepoTemplate.Path)
+	assert.Equal(t, "git-"+tenantName, newCluster.Spec.GitRepoTemplate.APISecretRef.Name)
+	assert.Empty(t, newCluster.Spec.GitRepoTemplate.APISecretRef.Namespace)
+}

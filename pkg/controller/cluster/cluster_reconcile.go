@@ -75,22 +75,38 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 			Kind:    instance.Kind,
 		}
 
+		if instance.Spec.GitRepoTemplate == nil {
+			instance.Spec.GitRepoTemplate = &synv1alpha1.GitRepoTemplate{}
+		}
+
 		if len(instance.Spec.GitRepoTemplate.DisplayName) == 0 {
 			instance.Spec.GitRepoTemplate.DisplayName = instance.Spec.DisplayName
 		}
 
 		instance.Spec.GitRepoTemplate.DeletionPolicy = instance.Spec.DeletionPolicy
 
-		//if instance.Spec.GitRepoTemplate
+		nsName := request.NamespacedName
+		nsName.Name = instance.Spec.TenantRef.Name
+
+		tenant := &synv1alpha1.Tenant{}
+
+		if err := r.client.Get(context.TODO(), nsName, tenant); err != nil {
+			return fmt.Errorf("Couldn't find tenant '%s' %w", nsName.Name, err)
+		}
+
+		if instance.Spec.Facts == nil {
+			instance.Spec.Facts = &synv1alpha1.Facts{}
+		}
+
+		if err := setClusterCatalog(instance, tenant); err != nil {
+			return err
+		}
 
 		err = helpers.CreateOrUpdateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, instance.Spec.TenantRef)
 		if err != nil {
 			reqLogger.Error(err, "Cannot create or update git repo object")
 			return err
 		}
-
-		repoName := request.NamespacedName
-		repoName.Name = instance.Spec.TenantRef.Name
 
 		var vaultClient vault.VaultClient = nil
 		secretPath := path.Join(instance.Spec.TenantRef.Name, instance.Name, "steward")
@@ -127,7 +143,7 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 					return err
 				}
 			}
-			err = r.removeClusterFileFromTenant(instance.GetName(), repoName, reqLogger)
+			err = r.removeClusterFileFromTenant(instance.GetName(), nsName, reqLogger)
 			if err != nil {
 				return err
 			}
@@ -136,7 +152,7 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 			return r.client.Update(context.TODO(), instance)
 		}
 
-		err = r.updateTenantGitRepo(repoName, instance.GetName())
+		err = r.updateTenantGitRepo(nsName, instance.GetName())
 		if err != nil {
 			return err
 		}
