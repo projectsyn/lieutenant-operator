@@ -17,7 +17,11 @@ spec:
     deletionPolicy: Delete
     apiSecretRef:
       name: lieutenant-secret
-      namespace: lieutenant
+  clusterCatalogGitRepoTemplate: # Template used for cluster catalog repos
+    repoName: "{{ .ClusterID }}"
+    path: "clusters"
+    apiSecretRef:
+      name: lieutenant-secret
 ....
 
 Please be aware that you first need to have a valid secret containing the endpoint information, see xref:how-tos/gitlab-connection.adoc[Connection to GitLab].
