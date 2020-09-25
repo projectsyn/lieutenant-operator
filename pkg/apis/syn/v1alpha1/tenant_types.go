@@ -18,6 +18,8 @@ type TenantSpec struct {
 	// Archive: will archive the external resources, if it supports that
 	// +kubebuilder:validation:Enum=Delete;Retain;Archive
 	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
+	// ClusterTemplate defines a template which will be used for newly created clusters of this tenant
+	ClusterTemplate *ClusterSpec `json:"clusterTemplate,omitempty"`
 }
 
 // TenantStatus defines the observed state of Tenant

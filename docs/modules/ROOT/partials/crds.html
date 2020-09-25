@@ -282,7 +282,8 @@ ClusterStatus
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#syn.tools/v1alpha1.Cluster">Cluster</a>)
+<a href="#syn.tools/v1alpha1.Cluster">Cluster</a>, 
+<a href="#syn.tools/v1alpha1.TenantSpec">TenantSpec</a>)
 </p>
 <p>
 <p>ClusterSpec defines the desired state of Cluster</p>
@@ -1087,6 +1088,23 @@ Archive: will archive the external resources, if it supports that</p>
 <p class="tableblock">
 </td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>clusterTemplate</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.ClusterSpec">
+ClusterSpec
+</a>
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>ClusterTemplate defines a template which will be used for newly created clusters of this tenant</p>
+<p class="tableblock">
+</td>
+</tr>
 </table>
 <p class="tableblock">
 </td>
@@ -1190,6 +1208,23 @@ DeletionPolicy
 Retain: will not delete any external resources
 Delete: will delete the external resources
 Archive: will archive the external resources, if it supports that</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>clusterTemplate</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.ClusterSpec">
+ClusterSpec
+</a>
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>ClusterTemplate defines a template which will be used for newly created clusters of this tenant</p>
 <p class="tableblock">
 </td>
 </tr>

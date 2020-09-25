@@ -30,14 +30,10 @@ spec:
       description: GitRepo is the Schema for the gitrepos API
       properties:
         apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
           type: string
         kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
           type: object
@@ -45,23 +41,17 @@ spec:
           description: GitRepoSpec defines the desired state of GitRepo
           properties:
             apiSecretRef:
-              description: APISecretRef reference to secret containing connection
-                information
+              description: APISecretRef reference to secret containing connection information
               properties:
                 name:
-                  description: Name is unique within a namespace to reference a secret
-                    resource.
+                  description: Name is unique within a namespace to reference a secret resource.
                   type: string
                 namespace:
-                  description: Namespace defines the space within which the secret
-                    name must be unique.
+                  description: Namespace defines the space within which the secret name must be unique.
                   type: string
               type: object
             deletionPolicy:
-              description: 'DeletionPolicy defines how the external resources should
-                be treated upon CR deletion. Retain: will not delete any external
-                resources Delete: will delete the external resources Archive: will
-                archive the external resources, if it supports that'
+              description: 'DeletionPolicy defines how the external resources should be treated upon CR deletion. Retain: will not delete any external resources Delete: will delete the external resources Archive: will archive the external resources, if it supports that'
               enum:
               - Delete
               - Retain
@@ -75,15 +65,13 @@ spec:
                     description: Key is the actual key
                     type: string
                   type:
-                    description: Type defines what type the key is (rsa, ed25519,
-                      etc...)
+                    description: Type defines what type the key is (rsa, ed25519, etc...)
                     type: string
                   writeAccess:
                     description: WriteAccess if the key has RW access or not
                     type: boolean
                 type: object
-              description: DeployKeys optional list of SSH deploy keys. If not set,
-                not deploy keys will be configured
+              description: DeployKeys optional list of SSH deploy keys. If not set, not deploy keys will be configured
               type: object
             displayName:
               description: DisplayName of Git repository
@@ -95,8 +83,7 @@ spec:
               description: RepoName name of Git repository
               type: string
             repoType:
-              description: RepoType specifies if a repo should be managed by the git
-                controller. A value of 'unmanaged' means it's not manged by the controller
+              description: RepoType specifies if a repo should be managed by the git controller. A value of 'unmanaged' means it's not manged by the controller
               enum:
               - auto
               - unmanaged
@@ -104,15 +91,13 @@ spec:
             templateFiles:
               additionalProperties:
                 type: string
-              description: TemplateFiles is a list of files that should be pushed
-                to the repository after its creation.
+              description: TemplateFiles is a list of files that should be pushed to the repository after its creation.
               type: object
             tenantRef:
               description: TenantRef references the tenant this repo belongs to
               properties:
                 name:
-                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                    TODO: Add other useful fields. apiVersion, kind, uid?'
+                  description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names TODO: Add other useful fields. apiVersion, kind, uid?'
                   type: string
               type: object
           required:
@@ -125,13 +110,10 @@ spec:
               description: SSH HostKeys of the git server
               type: string
             phase:
-              description: Updated by Operator with current phase. The GitPhase enum
-                will be used for application logic as using it directly would only
-                print an integer.
+              description: Updated by Operator with current phase. The GitPhase enum will be used for application logic as using it directly would only print an integer.
               type: string
             type:
-              description: Type autodiscovered Git repo type. Same behaviour for the
-                enum as with the Phase.
+              description: Type autodiscovered Git repo type. Same behaviour for the enum as with the Phase.
               type: string
             url:
               description: URL computed Git repository URL

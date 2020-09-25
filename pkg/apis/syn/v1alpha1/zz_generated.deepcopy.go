@@ -378,6 +378,11 @@ func (in *TenantSpec) DeepCopyInto(out *TenantSpec) {
 		*out = new(GitRepoTemplate)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.ClusterTemplate != nil {
+		in, out := &in.ClusterTemplate, &out.ClusterTemplate
+		*out = new(ClusterSpec)
+		(*in).DeepCopyInto(*out)
+	}
 	return
 }
 

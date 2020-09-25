@@ -54,6 +54,19 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 			return err
 		}
 
+		nsName := request.NamespacedName
+		nsName.Name = instance.Spec.TenantRef.Name
+
+		tenant := &synv1alpha1.Tenant{}
+
+		if err := r.client.Get(context.TODO(), nsName, tenant); err != nil {
+			return fmt.Errorf("Couldn't find tenant: %w", err)
+		}
+
+		if err := applyClusterTemplate(instance, tenant); err != nil {
+			return err
+		}
+
 		if err := r.createClusterRBAC(*instance); err != nil {
 			return err
 		}

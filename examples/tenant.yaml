@@ -16,3 +16,7 @@ spec:
         type: ssh-ed25519
         key: AAAAC3NzaC1lZDI1NTE5AAAAIJ22mHNYfSPnLAj8YiKa0RmxafD9r5nEUquizay7xh3s
         writeAccess: true
+  clusterTemplate:
+    gitRepoTemplate:
+      path: clusters
+      repoName: "{{ .Name }}"
