@@ -39,6 +39,11 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 			return err
 		}
 
+		if instance.Spec.RepoType == synv1alpha1.UnmanagedRepoType {
+			reqLogger.Info("Skipping GitRepo because it is unmanaged")
+			return nil
+		}
+
 		repo, hostKeys, err := manager.GetGitClient(&instance.Spec.GitRepoTemplate, instance.GetNamespace(), reqLogger, r.client)
 		if err != nil {
 			return err
