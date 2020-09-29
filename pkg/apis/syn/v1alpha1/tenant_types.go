@@ -7,7 +7,7 @@ import (
 // TenantSpec defines the desired state of Tenant
 type TenantSpec struct {
 	// DisplayName is the display name of the tenant.
-	DisplayName string `json:"displayName"`
+	DisplayName string `json:"displayName,omitempty"`
 	// GitRepoURL git repository storing the tenant configuration. If this is set, no gitRepoTemplate is needed.
 	GitRepoURL string `json:"gitRepoURL,omitempty"`
 	// GitRepoTemplate Template for managing the GitRepo object. If not set, no  GitRepo object will be created.
