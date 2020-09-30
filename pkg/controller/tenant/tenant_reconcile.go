@@ -10,6 +10,7 @@ import (
 	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -54,14 +55,16 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 
 		instance.Spec.GitRepoTemplate.DeletionPolicy = instance.Spec.DeletionPolicy
 
-		err = helpers.CreateOrUpdateGitRepo(instance, r.scheme, instance.Spec.GitRepoTemplate, r.client, corev1.LocalObjectReference{Name: instance.GetName()})
+		result, err := helpers.CreateOrUpdateGitRepo(instance, r.scheme, instance.Spec.GitRepoTemplate, r.client, corev1.LocalObjectReference{Name: instance.GetName()})
 		if err != nil {
 			return err
 		}
 
-		instance.Spec.GitRepoURL, _, err = helpers.GetGitRepoURLAndHostKeys(instance, r.client)
-		if err != nil {
-			return err
+		if result != controllerutil.OperationResultCreated {
+			instance.Spec.GitRepoURL, _, err = helpers.GetGitRepoURLAndHostKeys(instance, r.client)
+			if err != nil {
+				return err
+			}
 		}
 
 		helpers.AddDeletionProtection(instance)

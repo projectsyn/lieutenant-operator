@@ -29,14 +29,14 @@ type DeletionState struct {
 }
 
 // CreateOrUpdateGitRepo will create the gitRepo object if it doesn't already exist. If the owner object itself is a tenant tenantRef can be set nil.
-func CreateOrUpdateGitRepo(obj metav1.Object, scheme *runtime.Scheme, template *synv1alpha1.GitRepoTemplate, client client.Client, tenantRef corev1.LocalObjectReference) error {
+func CreateOrUpdateGitRepo(obj metav1.Object, scheme *runtime.Scheme, template *synv1alpha1.GitRepoTemplate, client client.Client, tenantRef corev1.LocalObjectReference) (controllerutil.OperationResult, error) {
 
 	if template == nil {
-		return fmt.Errorf("gitRepo template is empty")
+		return controllerutil.OperationResultNone, fmt.Errorf("gitRepo template is empty")
 	}
 
 	if tenantRef.Name == "" {
-		return fmt.Errorf("the tenant name is empty")
+		return controllerutil.OperationResultNone, fmt.Errorf("the tenant name is empty")
 	}
 
 	if template.DeletionPolicy == "" {
@@ -54,7 +54,7 @@ func CreateOrUpdateGitRepo(obj metav1.Object, scheme *runtime.Scheme, template *
 		},
 	}
 
-	_, err := controllerutil.CreateOrUpdate(context.TODO(), client, repo, func() error {
+	result, err := controllerutil.CreateOrUpdate(context.TODO(), client, repo, func() error {
 		repo.Spec.GitRepoTemplate = *template
 		repo.Spec.TenantRef = tenantRef
 		AddDeletionProtection(repo)
@@ -67,7 +67,7 @@ func CreateOrUpdateGitRepo(obj metav1.Object, scheme *runtime.Scheme, template *
 		}
 	}
 
-	return err
+	return result, err
 }
 
 // AddTenantLabel adds the tenant label to an object.

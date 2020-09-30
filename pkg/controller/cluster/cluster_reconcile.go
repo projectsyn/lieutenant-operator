@@ -90,7 +90,7 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 
 		instance.Spec.GitRepoTemplate.DeletionPolicy = instance.Spec.DeletionPolicy
 
-		err = helpers.CreateOrUpdateGitRepo(instance, r.scheme, instance.Spec.GitRepoTemplate, r.client, instance.Spec.TenantRef)
+		result, err := helpers.CreateOrUpdateGitRepo(instance, r.scheme, instance.Spec.GitRepoTemplate, r.client, instance.Spec.TenantRef)
 		if err != nil {
 			reqLogger.Error(err, "Cannot create or update git repo object")
 			return err
@@ -154,9 +154,11 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 		helpers.AddDeletionProtection(instance)
 		controllerutil.AddFinalizer(instance, finalizerName)
 
-		instance.Spec.GitRepoURL, instance.Spec.GitHostKeys, err = helpers.GetGitRepoURLAndHostKeys(instance, r.client)
-		if err != nil {
-			return err
+		if result != controllerutil.OperationResultCreated {
+			instance.Spec.GitRepoURL, instance.Spec.GitHostKeys, err = helpers.GetGitRepoURLAndHostKeys(instance, r.client)
+			if err != nil {
+				return err
+			}
 		}
 		if !equality.Semantic.DeepEqual(instanceCopy.Status, instance.Status) {
 			if err := r.client.Status().Update(context.TODO(), instance); err != nil {
