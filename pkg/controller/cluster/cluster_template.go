@@ -35,6 +35,7 @@ func applyClusterTemplate(cluster *synv1alpha1.Cluster, tenant *synv1alpha1.Tena
 		return nil
 	}
 
+	// To avoid rendering the template in the actual tenant
 	tenant = tenant.DeepCopy()
 
 	parser := &templateParser{

@@ -11,9 +11,8 @@ import (
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
-	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -23,13 +22,14 @@ const (
 	protectionSettingEnvVar = "LIEUTENANT_DELETE_PROTECTION"
 )
 
+// DeletionState of the instance
 type DeletionState struct {
 	FinalizerRemoved bool
 	Deleted          bool
 }
 
 // CreateOrUpdateGitRepo will create the gitRepo object if it doesn't already exist. If the owner object itself is a tenant tenantRef can be set nil.
-func CreateOrUpdateGitRepo(obj metav1.Object, gvk schema.GroupVersionKind, template *synv1alpha1.GitRepoTemplate, client client.Client, tenantRef corev1.LocalObjectReference) error {
+func CreateOrUpdateGitRepo(obj metav1.Object, scheme *runtime.Scheme, template *synv1alpha1.GitRepoTemplate, client client.Client, tenantRef corev1.LocalObjectReference) error {
 
 	if template == nil {
 		return fmt.Errorf("gitRepo template is empty")
@@ -51,36 +51,15 @@ func CreateOrUpdateGitRepo(obj metav1.Object, gvk schema.GroupVersionKind, templ
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      obj.GetName(),
 			Namespace: obj.GetNamespace(),
-			OwnerReferences: []metav1.OwnerReference{
-				*metav1.NewControllerRef(obj, gvk),
-			},
-		},
-		Spec: synv1alpha1.GitRepoSpec{
-			GitRepoTemplate: *template,
-			TenantRef:       corev1.LocalObjectReference{Name: tenantRef.Name},
 		},
 	}
 
-	AddDeletionProtection(repo)
-
-	err := client.Create(context.TODO(), repo)
-	if err != nil && errors.IsAlreadyExists(err) {
-		existingRepo := &synv1alpha1.GitRepo{}
-
-		namespacedName := types.NamespacedName{
-			Name:      repo.GetName(),
-			Namespace: repo.GetNamespace(),
-		}
-
-		err = client.Get(context.TODO(), namespacedName, existingRepo)
-		if err != nil {
-			return fmt.Errorf("could not update existing repo: %v", err)
-		}
-		existingRepo.Spec = repo.Spec
-
-		err = client.Update(context.TODO(), existingRepo)
-
-	}
+	_, err := controllerutil.CreateOrUpdate(context.TODO(), client, repo, func() error {
+		repo.Spec.GitRepoTemplate = *template
+		repo.Spec.TenantRef = tenantRef
+		AddDeletionProtection(repo)
+		return controllerutil.SetControllerReference(obj, repo, scheme)
+	})
 
 	for file, content := range template.TemplateFiles {
 		if content == manager.DeletionMagicString {
@@ -101,6 +80,7 @@ func AddTenantLabel(meta *metav1.ObjectMeta, tenant string) {
 	}
 }
 
+// GetGitRepoURLAndHostKeys for an instance
 func GetGitRepoURLAndHostKeys(obj metav1.Object, client client.Client) (string, string, error) {
 	gitRepo := &synv1alpha1.GitRepo{}
 	repoNamespacedName := types.NamespacedName{
@@ -115,6 +95,7 @@ func GetGitRepoURLAndHostKeys(obj metav1.Object, client client.Client) (string, 
 	return gitRepo.Status.URL, gitRepo.Status.HostKeys, nil
 }
 
+// SecretSortList to sort secrets
 type SecretSortList corev1.SecretList
 
 func (s SecretSortList) Len() int      { return len(s.Items) }
@@ -129,7 +110,7 @@ func (s SecretSortList) Less(i, j int) bool {
 	return s.Items[i].CreationTimestamp.Before(&s.Items[j].CreationTimestamp)
 }
 
-// Checks if the slice of strings contains a specific string
+// SliceContainsString checks if the slice of strings contains a specific string
 func SliceContainsString(list []string, s string) bool {
 	for _, v := range list {
 		if v == s {
@@ -173,6 +154,7 @@ func HandleDeletion(instance metav1.Object, finalizerName string, client client.
 	return DeletionState{Deleted: true, FinalizerRemoved: false}
 }
 
+// AddDeletionProtection annotations to the instance
 func AddDeletionProtection(instance metav1.Object) {
 	config := os.Getenv(protectionSettingEnvVar)
 
@@ -194,5 +176,4 @@ func AddDeletionProtection(instance metav1.Object) {
 
 		instance.SetAnnotations(annotations)
 	}
-
 }
