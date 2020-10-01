@@ -79,6 +79,49 @@ func TestReconcileCluster_NoTenant(t *testing.T) {
 	assert.Contains(t, err.Error(), "find tenant")
 }
 
+func TestReconcileCluster_NoGitRepoTemplate(t *testing.T) {
+	tenant := &synv1alpha1.Tenant{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-tenant",
+		},
+	}
+	cluster := &synv1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-cluster",
+		},
+		Spec: synv1alpha1.ClusterSpec{
+			TenantRef: corev1.LocalObjectReference{
+				Name: tenant.Name,
+			},
+		},
+	}
+
+	objs := []runtime.Object{
+		tenant,
+		cluster,
+	}
+
+	cl, s := testSetupClient(objs)
+
+	r := &ReconcileCluster{client: cl, scheme: s}
+
+	os.Setenv("SKIP_VAULT_SETUP", "true")
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name: cluster.Name,
+		},
+	}
+
+	_, err := r.Reconcile(req)
+	assert.NoError(t, err)
+
+	updatedCluster := &synv1alpha1.Cluster{}
+	err = cl.Get(context.TODO(), req.NamespacedName, updatedCluster)
+	assert.NoError(t, err)
+	assert.Nil(t, updatedCluster.Spec.GitRepoTemplate)
+}
+
 func TestReconcileCluster_Reconcile(t *testing.T) {
 	type fields struct {
 		tenantName   string

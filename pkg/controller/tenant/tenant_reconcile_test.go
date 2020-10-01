@@ -23,6 +23,35 @@ func testSetupClient(objs []runtime.Object) (client.Client, *runtime.Scheme) {
 	return fake.NewFakeClient(objs...), s
 }
 
+func TestHandleNilGitRepoTemplate(t *testing.T) {
+	tenant := &synv1alpha1.Tenant{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "t-some-name",
+		},
+		Spec: synv1alpha1.TenantSpec{
+			DisplayName: "Display Name",
+		},
+	}
+
+	cl, s := testSetupClient([]runtime.Object{tenant})
+
+	r := &ReconcileTenant{client: cl, scheme: s}
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name: tenant.Name,
+		},
+	}
+
+	_, err := r.Reconcile(req)
+	assert.NoError(t, err)
+	updatedTenant := &synv1alpha1.Tenant{}
+	err = cl.Get(context.TODO(), types.NamespacedName{Name: tenant.Name}, updatedTenant)
+	assert.NoError(t, err)
+	assert.Nil(t, tenant.Spec.GitRepoTemplate)
+	assert.Nil(t, updatedTenant.Spec.GitRepoTemplate)
+}
+
 func TestCreateGitRepo(t *testing.T) {
 	tests := []struct {
 		name      string

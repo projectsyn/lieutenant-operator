@@ -27,10 +27,6 @@ func (r *templateParser) ParseString(in string) interface{} {
 }
 
 func applyClusterTemplate(cluster *synv1alpha1.Cluster, tenant *synv1alpha1.Tenant) error {
-	if cluster.Spec.GitRepoTemplate == nil {
-		cluster.Spec.GitRepoTemplate = &synv1alpha1.GitRepoTemplate{}
-	}
-
 	if tenant.Spec.ClusterTemplate == nil {
 		return nil
 	}

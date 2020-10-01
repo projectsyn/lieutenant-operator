@@ -41,32 +41,33 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 		}
 		instanceCopy := instance.DeepCopy()
 
-		if len(instance.Spec.GitRepoTemplate.DisplayName) == 0 {
-			instance.Spec.GitRepoTemplate.DisplayName = instance.Spec.DisplayName
-		}
+		if instance.Spec.GitRepoTemplate != nil {
+			if len(instance.Spec.GitRepoTemplate.DisplayName) == 0 {
+				instance.Spec.GitRepoTemplate.DisplayName = instance.Spec.DisplayName
+			}
 
-		commonClassFile := CommonClassName + ".yml"
-		if instance.Spec.GitRepoTemplate.TemplateFiles == nil {
-			instance.Spec.GitRepoTemplate.TemplateFiles = map[string]string{}
-		}
-		if _, ok := instance.Spec.GitRepoTemplate.TemplateFiles[commonClassFile]; !ok {
-			instance.Spec.GitRepoTemplate.TemplateFiles[commonClassFile] = ""
-		}
+			commonClassFile := CommonClassName + ".yml"
+			if instance.Spec.GitRepoTemplate.TemplateFiles == nil {
+				instance.Spec.GitRepoTemplate.TemplateFiles = map[string]string{}
+			}
+			if _, ok := instance.Spec.GitRepoTemplate.TemplateFiles[commonClassFile]; !ok {
+				instance.Spec.GitRepoTemplate.TemplateFiles[commonClassFile] = ""
+			}
 
-		instance.Spec.GitRepoTemplate.DeletionPolicy = instance.Spec.DeletionPolicy
+			instance.Spec.GitRepoTemplate.DeletionPolicy = instance.Spec.DeletionPolicy
 
-		result, err := helpers.CreateOrUpdateGitRepo(instance, r.scheme, instance.Spec.GitRepoTemplate, r.client, corev1.LocalObjectReference{Name: instance.GetName()})
-		if err != nil {
-			return err
-		}
-
-		if result != controllerutil.OperationResultCreated {
-			instance.Spec.GitRepoURL, _, err = helpers.GetGitRepoURLAndHostKeys(instance, r.client)
+			result, err := helpers.CreateOrUpdateGitRepo(instance, r.scheme, instance.Spec.GitRepoTemplate, r.client, corev1.LocalObjectReference{Name: instance.GetName()})
 			if err != nil {
 				return err
 			}
-		}
 
+			if result != controllerutil.OperationResultCreated {
+				instance.Spec.GitRepoURL, _, err = helpers.GetGitRepoURLAndHostKeys(instance, r.client)
+				if err != nil {
+					return err
+				}
+			}
+		}
 		helpers.AddDeletionProtection(instance)
 		if !equality.Semantic.DeepEqual(instanceCopy, instance) {
 			if err := r.client.Update(context.TODO(), instance); err != nil {
