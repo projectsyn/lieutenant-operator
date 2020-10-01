@@ -46,6 +46,9 @@ func TestApplyClusterTemplate(t *testing.T) {
 				GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
 					RepoName: "{{ .Name }}",
 					Path:     "{{ .Spec.TenantRef.Name }}",
+					APISecretRef: corev1.SecretReference{
+						Name: `secret-{{ index .Annotations "syn.tools/tenant"}}`,
+					},
 				},
 			},
 		},
@@ -53,6 +56,9 @@ func TestApplyClusterTemplate(t *testing.T) {
 	cluster := &synv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "c-some-test",
+			Annotations: map[string]string{
+				"syn.tools/tenant": "tenant-a",
+			},
 		},
 		Spec: synv1alpha1.ClusterSpec{
 			TenantRef: corev1.LocalObjectReference{
@@ -67,6 +73,7 @@ func TestApplyClusterTemplate(t *testing.T) {
 	assert.Equal(t, "c-some-test", cluster.Spec.GitRepoTemplate.RepoName)
 	assert.Equal(t, "tenant-a", cluster.Spec.GitRepoTemplate.Path)
 	assert.Equal(t, "{{ .Name }}", tenant.Spec.ClusterTemplate.GitRepoTemplate.RepoName)
+	assert.Equal(t, "secret-tenant-a", cluster.Spec.GitRepoTemplate.APISecretRef.Name)
 }
 
 func TestApplyClusterTemplateFail(t *testing.T) {

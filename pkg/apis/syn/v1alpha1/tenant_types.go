@@ -10,7 +10,7 @@ type TenantSpec struct {
 	DisplayName string `json:"displayName,omitempty"`
 	// GitRepoURL git repository storing the tenant configuration. If this is set, no gitRepoTemplate is needed.
 	GitRepoURL string `json:"gitRepoURL,omitempty"`
-	// GitRepoTemplate Template for managing the GitRepo object. If not set, no  GitRepo object will be created.
+	// GitRepoTemplate Template for managing the GitRepo object. If not set, no GitRepo object will be created.
 	GitRepoTemplate *GitRepoTemplate `json:"gitRepoTemplate,omitempty"`
 	// DeletionPolicy defines how the external resources should be treated upon CR deletion.
 	// Retain: will not delete any external resources
@@ -18,7 +18,9 @@ type TenantSpec struct {
 	// Archive: will archive the external resources, if it supports that
 	// +kubebuilder:validation:Enum=Delete;Retain;Archive
 	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
-	// ClusterTemplate defines a template which will be used for newly created clusters of this tenant
+	// ClusterTemplate defines a template which will be used to set defaults for the clusters of this tenant.
+	// The fields whitin this can use Go templating.
+	// See [the docs](https://syn.tools/lieutenant-operator/explanation/templating.html) for details.
 	ClusterTemplate *ClusterSpec `json:"clusterTemplate,omitempty"`
 }
 

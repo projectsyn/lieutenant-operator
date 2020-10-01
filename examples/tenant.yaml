@@ -17,6 +17,10 @@ spec:
         key: AAAAC3NzaC1lZDI1NTE5AAAAIJ22mHNYfSPnLAj8YiKa0RmxafD9r5nEUquizay7xh3s
         writeAccess: true
   clusterTemplate:
+    facts:
+      creationtime: '{{ .CreationTimestamp }}'
     gitRepoTemplate:
-      path: clusters
-      repoName: "{{ .Name }}"
+      path: 'cluster-catalogs/{{index .Spec.Facts "cloud"}}'
+      repoName: '{{ .Name }}'
+      apiSecretRef:
+        name: git-api-credentials
