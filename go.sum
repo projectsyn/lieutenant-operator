@@ -825,8 +825,8 @@ github.com/russross/blackfriday v1.5.2 h1:HyvC0ARfnZBqnXwABFeSZHpKvJHJJfPz81GNue
 github.com/russross/blackfriday v1.5.2/go.mod h1:JO/DiYxRf+HjHt06OyowR9PTA263kcR/rfWxYHBV53g=
 github.com/russross/blackfriday/v2 v2.0.1 h1:lPqVAte+HuHNfhJ/0LC98ESWRz8afy9tM/0RK8m9o+Q=
 github.com/russross/blackfriday/v2 v2.0.1/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
-github.com/ryankurte/go-structparse v1.1.2-0.20200520212337-57e3831545db h1:qRa5ySf6pEOe/ENddirdRz0hlxBwBGA5I16JN9iHvX4=
-github.com/ryankurte/go-structparse v1.1.2-0.20200520212337-57e3831545db/go.mod h1:crDQ9yvcG7vXKASIt6b/3mtvH11rclCYbFiugR0aEy0=
+github.com/ryankurte/go-structparse v1.2.0 h1:CivPZN8qqRcBj6/jWJnW7VUl3qBzGuQ6FKYWCUwC0Y8=
+github.com/ryankurte/go-structparse v1.2.0/go.mod h1:crDQ9yvcG7vXKASIt6b/3mtvH11rclCYbFiugR0aEy0=
 github.com/ryanuber/columnize v0.0.0-20160712163229-9b3edd62028f/go.mod h1:sm1tb6uqfes/u+d4ooFouqFdy9/2g9QGwK3SQygK0Ts=
 github.com/ryanuber/columnize v2.1.0+incompatible/go.mod h1:sm1tb6uqfes/u+d4ooFouqFdy9/2g9QGwK3SQygK0Ts=
 github.com/ryanuber/go-glob v1.0.0 h1:iQh3xXAumdQ+4Ufa5b25cRpC5TYKlno6hsv6Cb3pkBk=

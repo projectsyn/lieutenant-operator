@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/vault/api v1.0.4
 	github.com/imdario/mergo v0.3.11
 	github.com/operator-framework/operator-sdk v0.17.1
-	github.com/ryankurte/go-structparse v1.1.2-0.20200520212337-57e3831545db
+	github.com/ryankurte/go-structparse v1.2.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1
 	github.com/xanzy/go-gitlab v0.38.1
