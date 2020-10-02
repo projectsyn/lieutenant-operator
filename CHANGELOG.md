@@ -4,11 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-### Changed
+## [v0.2.2] - 2020-09-10
+### Fixed
+- Update latest image tag in deployment ([#104])
 
+## [v0.2.1] - 2020-09-10
+### Changed
 - Apply the default Syn project meta files ([#90])
 - Replaced playbook.yml with custom command ([#100])
+- Make Vault secret engine path configurable ([#103])
 
 ## [v0.2.0] - 2020-07-23
 ### Added
@@ -83,6 +87,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [v0.1.4]: https://github.com/projectsyn/lieutenant-operator/releases/tag/v0.1.4
 [v0.1.5]: https://github.com/projectsyn/lieutenant-operator/releases/tag/v0.1.5
 [v0.2.0]: https://github.com/projectsyn/lieutenant-operator/releases/tag/v0.2.0
+[v0.2.1]: https://github.com/projectsyn/lieutenant-operator/releases/tag/v0.2.1
+[v0.2.2]: https://github.com/projectsyn/lieutenant-operator/releases/tag/v0.2.2
+
 [#62]: https://github.com/projectsyn/lieutenant-operator/pull/62
 [#71]: https://github.com/projectsyn/lieutenant-operator/pull/71
 [#76]: https://github.com/projectsyn/lieutenant-operator/pull/76
@@ -90,3 +97,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#85]: https://github.com/projectsyn/lieutenant-operator/pull/85
 [#88]: https://github.com/projectsyn/lieutenant-operator/pull/88
 [#90]: https://github.com/projectsyn/lieutenant-operator/pull/90
+[#100]: https://github.com/projectsyn/lieutenant-operator/pull/100
+[#103]: https://github.com/projectsyn/lieutenant-operator/pull/103
+[#104]: https://github.com/projectsyn/lieutenant-operator/pull/104

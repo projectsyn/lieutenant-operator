@@ -78,9 +78,14 @@ func newBankVaultClient(deletionPolicy synv1alpha1.DeletionPolicy, log logr.Logg
 		client.RawClient().SetToken(os.Getenv(api.EnvVaultToken))
 	}
 
+	secretEngine := os.Getenv("VAULT_SECRET_ENGINE_PATH")
+	if secretEngine == "" {
+		secretEngine = "kv"
+	}
+
 	return &BankVaultClient{
 		client:         client,
-		secretEngine:   "kv",
+		secretEngine:   secretEngine,
 		deletionPolicy: deletionPolicy,
 		log:            log,
 	}, nil
