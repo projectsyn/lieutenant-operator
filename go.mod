@@ -7,9 +7,9 @@ require (
 	github.com/banzaicloud/bank-vaults/pkg/sdk v0.5.0
 	github.com/go-logr/logr v0.1.0
 	github.com/hashicorp/vault/api v1.0.4
-	github.com/icza/gox v0.0.0-20200609211944-3a8f67025601
-	github.com/imdario/mergo v0.3.9 // indirect
+	github.com/imdario/mergo v0.3.11
 	github.com/operator-framework/operator-sdk v0.17.1
+	github.com/ryankurte/go-structparse v1.1.2-0.20200520212337-57e3831545db
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1
 	github.com/xanzy/go-gitlab v0.38.1
@@ -17,6 +17,7 @@ require (
 	k8s.io/apimachinery v0.17.4
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a
+	k8s.io/utils v0.0.0-20191114200735-6ca3b61696b6
 	sigs.k8s.io/controller-runtime v0.5.2
 )
 

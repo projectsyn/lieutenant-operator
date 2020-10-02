@@ -8,6 +8,7 @@ import (
 	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -37,6 +38,12 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 				return nil
 			}
 			return err
+		}
+		instanceCopy := instance.DeepCopy()
+
+		if instance.Spec.RepoType == synv1alpha1.UnmanagedRepoType {
+			reqLogger.Info("Skipping GitRepo because it is unmanaged")
+			return nil
 		}
 
 		repo, hostKeys, err := manager.GetGitClient(&instance.Spec.GitRepoTemplate, instance.GetNamespace(), reqLogger, r.client)
@@ -85,7 +92,9 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 
 		controllerutil.AddFinalizer(instance, finalizerName)
 
-		err = r.client.Update(context.TODO(), instance)
+		if !equality.Semantic.DeepEqual(instanceCopy, instance) {
+			err = r.client.Update(context.TODO(), instance)
+		}
 		if err != nil {
 			return err
 		}
@@ -93,7 +102,12 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 		instance.Status.Phase = &phase
 		instance.Status.URL = repo.FullURL().String()
 		instance.Status.Type = synv1alpha1.GitType(repo.Type())
-		return r.client.Status().Update(context.TODO(), instance)
+		if !equality.Semantic.DeepEqual(instanceCopy.Status, instance.Status) {
+			if err := r.client.Status().Update(context.TODO(), instance); err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 
 	return reconcile.Result{}, err
@@ -107,12 +121,15 @@ func (r *ReconcileGitRepo) repoExists(repo manager.Repo) bool {
 	return false
 }
 
-func (r *ReconcileGitRepo) handleRepoError(err error, instance *synv1alpha1.GitRepo, repo manager.Repo) error {
+func (r *ReconcileGitRepo) handleRepoError(repoErr error, instance *synv1alpha1.GitRepo, repo manager.Repo) error {
+	instanceCopy := instance.DeepCopy()
 	phase := synv1alpha1.Failed
 	instance.Status.Phase = &phase
 	instance.Status.URL = repo.FullURL().String()
-	if updateErr := r.client.Status().Update(context.TODO(), instance); updateErr != nil {
-		return fmt.Errorf("could not set status while handling error: %s: %s", updateErr, err)
+	if !equality.Semantic.DeepEqual(instanceCopy.Status, instance.Status) {
+		if err := r.client.Status().Update(context.TODO(), instance); err != nil {
+			return fmt.Errorf("could not set status while handling error: %w: %s", err, repoErr)
+		}
 	}
-	return err
+	return repoErr
 }

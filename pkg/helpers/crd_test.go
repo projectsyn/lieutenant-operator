@@ -12,11 +12,11 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 func TestAddTenantLabel(t *testing.T) {
@@ -51,7 +51,6 @@ func TestAddTenantLabel(t *testing.T) {
 func TestCreateOrUpdateGitRepo(t *testing.T) {
 	type args struct {
 		obj       metav1.Object
-		gvk       schema.GroupVersionKind
 		template  *synv1alpha1.GitRepoTemplate
 		tenantRef v1.LocalObjectReference
 	}
@@ -68,10 +67,6 @@ func TestCreateOrUpdateGitRepo(t *testing.T) {
 						Name:      "test",
 						Namespace: "test",
 					},
-				},
-				gvk: schema.GroupVersionKind{
-					Version: "testVersion",
-					Kind:    "testKind",
 				},
 				template: &synv1alpha1.GitRepoTemplate{
 					APISecretRef: v1.SecretReference{Name: "testSecret"},
@@ -94,8 +89,10 @@ func TestCreateOrUpdateGitRepo(t *testing.T) {
 		cl := testSetupClient(objs)
 
 		t.Run(tt.name, func(t *testing.T) {
-			if err := CreateOrUpdateGitRepo(tt.args.obj, tt.args.gvk, tt.args.template, cl, tt.args.tenantRef); (err != nil) != tt.wantErr {
+			if res, err := CreateOrUpdateGitRepo(tt.args.obj, scheme.Scheme, tt.args.template, cl, tt.args.tenantRef); (err != nil) != tt.wantErr {
 				t.Errorf("CreateOrUpdateGitRepo() error = %v, wantErr %v", err, tt.wantErr)
+			} else {
+				assert.Equal(t, controllerutil.OperationResultCreated, res)
 			}
 		})
 
@@ -108,13 +105,17 @@ func TestCreateOrUpdateGitRepo(t *testing.T) {
 		assert.NoError(t, cl.Get(context.TODO(), namespacedName, checkRepo))
 		assert.Equal(t, tt.args.template, &checkRepo.Spec.GitRepoTemplate)
 		tt.args.template.RepoName = "changedName"
-		assert.NoError(t, CreateOrUpdateGitRepo(tt.args.obj, tt.args.gvk, tt.args.template, cl, tt.args.tenantRef))
+		res, err := CreateOrUpdateGitRepo(tt.args.obj, scheme.Scheme, tt.args.template, cl, tt.args.tenantRef)
+		assert.NoError(t, err)
+		assert.Equal(t, controllerutil.OperationResultUpdated, res)
 		assert.NoError(t, cl.Get(context.TODO(), namespacedName, checkRepo))
 		assert.Equal(t, tt.args.template, &checkRepo.Spec.GitRepoTemplate)
 
 		checkRepo.Spec.RepoType = synv1alpha1.AutoRepoType
 		assert.NoError(t, cl.Update(context.TODO(), checkRepo))
-		assert.NoError(t, CreateOrUpdateGitRepo(tt.args.obj, tt.args.gvk, tt.args.template, cl, tt.args.tenantRef))
+		res, err = CreateOrUpdateGitRepo(tt.args.obj, scheme.Scheme, tt.args.template, cl, tt.args.tenantRef)
+		assert.NoError(t, err)
+		assert.Equal(t, controllerutil.OperationResultNone, res)
 		finalRepo := &synv1alpha1.GitRepo{}
 		assert.NoError(t, cl.Get(context.TODO(), namespacedName, finalRepo))
 		assert.Equal(t, checkRepo.Spec.GitRepoTemplate, finalRepo.Spec.GitRepoTemplate)

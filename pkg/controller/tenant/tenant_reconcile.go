@@ -8,8 +8,9 @@ import (
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -24,7 +25,7 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling Tenant")
 
-	err := retry.OnError(retry.DefaultBackoff, errors.IsNotFound, func() error {
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		// Fetch the Tenant instance
 		instance := &synv1alpha1.Tenant{}
 		err := r.client.Get(context.TODO(), request.NamespacedName, instance)
@@ -38,38 +39,42 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 			// Error reading the object - requeue the request.
 			return err
 		}
+		instanceCopy := instance.DeepCopy()
 
-		gvk := schema.GroupVersionKind{
-			Version: instance.APIVersion,
-			Kind:    instance.Kind,
+		if instance.Spec.GitRepoTemplate != nil {
+			if len(instance.Spec.GitRepoTemplate.DisplayName) == 0 {
+				instance.Spec.GitRepoTemplate.DisplayName = instance.Spec.DisplayName
+			}
+
+			commonClassFile := CommonClassName + ".yml"
+			if instance.Spec.GitRepoTemplate.TemplateFiles == nil {
+				instance.Spec.GitRepoTemplate.TemplateFiles = map[string]string{}
+			}
+			if _, ok := instance.Spec.GitRepoTemplate.TemplateFiles[commonClassFile]; !ok {
+				instance.Spec.GitRepoTemplate.TemplateFiles[commonClassFile] = ""
+			}
+
+			instance.Spec.GitRepoTemplate.DeletionPolicy = instance.Spec.DeletionPolicy
+
+			result, err := helpers.CreateOrUpdateGitRepo(instance, r.scheme, instance.Spec.GitRepoTemplate, r.client, corev1.LocalObjectReference{Name: instance.GetName()})
+			if err != nil {
+				return err
+			}
+
+			if result != controllerutil.OperationResultCreated {
+				instance.Spec.GitRepoURL, _, err = helpers.GetGitRepoURLAndHostKeys(instance, r.client)
+				if err != nil {
+					return err
+				}
+			}
 		}
-
-		if len(instance.Spec.GitRepoTemplate.DisplayName) == 0 {
-			instance.Spec.GitRepoTemplate.DisplayName = instance.Spec.DisplayName
-		}
-
-		commonClassFile := CommonClassName + ".yml"
-		if instance.Spec.GitRepoTemplate.TemplateFiles == nil {
-			instance.Spec.GitRepoTemplate.TemplateFiles = map[string]string{}
-		}
-		if _, ok := instance.Spec.GitRepoTemplate.TemplateFiles[commonClassFile]; !ok {
-			instance.Spec.GitRepoTemplate.TemplateFiles[commonClassFile] = ""
-		}
-
-		instance.Spec.GitRepoTemplate.DeletionPolicy = instance.Spec.DeletionPolicy
-
-		err = helpers.CreateOrUpdateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, corev1.LocalObjectReference{Name: instance.GetName()})
-		if err != nil {
-			return err
-		}
-
-		instance.Spec.GitRepoURL, _, err = helpers.GetGitRepoURLAndHostKeys(instance, r.client)
-		if err != nil {
-			return err
-		}
-
 		helpers.AddDeletionProtection(instance)
-		return r.client.Update(context.TODO(), instance)
+		if !equality.Semantic.DeepEqual(instanceCopy, instance) {
+			if err := r.client.Update(context.TODO(), instance); err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 	return reconcile.Result{}, err
 }

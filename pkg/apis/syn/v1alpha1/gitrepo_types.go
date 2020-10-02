@@ -48,7 +48,7 @@ type DeletionPolicy string
 type GitRepoSpec struct {
 	GitRepoTemplate `json:",inline"`
 	// TenantRef references the tenant this repo belongs to
-	TenantRef corev1.LocalObjectReference `json:"tenantRef"`
+	TenantRef corev1.LocalObjectReference `json:"tenantRef,omitempty"`
 }
 
 // GitRepoTemplate is used for templating git repos, it does not contain the tenantRef as it will be added by the

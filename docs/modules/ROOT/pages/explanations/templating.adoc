@@ -1,0 +1,57 @@
+= Templating
+
+Some fields of the CRDs allow to use https://golang.org/pkg/text/template[Go templates] which are rendered by the operator.
+You can find some explanations on how to use them in here.
+
+
+== Cluster Template
+
+The tenant field `.spec.clusterTemplate` <<references/crds-html.adoc#syn.tools/v1alpha1.TenantSpec,defines>> a template which is used to set default values for clusters of this tenant.
+
+[NOTE]
+The template will only be applied to fields of the cluster which aren't already set (empty or `nil`).
+It's for example not possible to set the displayName of a cluster if it already defines one.
+
+All _string_ fields within this allow to use Go templates which are rendered by the operator.
+As input data to the template rendering, the instance of the cluster on which the template is being applied on can be used.
+This data is a Go type defined https://github.com/projectsyn/lieutenant-operator/blob/34db9df5d2090a8840e69816d16ec13527c4fc2c/pkg/apis/syn/v1alpha1/cluster_types.go#L60[here].
+
+Since it's a Go type, only https://golang.org/ref/spec#Exported_identifiers[exported fields] (uppercase) can be accessed.
+
+[NOTE]
+====
+Since the `metav1.TypeMeta` (`.metadata` in YAML) is an https://golang.org/doc/effective_go.html#embedding[embedded] struct, you must access it's fields directly (and not via `.Metadata` as in YAML).
+For example the name is accessed with `{{ .Name }}`.
+====
+
+[NOTE]
+====
+To access a map in Go templates (like `.Annotations`) you have to use the https://golang.org/pkg/text/template/#hdr-Functions[`index`] function.
+For example an annotation is accessed with `{{ index .Annotations "syn.tools/name" }}`.
+====
+
+Some examples of how to access different values:
+
+[source,yaml]
+----
+apiVersion: syn.tools/v1alpha1
+kind: Tenant
+metadata:
+  name: t-aezoo6
+spec:
+  displayName: Big Corp.
+  gitRepoTemplate:
+    apiSecretRef:
+      name: vshn-gitlab
+    path: syn-dev/customers
+    repoName: t-aezoo6
+  clusterTemplate:
+    facts:
+      name: '{{ index .Annotations "syn.tools/name"}}'
+      creation: '{{ .CreationTimestamp }}'
+    gitRepoTemplate:
+      apiSecretRef:
+        name: secret-{{ .Spec.TenantRef.Name }}
+      path: cluster-catalogs/{{ index .Spec.Facts "cloud"}}
+      repoName: catalog-{{ .Name }}
+----

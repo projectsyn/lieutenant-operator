@@ -282,7 +282,8 @@ ClusterStatus
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#syn.tools/v1alpha1.Cluster">Cluster</a>)
+<a href="#syn.tools/v1alpha1.Cluster">Cluster</a>, 
+<a href="#syn.tools/v1alpha1.TenantSpec">TenantSpec</a>)
 </p>
 <p>
 <p>ClusterSpec defines the desired state of Cluster</p>
@@ -1063,7 +1064,7 @@ GitRepoTemplate
 </td>
 <td class="tableblock halign-left valign-top">
 <p class="tableblock">
-<p>GitRepoTemplate Template for managing the GitRepo object. If not set, no  GitRepo object will be created.</p>
+<p>GitRepoTemplate Template for managing the GitRepo object. If not set, no GitRepo object will be created.</p>
 <p class="tableblock">
 </td>
 </tr>
@@ -1084,6 +1085,25 @@ DeletionPolicy
 Retain: will not delete any external resources
 Delete: will delete the external resources
 Archive: will archive the external resources, if it supports that</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>clusterTemplate</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.ClusterSpec">
+ClusterSpec
+</a>
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>ClusterTemplate defines a template which will be used to set defaults for the clusters of this tenant.
+The fields whitin this can use Go templating.
+See <a href="https://syn.tools/lieutenant-operator/explanation/templating.html">the docs</a> for details.</p>
 <p class="tableblock">
 </td>
 </tr>
@@ -1169,7 +1189,7 @@ GitRepoTemplate
 </td>
 <td class="tableblock halign-left valign-top">
 <p class="tableblock">
-<p>GitRepoTemplate Template for managing the GitRepo object. If not set, no  GitRepo object will be created.</p>
+<p>GitRepoTemplate Template for managing the GitRepo object. If not set, no GitRepo object will be created.</p>
 <p class="tableblock">
 </td>
 </tr>
@@ -1190,6 +1210,25 @@ DeletionPolicy
 Retain: will not delete any external resources
 Delete: will delete the external resources
 Archive: will archive the external resources, if it supports that</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>clusterTemplate</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.ClusterSpec">
+ClusterSpec
+</a>
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>ClusterTemplate defines a template which will be used to set defaults for the clusters of this tenant.
+The fields whitin this can use Go templating.
+See <a href="https://syn.tools/lieutenant-operator/explanation/templating.html">the docs</a> for details.</p>
 <p class="tableblock">
 </td>
 </tr>

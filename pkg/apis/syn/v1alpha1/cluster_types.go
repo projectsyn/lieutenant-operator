@@ -11,7 +11,7 @@ type Facts map[string]string
 // ClusterSpec defines the desired state of Cluster
 type ClusterSpec struct {
 	// DisplayName of cluster which could be different from metadata.name. Allows cluster renaming should it be needed.
-	DisplayName string `json:"displayName"`
+	DisplayName string `json:"displayName,omitempty"`
 	// GitRepoURL git repository storing the cluster configuration catalog. If this is set, no gitRepoTemplate is needed.
 	GitRepoURL string `json:"gitRepoURL,omitempty"`
 	// SSH GitHostKeys of the git server
@@ -19,7 +19,7 @@ type ClusterSpec struct {
 	// GitRepoTemplate template for managing the GitRepo object.
 	GitRepoTemplate *GitRepoTemplate `json:"gitRepoTemplate,omitempty"`
 	// TenantRef reference to Tenant object the cluster belongs to.
-	TenantRef corev1.LocalObjectReference `json:"tenantRef"`
+	TenantRef corev1.LocalObjectReference `json:"tenantRef,omitempty"`
 	// TokenLifetime set the token lifetime
 	TokenLifeTime string `json:"tokenLifeTime,omitempty"`
 	// Facts are key/value pairs for statically configured facts
@@ -40,7 +40,7 @@ type BootstrapToken struct {
 	// used after this timestamp it will be rejected.
 	ValidUntil metav1.Time `json:"validUntil,omitempty"`
 	// TokenValid indicates if the token is still valid or was already used.
-	TokenValid bool `json:"tokenValid"`
+	TokenValid bool `json:"tokenValid,omitempty"`
 }
 
 // ClusterStatus defines the observed state of Cluster

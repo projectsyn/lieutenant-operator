@@ -18,9 +18,9 @@ import (
 	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
 	"github.com/projectsyn/lieutenant-operator/pkg/vault"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -53,6 +53,20 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 			}
 			return err
 		}
+		instanceCopy := instance.DeepCopy()
+
+		nsName := request.NamespacedName
+		nsName.Name = instance.Spec.TenantRef.Name
+
+		tenant := &synv1alpha1.Tenant{}
+
+		if err := r.client.Get(context.TODO(), nsName, tenant); err != nil {
+			return fmt.Errorf("Couldn't find tenant: %w", err)
+		}
+
+		if err := applyClusterTemplate(instance, tenant); err != nil {
+			return err
+		}
 
 		if err := r.createClusterRBAC(*instance); err != nil {
 			return err
@@ -70,21 +84,25 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 			instance.Status.BootstrapToken.TokenValid = false
 		}
 
-		gvk := schema.GroupVersionKind{
-			Version: instance.APIVersion,
-			Kind:    instance.Kind,
-		}
+		if instance.Spec.GitRepoTemplate != nil {
+			if len(instance.Spec.GitRepoTemplate.DisplayName) == 0 {
+				instance.Spec.GitRepoTemplate.DisplayName = instance.Spec.DisplayName
+			}
 
-		if len(instance.Spec.GitRepoTemplate.DisplayName) == 0 {
-			instance.Spec.GitRepoTemplate.DisplayName = instance.Spec.DisplayName
-		}
+			instance.Spec.GitRepoTemplate.DeletionPolicy = instance.Spec.DeletionPolicy
 
-		instance.Spec.GitRepoTemplate.DeletionPolicy = instance.Spec.DeletionPolicy
+			result, err := helpers.CreateOrUpdateGitRepo(instance, r.scheme, instance.Spec.GitRepoTemplate, r.client, instance.Spec.TenantRef)
+			if err != nil {
+				reqLogger.Error(err, "Cannot create or update git repo object")
+				return err
+			}
 
-		err = helpers.CreateOrUpdateGitRepo(instance, gvk, instance.Spec.GitRepoTemplate, r.client, instance.Spec.TenantRef)
-		if err != nil {
-			reqLogger.Error(err, "Cannot create or update git repo object")
-			return err
+			if result != controllerutil.OperationResultCreated {
+				instance.Spec.GitRepoURL, instance.Spec.GitHostKeys, err = helpers.GetGitRepoURLAndHostKeys(instance, r.client)
+				if err != nil {
+					return err
+				}
+			}
 		}
 
 		repoName := request.NamespacedName
@@ -125,6 +143,7 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 					return err
 				}
 			}
+			// TODO: Move logic to tenant reconcile to avoid conflicts https://github.com/projectsyn/lieutenant-operator/issues/80
 			err = r.removeClusterFileFromTenant(instance.GetName(), repoName, reqLogger)
 			if err != nil {
 				return err
@@ -134,6 +153,7 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 			return r.client.Update(context.TODO(), instance)
 		}
 
+		// TODO: Move logic to tenant reconcile to avoid conflicts https://github.com/projectsyn/lieutenant-operator/issues/80
 		err = r.updateTenantGitRepo(repoName, instance.GetName())
 		if err != nil {
 			return err
@@ -143,15 +163,17 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 		helpers.AddDeletionProtection(instance)
 		controllerutil.AddFinalizer(instance, finalizerName)
 
-		instance.Spec.GitRepoURL, instance.Spec.GitHostKeys, err = helpers.GetGitRepoURLAndHostKeys(instance, r.client)
-		if err != nil {
-			return err
+		if !equality.Semantic.DeepEqual(instanceCopy.Status, instance.Status) {
+			if err := r.client.Status().Update(context.TODO(), instance); err != nil {
+				return err
+			}
 		}
-		err = r.client.Status().Update(context.TODO(), instance)
-		if err != nil {
-			return err
+		if !equality.Semantic.DeepEqual(instanceCopy, instance) {
+			if err := r.client.Update(context.TODO(), instance); err != nil {
+				return err
+			}
 		}
-		return r.client.Update(context.TODO(), instance)
+		return nil
 	})
 
 	return reconcile.Result{}, err
@@ -207,6 +229,10 @@ func (r *ReconcileCluster) updateTenantGitRepo(tenant types.NamespacedName, clus
 			return err
 		}
 
+		if tenantCR.Spec.GitRepoTemplate == nil {
+			return nil
+		}
+
 		if tenantCR.Spec.GitRepoTemplate.TemplateFiles == nil {
 			tenantCR.Spec.GitRepoTemplate.TemplateFiles = map[string]string{}
 		}
@@ -260,7 +286,7 @@ func (r *ReconcileCluster) removeClusterFileFromTenant(clusterName string, tenan
 
 	fileName := clusterName + ".yml"
 
-	if tenantCR.Spec.GitRepoTemplate.TemplateFiles == nil {
+	if tenantCR.Spec.GitRepoTemplate == nil || tenantCR.Spec.GitRepoTemplate.TemplateFiles == nil {
 		return nil
 	}
 

@@ -7,11 +7,11 @@ import (
 
 	"github.com/projectsyn/lieutenant-operator/pkg/git/helpers"
 	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
+	"k8s.io/utils/pointer"
 
 	"github.com/go-logr/logr"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 
-	"github.com/icza/gox/builtinx"
 	"github.com/xanzy/go-gitlab"
 )
 
@@ -418,10 +418,10 @@ func (g *Gitlab) compareFiles() ([]manager.CommitFile, error) {
 func (g *Gitlab) getCommitOptions() *gitlab.CreateCommitOptions {
 
 	co := &gitlab.CreateCommitOptions{
-		AuthorEmail:   builtinx.NewString("lieutenant-operator@syn.local"),
-		AuthorName:    builtinx.NewString("Lieutenant Operator"),
-		Branch:        builtinx.NewString("master"),
-		CommitMessage: builtinx.NewString("Update cluster files"),
+		AuthorEmail:   pointer.StringPtr("lieutenant-operator@syn.local"),
+		AuthorName:    pointer.StringPtr("Lieutenant Operator"),
+		Branch:        pointer.StringPtr("master"),
+		CommitMessage: pointer.StringPtr("Update cluster files"),
 	}
 
 	co.Actions = []*gitlab.CommitAction{}

@@ -33,6 +33,95 @@ func testSetupClient(objs []runtime.Object) (client.Client, *runtime.Scheme) {
 	return fake.NewFakeClient(objs...), s
 }
 
+func TestReconcileCluster_NoCluster(t *testing.T) {
+	cl, s := testSetupClient([]runtime.Object{
+		&synv1alpha1.Cluster{},
+	})
+	r := &ReconcileCluster{client: cl, scheme: s}
+	_, err := r.Reconcile(reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name: "c-not-found",
+		},
+	})
+	assert.NoError(t, err)
+}
+
+func TestReconcileCluster_NoTenant(t *testing.T) {
+	cluster := &synv1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-cluster",
+		},
+		Spec: synv1alpha1.ClusterSpec{
+			TenantRef: corev1.LocalObjectReference{
+				Name: "inexistent-tenant",
+			},
+		},
+	}
+
+	objs := []runtime.Object{
+		cluster,
+		&synv1alpha1.GitRepo{},
+		&synv1alpha1.Tenant{},
+	}
+
+	cl, s := testSetupClient(objs)
+
+	r := &ReconcileCluster{client: cl, scheme: s}
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name: cluster.Name,
+		},
+	}
+
+	_, err := r.Reconcile(req)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "find tenant")
+}
+
+func TestReconcileCluster_NoGitRepoTemplate(t *testing.T) {
+	tenant := &synv1alpha1.Tenant{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-tenant",
+		},
+	}
+	cluster := &synv1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-cluster",
+		},
+		Spec: synv1alpha1.ClusterSpec{
+			TenantRef: corev1.LocalObjectReference{
+				Name: tenant.Name,
+			},
+		},
+	}
+
+	objs := []runtime.Object{
+		tenant,
+		cluster,
+	}
+
+	cl, s := testSetupClient(objs)
+
+	r := &ReconcileCluster{client: cl, scheme: s}
+
+	os.Setenv("SKIP_VAULT_SETUP", "true")
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name: cluster.Name,
+		},
+	}
+
+	_, err := r.Reconcile(req)
+	assert.NoError(t, err)
+
+	updatedCluster := &synv1alpha1.Cluster{}
+	err = cl.Get(context.TODO(), req.NamespacedName, updatedCluster)
+	assert.NoError(t, err)
+	assert.Nil(t, updatedCluster.Spec.GitRepoTemplate)
+}
+
 func TestReconcileCluster_Reconcile(t *testing.T) {
 	type fields struct {
 		tenantName   string

@@ -17,7 +17,20 @@ spec:
     deletionPolicy: Delete
     apiSecretRef:
       name: lieutenant-secret
-      namespace: lieutenant
+  clusterTemplate:
+    gitRepoTemplate:
+      apiSecretRef:
+        name: lieutenant-secret
+      path: cluster-catalogs
+      repoName: catalog-{{ .Name }}
 ....
 
 Please be aware that you first need to have a valid secret containing the endpoint information, see xref:how-tos/gitlab-connection.adoc[Connection to GitLab].
+
+
+== Cluster Templating
+
+The `spec.clusterTemplate` of a tenant can contain a template which is used to set default values for clusters of this tenant.
+All fields of a cluster's `.spec` can be set by this template if they're not already set by the cluster itself.
+The fields can contain https://golang.org/pkg/text/template[Go templates] and use the data of a cluster.
+See xref:explanations/templating.adoc[the templating explanation] for further details.
