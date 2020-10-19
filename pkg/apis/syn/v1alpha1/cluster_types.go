@@ -20,6 +20,10 @@ type ClusterSpec struct {
 	GitRepoTemplate *GitRepoTemplate `json:"gitRepoTemplate,omitempty"`
 	// TenantRef reference to Tenant object the cluster belongs to.
 	TenantRef corev1.LocalObjectReference `json:"tenantRef,omitempty"`
+	// TenantGitRepoRevision allows to configure the revision of the tenant configuration to use. It can be any git tree-ish reference. The revision from the tenant will be inherited if left empty.
+	TenantGitRepoRevision string `json:"tenantGitRepoRevision,omitempty"`
+	// GlobalGitRepoRevision allows to configure the revision of the global configuration to use. It can be any git tree-ish reference. The revision from the tenant will be inherited if left empty.
+	GlobalGitRepoRevision string `json:"globalGitRepoRevision,omitempty"`
 	// TokenLifetime set the token lifetime
 	TokenLifeTime string `json:"tokenLifeTime,omitempty"`
 	// Facts are key/value pairs for statically configured facts

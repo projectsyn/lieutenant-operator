@@ -10,6 +10,12 @@ type TenantSpec struct {
 	DisplayName string `json:"displayName,omitempty"`
 	// GitRepoURL git repository storing the tenant configuration. If this is set, no gitRepoTemplate is needed.
 	GitRepoURL string `json:"gitRepoURL,omitempty"`
+	// GitRepoRevision allows to configure the revision of the tenant configuration to use. It can be any git tree-ish reference. Defaults to HEAD if left empty.
+	GitRepoRevision string `json:"gitRepoRevision,omitempty"`
+	// GlobalGitRepoURL git repository storing the global configuration.
+	GlobalGitRepoURL string `json:"globalGitRepoURL,omitempty"`
+	// GlobalGitRepoRevision allows to configure the revision of the global configuration to use. It can be any git tree-ish reference. Defaults to HEAD if left empty.
+	GlobalGitRepoRevision string `json:"globalGitRepoRevision,omitempty"`
 	// GitRepoTemplate Template for managing the GitRepo object. If not set, no GitRepo object will be created.
 	GitRepoTemplate *GitRepoTemplate `json:"gitRepoTemplate,omitempty"`
 	// DeletionPolicy defines how the external resources should be treated upon CR deletion.
