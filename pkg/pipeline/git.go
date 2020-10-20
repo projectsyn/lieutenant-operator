@@ -19,6 +19,11 @@ func gitRepoSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionR
 		return ExecutionResult{Err: fmt.Errorf("object is not a GitRepository")}
 	}
 
+	err := fetchGitRepoTemplate(instance, data)
+	if err != nil {
+		return ExecutionResult{Err: err}
+	}
+
 	repo, hostKeys, err := manager.GetGitClient(&instance.Spec.GitRepoTemplate, instance.GetNamespace(), data.Log, data.Client)
 	if err != nil {
 		return ExecutionResult{Err: err}
@@ -66,8 +71,8 @@ func gitRepoSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionR
 	return ExecutionResult{}
 }
 
-// createOrUpdateGitRepo will create the gitRepo object if it doesn't already exist.
-func createOrUpdateGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+// createGitRepo will create the gitRepo object if it doesn't already exist.
+func createGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 
 	template := obj.GetGitTemplate()
 
@@ -115,28 +120,11 @@ func createOrUpdateGitRepo(obj PipelineObject, data *ExecutionContext) Execution
 		},
 	}
 
-	addDeletionProtection(repo, data)
-
 	err := data.Client.Create(context.TODO(), repo)
-	if err != nil && errors.IsAlreadyExists(err) {
-		existingRepo := &synv1alpha1.GitRepo{}
-
-		namespacedName := types.NamespacedName{
-			Name:      repo.GetName(),
-			Namespace: repo.GetNamespace(),
+	if err != nil {
+		if errors.IsAlreadyExists(err) {
+			return ExecutionResult{}
 		}
-
-		err = data.Client.Get(context.TODO(), namespacedName, existingRepo)
-		if err != nil {
-			return ExecutionResult{
-				Abort: true,
-				Err:   fmt.Errorf("could not update existing repo: %w", err),
-			}
-		}
-		existingRepo.Spec = repo.Spec
-
-		err = data.Client.Update(context.TODO(), existingRepo)
-
 	}
 
 	for file, content := range template.TemplateFiles {
@@ -145,10 +133,7 @@ func createOrUpdateGitRepo(obj PipelineObject, data *ExecutionContext) Execution
 		}
 	}
 
-	return ExecutionResult{
-		Abort: false,
-		Err:   err,
-	}
+	return ExecutionResult{Err: err}
 }
 
 func setGitRepoURLAndHostKeys(obj PipelineObject, data *ExecutionContext) ExecutionResult {
@@ -186,4 +171,38 @@ func handleRepoError(err error, instance *synv1alpha1.GitRepo, repo manager.Repo
 		return fmt.Errorf("could not set status while handling error: %s: %s", updateErr, err)
 	}
 	return err
+}
+
+func fetchGitRepoTemplate(obj *synv1alpha1.GitRepo, data *ExecutionContext) error {
+	tenant := &synv1alpha1.Tenant{}
+
+	tenantName := types.NamespacedName{Name: obj.GetObjectMeta().GetName(), Namespace: obj.GetObjectMeta().GetNamespace()}
+
+	err := data.Client.Get(context.TODO(), tenantName, tenant)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		}
+	}
+
+	if tenant != nil && tenant.Spec.GitRepoTemplate != nil {
+		obj.Spec.GitRepoTemplate = *tenant.Spec.GitRepoTemplate
+	}
+
+	cluster := &synv1alpha1.Cluster{}
+
+	clusterName := types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}
+
+	err = data.Client.Get(context.TODO(), clusterName, cluster)
+	if err != nil {
+		if !errors.IsNotFound(err) {
+			return err
+		}
+	}
+
+	if cluster != nil && cluster.Spec.GitRepoTemplate != nil {
+		obj.Spec.GitRepoTemplate = *cluster.Spec.GitRepoTemplate
+	}
+
+	return nil
 }

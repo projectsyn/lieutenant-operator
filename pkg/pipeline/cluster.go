@@ -10,7 +10,6 @@ import (
 	"time"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
-	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -59,15 +58,9 @@ func clusterSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionR
 
 	}
 
-	result = updateTenantGitRepo(obj, data)
+	result = setTenantOwner(obj, data)
 	if resultNotOK(result) {
-		result.Err = wrapError("update tenant git repo", result.Err)
-		return result
-	}
-
-	result = removeClusterFileFromTenant(obj, data)
-	if resultNotOK(result) {
-		result.Err = wrapError("set bootstrap token", result.Err)
+		result.Err = wrapError("set tenant owner", result.Err)
 		return result
 	}
 
@@ -170,63 +163,20 @@ func generateToken() (string, error) {
 	return base64.URLEncoding.EncodeToString(b), err
 }
 
-// TODO: this should get removed and switched to a poll system on the tenant
-func removeClusterFileFromTenant(obj PipelineObject, data *ExecutionContext) ExecutionResult {
-	if !data.Deleted {
-		return ExecutionResult{}
-	}
+func setTenantOwner(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 
-	tenantCR, err := getTenantCR(obj, data)
+	tenant := &synv1alpha1.Tenant{}
+
+	tenantName := types.NamespacedName{Name: obj.GetTenantRef().Name, Namespace: obj.GetObjectMeta().GetNamespace()}
+
+	err := data.Client.Get(context.TODO(), tenantName, tenant)
 	if err != nil {
 		return ExecutionResult{Err: err}
 	}
 
-	fileName := obj.GetObjectMeta().GetName() + ".yml"
+	obj.GetObjectMeta().SetOwnerReferences([]metav1.OwnerReference{
+		*metav1.NewControllerRef(tenant.GetObjectMeta(), tenant.GroupVersionKind()),
+	})
 
-	if tenantCR.Spec.GitRepoTemplate.TemplateFiles == nil {
-		return ExecutionResult{}
-	}
-
-	if _, ok := tenantCR.Spec.GitRepoTemplate.TemplateFiles[fileName]; ok {
-		tenantCR.Spec.GitRepoTemplate.TemplateFiles[fileName] = manager.DeletionMagicString
-		err := data.Client.Update(context.TODO(), tenantCR)
-		if err != nil {
-			return ExecutionResult{Err: err}
-		}
-	}
-
-	return ExecutionResult{}
-}
-
-func getTenantCR(obj PipelineObject, data *ExecutionContext) (*synv1alpha1.Tenant, error) {
-
-	tenant := types.NamespacedName{
-		Name:      obj.GetTenantRef().Name,
-		Namespace: obj.GetObjectMeta().GetNamespace(),
-	}
-
-	tenantCR := &synv1alpha1.Tenant{}
-	return tenantCR, data.Client.Get(context.TODO(), tenant, tenantCR)
-}
-
-// TODO: also poll system here...
-func updateTenantGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionResult {
-
-	tenantCR, err := getTenantCR(obj, data)
-	if err != nil {
-		return ExecutionResult{Err: err}
-	}
-
-	if tenantCR.Spec.GitRepoTemplate.TemplateFiles == nil {
-		tenantCR.Spec.GitRepoTemplate.TemplateFiles = map[string]string{}
-	}
-
-	clusterClassFile := obj.GetObjectMeta().GetName() + ".yml"
-	if _, ok := tenantCR.Spec.GitRepoTemplate.TemplateFiles[clusterClassFile]; !ok {
-		fileContent := fmt.Sprintf(clusterClassContent, obj.GetTenantRef().Name, CommonClassName)
-		tenantCR.Spec.GitRepoTemplate.TemplateFiles[clusterClassFile] = fileContent
-		err := data.Client.Update(context.TODO(), tenantCR)
-		return ExecutionResult{Err: err}
-	}
 	return ExecutionResult{}
 }

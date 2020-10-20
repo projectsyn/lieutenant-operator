@@ -79,6 +79,8 @@ func addTenantLabel(obj PipelineObject, data *ExecutionContext) ExecutionResult 
 
 func updateObject(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 
+	resourceVersion := obj.GetObjectMeta().GetResourceVersion()
+
 	rtObj, ok := obj.(runtime.Object)
 	if !ok {
 		return ExecutionResult{
@@ -92,7 +94,11 @@ func updateObject(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 		return ExecutionResult{Err: err}
 	}
 
-	err = data.Client.Status().Update(context.TODO(), rtObj)
+	// Updating the status if either there were changes or the object is deleted will
+	// lead to some race conditions. By checking first we can avoid them.
+	if resourceVersion == obj.GetObjectMeta().GetResourceVersion() && !data.Deleted {
+		err = data.Client.Status().Update(context.TODO(), rtObj)
+	}
 	return ExecutionResult{Abort: true, Err: err}
 }
 

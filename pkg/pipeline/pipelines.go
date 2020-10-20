@@ -10,9 +10,9 @@ func ReconcileTenant(obj PipelineObject, data *ExecutionContext) error {
 		return wrapError("tenant specific steps", result.Err)
 	}
 
-	result = createOrUpdateGitRepo(obj, data)
+	result = createGitRepo(obj, data)
 	if resultNotOK(result) {
-		return wrapError("create or uptdate git repo", result.Err)
+		return wrapError("create git repo", result.Err)
 	}
 
 	result = setGitRepoURLAndHostKeys(obj, data)
@@ -29,12 +29,13 @@ func ReconcileTenant(obj PipelineObject, data *ExecutionContext) error {
 
 func ReconcileCluster(obj PipelineObject, data *ExecutionContext) error {
 
+	//TODO: the cluster has to get the right tenant and set it as its owner
 	result := clusterSpecificSteps(obj, data)
 	if resultNotOK(result) {
 		return wrapError("cluster specific steps failes", result.Err)
 	}
 
-	result = createOrUpdateGitRepo(obj, data)
+	result = createGitRepo(obj, data)
 	if resultNotOK(result) {
 		return wrapError("create or uptdate git repo", result.Err)
 	}
@@ -61,7 +62,7 @@ func ReconcileGitRep(obj PipelineObject, data *ExecutionContext) error {
 
 	result = gitRepoSpecificSteps(obj, data)
 	if resultNotOK(result) {
-		return wrapError("cluster specific steps failes", result.Err)
+		return wrapError("git repo specific steps failes", result.Err)
 	}
 
 	result = common(obj, data)

@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 
-	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
@@ -18,30 +17,21 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling Tenant")
 
-	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		// Fetch the Tenant instance
-		instance := &synv1alpha1.Tenant{}
-		err := r.client.Get(context.TODO(), request.NamespacedName, instance)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				return nil
-			}
-			return err
+	// Fetch the Tenant instance
+	instance := &synv1alpha1.Tenant{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return reconcile.Result{}, nil
 		}
-		instanceCopy := instance.DeepCopy()
+		return reconcile.Result{}, err
+	}
 
-		data := &pipeline.ExecutionContext{
-			Client:        r.client,
-			Log:           reqLogger,
-			FinalizerName: "",
-		}
+	data := &pipeline.ExecutionContext{
+		Client:        r.client,
+		Log:           reqLogger,
+		FinalizerName: "",
+	}
 
-		err = pipeline.ReconcileTenant(instance, data)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-	return reconcile.Result{}, err
+	return reconcile.Result{}, pipeline.ReconcileTenant(instance, data)
 }

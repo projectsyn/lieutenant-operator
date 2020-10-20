@@ -6,7 +6,6 @@ import (
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pkg/pipeline"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -25,40 +24,22 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling Cluster")
 
-	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+	instance := &synv1alpha1.Cluster{}
 
-		instance := &synv1alpha1.Cluster{}
-
-		err := r.client.Get(context.TODO(), request.NamespacedName, instance)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				return nil
-			}
-			return err
+	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return reconcile.Result{}, nil
 		}
-		instanceCopy := instance.DeepCopy()
+		return reconcile.Result{}, err
+	}
 
-		nsName := request.NamespacedName
-		nsName.Name = instance.Spec.TenantRef.Name
+	data := &pipeline.ExecutionContext{
+		Client:        r.client,
+		Log:           reqLogger,
+		FinalizerName: finalizerName,
+	}
 
-		tenant := &synv1alpha1.Tenant{}
+	return reconcile.Result{}, pipeline.ReconcileCluster(instance, data)
 
-		if err := r.client.Get(context.TODO(), nsName, tenant); err != nil {
-			return fmt.Errorf("Couldn't find tenant: %w", err)
-		}
-
-		if err := applyClusterTemplate(instance, tenant); err != nil {
-			return err
-		}
-
-		data := &pipeline.ExecutionContext{
-			Client:        r.client,
-			Log:           reqLogger,
-			FinalizerName: finalizerName,
-		}
-
-		return pipeline.ReconcileCluster(instance, data)
-	})
-
-	return reconcile.Result{}, err
 }

@@ -33,13 +33,23 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Watch for changes to primary resource GitRepo
+	// Watch for changes to primary resource Tenant
 	err = c.Watch(&source.Kind{Type: &synv1alpha1.GitRepo{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
 
-	return nil
+	err = c.Watch(&source.Kind{Type: &synv1alpha1.Cluster{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &synv1alpha1.GitRepo{},
+	})
+	if err != nil {
+		return err
+	}
+	return c.Watch(&source.Kind{Type: &synv1alpha1.Tenant{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &synv1alpha1.GitRepo{},
+	})
 }
 
 // blank assignment to verify that ReconcileGitRepo implements reconcile.Reconciler

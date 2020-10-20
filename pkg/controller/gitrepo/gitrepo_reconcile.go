@@ -8,7 +8,6 @@ import (
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -25,32 +24,23 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling GitRepo")
 
-	err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
-		// Fetch the GitRepo instance
-		instance := &synv1alpha1.GitRepo{}
+	// Fetch the GitRepo instance
+	instance := &synv1alpha1.GitRepo{}
 
-		err := r.client.Get(context.TODO(), request.NamespacedName, instance)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				return nil
-			}
-			return err
+	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return reconcile.Result{}, nil
 		}
-		instanceCopy := instance.DeepCopy()
+		return reconcile.Result{}, err
+	}
 
-		if instance.Spec.RepoType == synv1alpha1.UnmanagedRepoType {
-			reqLogger.Info("Skipping GitRepo because it is unmanaged")
-			return nil
-		}
+	data := &pipeline.ExecutionContext{
+		Client:        r.client,
+		Log:           reqLogger,
+		FinalizerName: finalizerName,
+	}
 
-		data := &pipeline.ExecutionContext{
-			Client:        r.client,
-			Log:           reqLogger,
-			FinalizerName: finalizerName,
-		}
+	return reconcile.Result{}, pipeline.ReconcileGitRep(instance, data)
 
-		return pipeline.ReconcileGitRep(instance, data)
-	})
-
-	return reconcile.Result{}, err
 }

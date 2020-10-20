@@ -39,7 +39,15 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	return c.Watch(&source.Kind{Type: &synv1alpha1.GitRepo{}}, &handler.EnqueueRequestForOwner{
+	err = c.Watch(&source.Kind{Type: &synv1alpha1.GitRepo{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &synv1alpha1.Tenant{},
+	})
+	if err != nil {
+		return err
+	}
+
+	return c.Watch(&source.Kind{Type: &synv1alpha1.Cluster{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &synv1alpha1.Tenant{},
 	})
