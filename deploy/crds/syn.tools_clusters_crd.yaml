@@ -115,6 +115,12 @@ spec:
             gitRepoURL:
               description: GitRepoURL git repository storing the cluster configuration catalog. If this is set, no gitRepoTemplate is needed.
               type: string
+            globalGitRepoRevision:
+              description: GlobalGitRepoRevision allows to configure the revision of the global configuration to use. It can be any git tree-ish reference. The revision from the tenant will be inherited if left empty.
+              type: string
+            tenantGitRepoRevision:
+              description: TenantGitRepoRevision allows to configure the revision of the tenant configuration to use. It can be any git tree-ish reference. The revision from the tenant will be inherited if left empty.
+              type: string
             tenantRef:
               description: TenantRef reference to Tenant object the cluster belongs to.
               properties:

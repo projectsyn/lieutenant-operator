@@ -207,6 +207,36 @@ Kubernetes core/v1.LocalObjectReference
 <tr>
 <td class="tableblock halign-left valign-top">
 <p class="tableblock">
+<code>tenantGitRepoRevision</code></br>
+<em>
+string
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>TenantGitRepoRevision allows to configure the revision of the tenant configuration to use. It can be any git tree-ish reference. The revision from the tenant will be inherited if left empty.</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>globalGitRepoRevision</code></br>
+<em>
+string
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>GlobalGitRepoRevision allows to configure the revision of the global configuration to use. It can be any git tree-ish reference. The revision from the tenant will be inherited if left empty.</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>tokenLifeTime</code></br>
 <em>
 string
@@ -372,6 +402,36 @@ Kubernetes core/v1.LocalObjectReference
 <td class="tableblock halign-left valign-top">
 <p class="tableblock">
 <p>TenantRef reference to Tenant object the cluster belongs to.</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>tenantGitRepoRevision</code></br>
+<em>
+string
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>TenantGitRepoRevision allows to configure the revision of the tenant configuration to use. It can be any git tree-ish reference. The revision from the tenant will be inherited if left empty.</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>globalGitRepoRevision</code></br>
+<em>
+string
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>GlobalGitRepoRevision allows to configure the revision of the global configuration to use. It can be any git tree-ish reference. The revision from the tenant will be inherited if left empty.</p>
 <p class="tableblock">
 </td>
 </tr>
@@ -1054,6 +1114,51 @@ string
 <tr>
 <td class="tableblock halign-left valign-top">
 <p class="tableblock">
+<code>gitRepoRevision</code></br>
+<em>
+string
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>GitRepoRevision allows to configure the revision of the tenant configuration to use. It can be any git tree-ish reference. Defaults to HEAD if left empty.</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>globalGitRepoURL</code></br>
+<em>
+string
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>GlobalGitRepoURL git repository storing the global configuration.</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>globalGitRepoRevision</code></br>
+<em>
+string
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>GlobalGitRepoRevision allows to configure the revision of the global configuration to use. It can be any git tree-ish reference. Defaults to HEAD if left empty.</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
 <code>gitRepoTemplate</code></br>
 <em>
 <a href="#syn.tools/v1alpha1.GitRepoTemplate">
@@ -1173,6 +1278,51 @@ string
 <td class="tableblock halign-left valign-top">
 <p class="tableblock">
 <p>GitRepoURL git repository storing the tenant configuration. If this is set, no gitRepoTemplate is needed.</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>gitRepoRevision</code></br>
+<em>
+string
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>GitRepoRevision allows to configure the revision of the tenant configuration to use. It can be any git tree-ish reference. Defaults to HEAD if left empty.</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>globalGitRepoURL</code></br>
+<em>
+string
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>GlobalGitRepoURL git repository storing the global configuration.</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>globalGitRepoRevision</code></br>
+<em>
+string
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>GlobalGitRepoRevision allows to configure the revision of the global configuration to use. It can be any git tree-ish reference. Defaults to HEAD if left empty.</p>
 <p class="tableblock">
 </td>
 </tr>

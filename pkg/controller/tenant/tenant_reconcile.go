@@ -2,6 +2,7 @@ package tenant
 
 import (
 	"context"
+	"os"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/util/retry"
@@ -68,6 +69,13 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 				}
 			}
 		}
+
+		// Set URL of global git repo from default
+		defaultGlobalGitRepoURL := os.Getenv("DEFAULT_GLOBAL_GIT_REPO_URL")
+		if len(instance.Spec.GlobalGitRepoURL) == 0 && len(defaultGlobalGitRepoURL) > 0 {
+			instance.Spec.GlobalGitRepoURL = defaultGlobalGitRepoURL
+		}
+
 		helpers.AddDeletionProtection(instance)
 		if !equality.Semantic.DeepEqual(instanceCopy, instance) {
 			if err := r.client.Update(context.TODO(), instance); err != nil {
