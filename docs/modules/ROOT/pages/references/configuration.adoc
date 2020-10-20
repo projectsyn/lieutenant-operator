@@ -37,4 +37,10 @@ Lieutenant Operator is configured via environment variables:
 |Defines with what frequency the CRs will be synced
 |5m
 
+|DEFAULT_GLOBAL_GIT_REPO_URL
+|URL of the default global configuration git repository.
+ Its value will be applied to `tenant.Spec.GlobalGitRepoURL` if not set otherwise.
+ If left empty, the `GlobalGitRepoURL` field will remain untouched.
+|
+
 |===
