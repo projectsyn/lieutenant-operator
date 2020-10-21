@@ -29,7 +29,6 @@ func ReconcileTenant(obj PipelineObject, data *ExecutionContext) error {
 
 func ReconcileCluster(obj PipelineObject, data *ExecutionContext) error {
 
-	//TODO: the cluster has to get the right tenant and set it as its owner
 	result := clusterSpecificSteps(obj, data)
 	if resultNotOK(result) {
 		return wrapError("cluster specific steps failes", result.Err)

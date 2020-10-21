@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -11,7 +12,17 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/kubectl/pkg/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
+
+// testSetupClient returns a client containing all objects in objs
+func testSetupClient(objs []runtime.Object) (client.Client, *runtime.Scheme) {
+	s := scheme.Scheme
+	s.AddKnownTypes(synv1alpha1.SchemeGroupVersion, objs...)
+	return fake.NewFakeClientWithScheme(s, objs...), s
+}
 
 func TestGetDeletionPolicyDefault(t *testing.T) {
 	policy := getDefaultDeletionPolicy()
@@ -119,7 +130,7 @@ func TestHandleDeletion(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			client := testSetupClient([]runtime.Object{&synv1alpha1.Cluster{}})
+			client, _ := testSetupClient([]runtime.Object{&synv1alpha1.Cluster{}})
 
 			data := &ExecutionContext{
 				Client:        client,
@@ -186,6 +197,163 @@ func TestAddDeletionProtection(t *testing.T) {
 			if result != tt.args.result {
 				t.Errorf("AddDeletionProtection() value = %v, wantValue %v", result, tt.args.result)
 			}
+		})
+	}
+}
+
+func Test_checkIfDeleted(t *testing.T) {
+	type args struct {
+		obj  *synv1alpha1.Tenant
+		data *ExecutionContext
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+		want    bool
+	}{
+		{
+			name: "object deleted",
+			want: true,
+			args: args{
+				data: &ExecutionContext{},
+				obj: &synv1alpha1.Tenant{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:              "test",
+						DeletionTimestamp: &metav1.Time{Time: time.Now()},
+					},
+				},
+			},
+		},
+		{
+			name: "object not deleted",
+			want: false,
+			args: args{
+				data: &ExecutionContext{},
+				obj: &synv1alpha1.Tenant{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test",
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := checkIfDeleted(tt.args.obj, tt.args.data); (got.Err != nil) != tt.wantErr {
+				t.Errorf("checkIfDeleted() = had error %v", got.Err)
+			}
+
+			assert.Equal(t, tt.want, tt.args.data.Deleted)
+
+		})
+	}
+}
+
+func Test_handleFinalizer(t *testing.T) {
+	type args struct {
+		obj  *synv1alpha1.Cluster
+		data *ExecutionContext
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "add finalizers",
+			args: args{
+				data: &ExecutionContext{
+					FinalizerName: "test",
+				},
+				obj: &synv1alpha1.Cluster{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test",
+					},
+				},
+			},
+		},
+		{
+			name: "remove finalizers",
+			args: args{
+				data: &ExecutionContext{
+					Deleted:       true,
+					FinalizerName: "test",
+				},
+				obj: &synv1alpha1.Cluster{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test",
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := handleFinalizer(tt.args.obj, tt.args.data); (got.Err != nil) != tt.wantErr {
+				t.Errorf("handleFinalizer() = had error: %v", got.Err)
+			}
+
+			if tt.args.data.Deleted {
+				assert.Empty(t, tt.args.obj.GetFinalizers())
+			} else {
+				assert.NotEmpty(t, tt.args.obj.GetFinalizers())
+			}
+
+		})
+	}
+}
+
+func Test_resultNotOK(t *testing.T) {
+	assert.True(t, resultNotOK(ExecutionResult{Err: fmt.Errorf("test")}))
+	assert.False(t, resultNotOK(ExecutionResult{}))
+}
+
+func Test_wrapError(t *testing.T) {
+	assert.Equal(t, "step test failed: test", wrapError("test", fmt.Errorf("test")).Error())
+	assert.Nil(t, wrapError("test", nil))
+}
+
+func Test_updateObject(t *testing.T) {
+	type args struct {
+		obj  *synv1alpha1.Tenant
+		data *ExecutionContext
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "update objects",
+			args: args{
+				data: &ExecutionContext{},
+				obj: &synv1alpha1.Tenant{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test",
+					},
+				},
+			},
+		},
+		{
+			name: "update fail",
+			args: args{
+				data: &ExecutionContext{},
+				obj:  &synv1alpha1.Tenant{},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+
+			tt.args.data.Client, _ = testSetupClient([]runtime.Object{
+				tt.args.obj,
+			})
+
+			if got := updateObject(tt.args.obj, tt.args.data); (got.Err != nil) != tt.wantErr {
+				t.Errorf("updateObject() = had error: %v", got.Err)
+			}
+
 		})
 	}
 }

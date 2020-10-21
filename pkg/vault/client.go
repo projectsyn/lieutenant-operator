@@ -33,6 +33,7 @@ type VaultClient interface {
 	AddSecrets(secrets []VaultSecret) error
 	// remove specific secret
 	RemoveSecrets(secret []VaultSecret) error
+	SetDeletionPolicy(synv1alpha1.DeletionPolicy)
 }
 
 type BankVaultClient struct {
@@ -48,6 +49,7 @@ type BankVaultClient struct {
 func NewClient(deletionPolicy synv1alpha1.DeletionPolicy, log logr.Logger) (VaultClient, error) {
 
 	if instanceClient != nil {
+		instanceClient.SetDeletionPolicy(deletionPolicy)
 		return instanceClient, nil
 	}
 
@@ -258,4 +260,8 @@ func (b *BankVaultClient) listSecrets(secretPath string) ([]string, error) {
 
 	return result, nil
 
+}
+
+func (b *BankVaultClient) SetDeletionPolicy(deletionPolicy synv1alpha1.DeletionPolicy) {
+	b.deletionPolicy = deletionPolicy
 }

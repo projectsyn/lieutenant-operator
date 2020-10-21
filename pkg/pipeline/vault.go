@@ -31,6 +31,9 @@ func createOrUpdateVault(obj PipelineObject, data *ExecutionContext) ExecutionRe
 	}
 
 	vaultClient, err := getVaultClient(obj, data)
+	if err != nil {
+		return ExecutionResult{Err: err}
+	}
 
 	err = vaultClient.AddSecrets([]vault.VaultSecret{{Path: secretPath, Value: token}})
 	if err != nil {
