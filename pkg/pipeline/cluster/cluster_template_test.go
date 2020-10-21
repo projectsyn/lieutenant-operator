@@ -29,7 +29,7 @@ func TestApplyClusterTemplateRaw(t *testing.T) {
 		},
 	}
 
-	err := applyClusterTemplate(cluster, tenant)
+	err := ApplyClusterTemplate(cluster, tenant)
 	assert.NoError(t, err)
 	assert.Equal(t, "test", cluster.Spec.DisplayName)
 	assert.Equal(t, "repo", cluster.Spec.GitRepoTemplate.RepoName)
@@ -67,7 +67,7 @@ func TestApplyClusterTemplate(t *testing.T) {
 		},
 	}
 
-	err := applyClusterTemplate(cluster, tenant)
+	err := ApplyClusterTemplate(cluster, tenant)
 	assert.NoError(t, err)
 	assert.Equal(t, "test", cluster.Spec.DisplayName)
 	assert.Equal(t, "c-some-test", cluster.Spec.GitRepoTemplate.RepoName)
@@ -90,13 +90,13 @@ func TestApplyClusterTemplateFail(t *testing.T) {
 	}
 	cluster := &synv1alpha1.Cluster{}
 
-	err := applyClusterTemplate(cluster, tenant)
+	err := ApplyClusterTemplate(cluster, tenant)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "parse")
 
 	// Non existent data in template
 	tenant.Spec.ClusterTemplate.GitRepoTemplate.RepoName = "{{ .nonexistent }}"
-	err = applyClusterTemplate(cluster, tenant)
+	err = ApplyClusterTemplate(cluster, tenant)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "render")
 }

@@ -24,6 +24,11 @@ func gitRepoSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionR
 		return ExecutionResult{Err: err}
 	}
 
+	if instance.Spec.RepoType == synv1alpha1.UnmanagedRepoType {
+		data.Log.Info("Skipping GitRepo because it is unmanaged")
+		return ExecutionResult{}
+	}
+
 	repo, hostKeys, err := manager.GetGitClient(&instance.Spec.GitRepoTemplate, instance.GetNamespace(), data.Log, data.Client)
 	if err != nil {
 		return ExecutionResult{Err: err}
@@ -75,6 +80,10 @@ func gitRepoSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionR
 func createGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 
 	template := obj.GetGitTemplate()
+
+	if template == nil {
+		return ExecutionResult{}
+	}
 
 	if template.DisplayName == "" {
 		template.DisplayName = obj.GetDisplayName()

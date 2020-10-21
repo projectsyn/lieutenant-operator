@@ -26,7 +26,7 @@ func (r *templateParser) ParseString(in string) interface{} {
 	return str
 }
 
-func applyClusterTemplate(cluster *synv1alpha1.Cluster, tenant *synv1alpha1.Tenant) error {
+func ApplyClusterTemplate(cluster *synv1alpha1.Cluster, tenant *synv1alpha1.Tenant) error {
 	if tenant.Spec.ClusterTemplate == nil {
 		return nil
 	}

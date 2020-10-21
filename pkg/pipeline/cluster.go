@@ -10,6 +10,7 @@ import (
 	"time"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
+	"github.com/projectsyn/lieutenant-operator/pkg/pipeline/cluster"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -61,6 +62,12 @@ func clusterSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionR
 	result = setTenantOwner(obj, data)
 	if resultNotOK(result) {
 		result.Err = wrapError("set tenant owner", result.Err)
+		return result
+	}
+
+	result = applyTenantTemplate(obj, data)
+	if resultNotOK(result) {
+		result.Err = wrapError("apply tenant template", result.Err)
 		return result
 	}
 
@@ -178,5 +185,25 @@ func setTenantOwner(obj PipelineObject, data *ExecutionContext) ExecutionResult 
 		*metav1.NewControllerRef(tenant.GetObjectMeta(), tenant.GroupVersionKind()),
 	})
 
+	return ExecutionResult{}
+}
+
+func applyTenantTemplate(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+	nsName := types.NamespacedName{Name: obj.GetTenantRef().Name, Namespace: obj.GetObjectMeta().GetNamespace()}
+
+	tenant := &synv1alpha1.Tenant{}
+
+	if err := data.Client.Get(context.TODO(), nsName, tenant); err != nil {
+		return ExecutionResult{Err: fmt.Errorf("Couldn't find tenant: %w", err)}
+	}
+
+	instance, ok := obj.(*synv1alpha1.Cluster)
+	if !ok {
+		return ExecutionResult{Err: fmt.Errorf("object is not a cluster")}
+	}
+
+	if err := cluster.ApplyClusterTemplate(instance, tenant); err != nil {
+		return ExecutionResult{Err: err}
+	}
 	return ExecutionResult{}
 }

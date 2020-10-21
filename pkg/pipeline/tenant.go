@@ -3,6 +3,7 @@ package pipeline
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
@@ -13,7 +14,8 @@ import (
 
 const (
 	// CommonClassName is the name of the tenant's common class
-	CommonClassName = "common"
+	CommonClassName         = "common"
+	DefaultGlobalGitRepoURL = "DEFAULT_GLOBAL_GIT_REPO_URL"
 )
 
 func tenantSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionResult {
@@ -27,6 +29,12 @@ func tenantSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionRe
 	result = updateTenantGitRepo(obj, data)
 	if resultNotOK(result) {
 		result.Err = wrapError("update tenant git repo", result.Err)
+		return result
+	}
+
+	result = setGlobalGitRepoURL(obj, data)
+	if resultNotOK(result) {
+		result.Err = wrapError("set global gir repo URL", result.Err)
 		return result
 	}
 
@@ -86,5 +94,19 @@ func updateTenantGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionRe
 		}
 	}
 
+	return ExecutionResult{}
+}
+
+func setGlobalGitRepoURL(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+
+	instance, ok := obj.(*synv1alpha1.Tenant)
+	if !ok {
+		return ExecutionResult{Err: fmt.Errorf("object is not a tenant")}
+	}
+
+	defaultGlobalGitRepoURL := os.Getenv(DefaultGlobalGitRepoURL)
+	if len(instance.Spec.GlobalGitRepoURL) == 0 && len(defaultGlobalGitRepoURL) > 0 {
+		instance.Spec.GlobalGitRepoURL = defaultGlobalGitRepoURL
+	}
 	return ExecutionResult{}
 }

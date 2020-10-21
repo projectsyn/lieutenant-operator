@@ -1,23 +1,10 @@
 package helpers
 
 import (
-	"os"
 	"testing"
 
-	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/stretchr/testify/assert"
 )
-
-func TestGetDeletionPolicyDefault(t *testing.T) {
-	policy := GetDeletionPolicy()
-	assert.Equal(t, synv1alpha1.ArchivePolicy, policy)
-}
-
-func TestGetDeletionPolicyNonDefault(t *testing.T) {
-	os.Setenv("DEFAULT_DELETION_POLICY", "Retain")
-	policy := GetDeletionPolicy()
-	assert.Equal(t, synv1alpha1.RetainPolicy, policy)
-}
 
 func TestRenderTemplateRawString(t *testing.T) {
 	str, err := RenderTemplate("raw string", nil)
