@@ -131,18 +131,12 @@ func createGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 
 	err := data.Client.Create(context.TODO(), repo)
 	if err != nil {
-		if errors.IsAlreadyExists(err) {
+		if !errors.IsAlreadyExists(err) {
 			return ExecutionResult{}
 		}
 	}
 
-	for file, content := range template.TemplateFiles {
-		if content == manager.DeletionMagicString {
-			delete(template.TemplateFiles, file)
-		}
-	}
-
-	return ExecutionResult{Err: err}
+	return ExecutionResult{}
 }
 
 func setGitRepoURLAndHostKeys(obj PipelineObject, data *ExecutionContext) ExecutionResult {
