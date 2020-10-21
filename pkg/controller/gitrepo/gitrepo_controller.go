@@ -3,6 +3,7 @@ package gitrepo
 import (
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -39,17 +40,31 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	err = c.Watch(&source.Kind{Type: &synv1alpha1.Cluster{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &synv1alpha1.GitRepo{},
+	err = c.Watch(&source.Kind{Type: &synv1alpha1.Tenant{}}, &handler.EnqueueRequestsFromMapFunc{
+		ToRequests: handler.ToRequestsFunc(func(a handler.MapObject) []reconcile.Request {
+			return []reconcile.Request{
+				{NamespacedName: types.NamespacedName{
+					Name:      a.Meta.GetName(),
+					Namespace: a.Meta.GetNamespace(),
+				}},
+			}
+		}),
 	})
 	if err != nil {
 		return err
 	}
-	return c.Watch(&source.Kind{Type: &synv1alpha1.Tenant{}}, &handler.EnqueueRequestForOwner{
-		IsController: true,
-		OwnerType:    &synv1alpha1.GitRepo{},
+
+	return c.Watch(&source.Kind{Type: &synv1alpha1.Cluster{}}, &handler.EnqueueRequestsFromMapFunc{
+		ToRequests: handler.ToRequestsFunc(func(a handler.MapObject) []reconcile.Request {
+			return []reconcile.Request{
+				{NamespacedName: types.NamespacedName{
+					Name:      a.Meta.GetName(),
+					Namespace: a.Meta.GetNamespace(),
+				}},
+			}
+		}),
 	})
+
 }
 
 // blank assignment to verify that ReconcileGitRepo implements reconcile.Reconciler
