@@ -89,13 +89,6 @@ func createGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 		template.DisplayName = obj.GetDisplayName()
 	}
 
-	if template == nil {
-		return ExecutionResult{
-			Abort: true,
-			Err:   fmt.Errorf("gitRepo template is empty"),
-		}
-	}
-
 	if obj.GetTenantRef().Name == "" {
 		return ExecutionResult{
 			Abort: true,
