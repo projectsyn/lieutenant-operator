@@ -49,8 +49,7 @@ func TestHandleNilGitRepoTemplate(t *testing.T) {
 	updatedTenant := &synv1alpha1.Tenant{}
 	err = cl.Get(context.TODO(), types.NamespacedName{Name: tenant.Name}, updatedTenant)
 	assert.NoError(t, err)
-	assert.Nil(t, tenant.Spec.GitRepoTemplate)
-	assert.Nil(t, updatedTenant.Spec.GitRepoTemplate)
+	assert.Contains(t, updatedTenant.Spec.GitRepoTemplate.TemplateFiles, "common.yml")
 }
 
 func TestCreateGitRepo(t *testing.T) {

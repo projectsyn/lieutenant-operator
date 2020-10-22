@@ -306,6 +306,8 @@ func (m *TestMockClient) RemoveSecrets(secrets []vault.VaultSecret) error {
 	return nil
 }
 
+func (m *TestMockClient) SetDeletionPolicy(deletionPolicy synv1alpha1.DeletionPolicy) {}
+
 func TestReconcileCluster_getServiceAccountToken(t *testing.T) {
 	type args struct {
 		instance metav1.Object

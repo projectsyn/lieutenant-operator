@@ -30,7 +30,12 @@ func updateTenantGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionRe
 		return ExecutionResult{Err: fmt.Errorf("object is not a tenant")}
 	}
 
-	oldFiles := tenantCR.Spec.GitRepoTemplate.TemplateFiles
+	var oldFiles map[string]string
+	if tenantCR.Spec.GitRepoTemplate != nil {
+		oldFiles = tenantCR.Spec.GitRepoTemplate.TemplateFiles
+	} else {
+		tenantCR.Spec.GitRepoTemplate = &synv1alpha1.GitRepoTemplate{}
+	}
 
 	tenantCR.Spec.GitRepoTemplate.TemplateFiles = map[string]string{}
 
