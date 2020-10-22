@@ -110,6 +110,8 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 
 			objs := []runtime.Object{
 				repo,
+				&synv1alpha1.Tenant{},
+				&synv1alpha1.Cluster{},
 			}
 
 			cl, s := testSetupClient(objs)

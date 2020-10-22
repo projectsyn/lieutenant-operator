@@ -66,6 +66,9 @@ func init() {
 
 // GetGitTemplate returns the git repository template
 func (t *Tenant) GetGitTemplate() *GitRepoTemplate {
+	if t.Spec.GitRepoTemplate == nil {
+		t.Spec.GitRepoTemplate = &GitRepoTemplate{}
+	}
 	return t.Spec.GitRepoTemplate
 }
 

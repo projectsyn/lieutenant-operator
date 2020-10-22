@@ -34,7 +34,11 @@ func TestHandleNilGitRepoTemplate(t *testing.T) {
 		},
 	}
 
-	cl, s := testSetupClient([]runtime.Object{tenant})
+	cl, s := testSetupClient([]runtime.Object{
+		tenant,
+		&synv1alpha1.ClusterList{},
+		&synv1alpha1.GitRepo{},
+	})
 
 	r := &ReconcileTenant{client: cl, scheme: s}
 

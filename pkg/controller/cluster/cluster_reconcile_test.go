@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path"
 	"reflect"
@@ -76,7 +75,7 @@ func TestReconcileCluster_NoTenant(t *testing.T) {
 
 	_, err := r.Reconcile(req)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "find tenant")
+	assert.Contains(t, err.Error(), "no matching secrets found")
 }
 
 func TestReconcileCluster_NoGitRepoTemplate(t *testing.T) {
@@ -99,6 +98,7 @@ func TestReconcileCluster_NoGitRepoTemplate(t *testing.T) {
 	objs := []runtime.Object{
 		tenant,
 		cluster,
+		&synv1alpha1.GitRepo{},
 	}
 
 	cl, s := testSetupClient(objs)
@@ -283,12 +283,6 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			assert.Equal(t, roleBinding.RoleRef.Name, role.Name)
 			assert.Equal(t, roleBinding.Subjects[0].Name, sa.Name)
 
-			testTenant := &synv1alpha1.Tenant{}
-			err = cl.Get(context.TODO(), types.NamespacedName{Name: tt.fields.tenantName, Namespace: tt.fields.objNamespace}, testTenant)
-			assert.NoError(t, err)
-			fileContent, found := testTenant.Spec.GitRepoTemplate.TemplateFiles[tt.fields.objName+".yml"]
-			assert.True(t, found)
-			assert.Equal(t, fileContent, fmt.Sprintf(clusterClassContent, tt.fields.tenantName, pipeline.CommonClassName))
 		})
 	}
 }
