@@ -8,7 +8,6 @@ import (
 
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -107,10 +106,12 @@ func resultNotOK(result ExecutionResult) bool {
 
 // handleDeletion will handle the finalizers if the object was deleted.
 // It will only trigger if data.Deleted is true.
-func handleDeletion(instance metav1.Object, data *ExecutionContext) ExecutionResult {
+func handleDeletion(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 	if !data.Deleted {
 		return ExecutionResult{}
 	}
+
+	instance := obj.GetObjectMeta()
 
 	annotationValue, exists := instance.GetAnnotations()[DeleteProtectionAnnotation]
 

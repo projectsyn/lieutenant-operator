@@ -10,35 +10,15 @@ const (
 
 func common(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 
-	result := handleDeletion(obj.GetObjectMeta(), data)
-	if result.Abort || result.Err != nil {
-		result.Err = wrapError("deletion", result.Err)
-		return result
+	steps := []Step{
+		{Name: "deletion", F: handleDeletion},
+		{Name: "add deletion protection", F: addDeletionProtection},
+		{Name: "handle finalizer", F: handleFinalizer},
+		{Name: "update object", F: updateObject},
 	}
 
-	result = addTenantLabel(obj, data)
-	if result.Abort || result.Err != nil {
-		result.Err = wrapError("add tenant label", result.Err)
-		return result
-	}
+	err := RunPipeline(obj, data, steps)
 
-	result = addDeletionProtection(obj, data)
-	if result.Abort || result.Err != nil {
-		result.Err = wrapError("add deletion protection", result.Err)
-		return result
-	}
+	return ExecutionResult{Err: err}
 
-	result = handleFinalizer(obj, data)
-	if result.Abort || result.Err != nil {
-		result.Err = wrapError("add deletion protection", result.Err)
-		return result
-	}
-
-	result = updateObject(obj, data)
-	if result.Abort || result.Err != nil {
-		result.Err = wrapError("update object", result.Err)
-		return result
-	}
-
-	return ExecutionResult{}
 }

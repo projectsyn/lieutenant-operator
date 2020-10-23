@@ -8,24 +8,14 @@ const (
 
 func tenantSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 
-	result := addDefaultClassFile(obj, data)
-	if resultNotOK(result) {
-		result.Err = wrapError("add default class file", result.Err)
-		return result
+	steps := []Step{
+		{Name: "add default class file", F: addDefaultClassFile},
+		{Name: "uptade tenant git repo", F: updateTenantGitRepo},
+		{Name: "set global git repo url", F: setGlobalGitRepoURL},
 	}
 
-	result = updateTenantGitRepo(obj, data)
-	if resultNotOK(result) {
-		result.Err = wrapError("update tenant git repo", result.Err)
-		return result
-	}
+	err := RunPipeline(obj, data, steps)
 
-	result = setGlobalGitRepoURL(obj, data)
-	if resultNotOK(result) {
-		result.Err = wrapError("set global gir repo URL", result.Err)
-		return result
-	}
-
-	return ExecutionResult{}
+	return ExecutionResult{Err: err}
 
 }

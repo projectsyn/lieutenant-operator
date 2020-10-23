@@ -1,10 +1,5 @@
 package pipeline
 
-import (
-	"os"
-	"strings"
-)
-
 const (
 	clusterClassContent = `classes:
 - %s.%s
@@ -12,50 +7,18 @@ const (
 )
 
 func clusterSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionResult {
-	result := createClusterRBAC(obj, data)
-	if resultNotOK(result) {
-		result.Err = wrapError("create cluster RBAC", result.Err)
-		return result
+
+	steps := []Step{
+		{Name: "create cluster RBAC", F: createClusterRBAC},
+		{Name: "deletion check", F: checkIfDeleted},
+		{Name: "set bootstrap token", F: setBootstrapToken},
+		{Name: "create or update vault", F: createOrUpdateVault},
+		{Name: "delete vault entries", F: handleVaultDeletion},
+		{Name: "set tenant owner", F: setTenantOwner},
+		{Name: "apply tenant template", F: applyTenantTemplate},
 	}
 
-	result = checkIfDeleted(obj, data)
-	if resultNotOK(result) {
-		result.Err = wrapError("deletion check", result.Err)
-		return result
-	}
+	err := RunPipeline(obj, data, steps)
 
-	result = setBootstrapToken(obj, data)
-	if resultNotOK(result) {
-		result.Err = wrapError("set bootstrap token", result.Err)
-		return result
-	}
-
-	if strings.ToLower(os.Getenv("SKIP_VAULT_SETUP")) != "true" {
-		result = createOrUpdateVault(obj, data)
-		if resultNotOK(result) {
-			result.Err = wrapError("create or update vault", result.Err)
-			return result
-		}
-
-		result = handleVaultDeletion(obj, data)
-		if resultNotOK(result) {
-			result.Err = wrapError("delete vault entries", result.Err)
-			return result
-		}
-
-	}
-
-	result = setTenantOwner(obj, data)
-	if resultNotOK(result) {
-		result.Err = wrapError("set tenant owner", result.Err)
-		return result
-	}
-
-	result = applyTenantTemplate(obj, data)
-	if resultNotOK(result) {
-		result.Err = wrapError("apply tenant template", result.Err)
-		return result
-	}
-
-	return ExecutionResult{}
+	return ExecutionResult{Err: err}
 }

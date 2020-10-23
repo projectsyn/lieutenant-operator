@@ -3,8 +3,10 @@ package pipeline
 import (
 	"context"
 	"fmt"
+	"os"
 	"path"
 	"sort"
+	"strings"
 
 	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
 	"github.com/projectsyn/lieutenant-operator/pkg/vault"
@@ -23,6 +25,10 @@ func getVaultClient(obj PipelineObject, data *ExecutionContext) (vault.VaultClie
 }
 
 func createOrUpdateVault(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+	if strings.ToLower(os.Getenv("SKIP_VAULT_SETUP")) == "true" {
+		return ExecutionResult{}
+	}
+
 	secretPath := path.Join(obj.GetTenantRef().Name, obj.GetObjectMeta().GetName(), "steward")
 
 	token, err := GetServiceAccountToken(obj.GetObjectMeta(), data)
@@ -74,6 +80,11 @@ func GetServiceAccountToken(instance metav1.Object, data *ExecutionContext) (str
 }
 
 func handleVaultDeletion(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+
+	if strings.ToLower(os.Getenv("SKIP_VAULT_SETUP")) == "true" {
+		return ExecutionResult{}
+	}
+
 	repoName := types.NamespacedName{
 		Name:      obj.GetTenantRef().Name,
 		Namespace: obj.GetObjectMeta().GetNamespace(),

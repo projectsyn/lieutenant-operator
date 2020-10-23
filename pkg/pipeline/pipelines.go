@@ -3,70 +3,54 @@ package pipeline
 // Function defines the general form of a pipeline function.
 type Function func(PipelineObject, *ExecutionContext) ExecutionResult
 
+type Step struct {
+	Name string
+	F    Function
+}
+
 func ReconcileTenant(obj PipelineObject, data *ExecutionContext) error {
 
-	result := tenantSpecificSteps(obj, data)
-	if resultNotOK(result) {
-		return wrapError("tenant specific steps", result.Err)
+	steps := []Step{
+		{Name: "tenant specific steps", F: tenantSpecificSteps},
+		{Name: "create git repo", F: createGitRepo},
+		{Name: "set gitrepo url and hostkeys", F: setGitRepoURLAndHostKeys},
+		{Name: "common", F: common},
 	}
 
-	result = createGitRepo(obj, data)
-	if resultNotOK(result) {
-		return wrapError("create git repo", result.Err)
-	}
-
-	result = setGitRepoURLAndHostKeys(obj, data)
-	if resultNotOK(result) {
-		return wrapError("set gitrepo url and hostkeys", result.Err)
-	}
-
-	result = common(obj, data)
-	if resultNotOK(result) {
-		return wrapError("common", result.Err)
-	}
-	return nil
+	return RunPipeline(obj, data, steps)
 }
 
 func ReconcileCluster(obj PipelineObject, data *ExecutionContext) error {
 
-	result := clusterSpecificSteps(obj, data)
-	if resultNotOK(result) {
-		return wrapError("cluster specific steps failes", result.Err)
+	steps := []Step{
+		{Name: "cluster specific steps", F: clusterSpecificSteps},
+		{Name: "create git repo", F: createGitRepo},
+		{Name: "set gitrepo url and hostkeys", F: setGitRepoURLAndHostKeys},
+		{Name: "add tenant label", F: addTenantLabel},
+		{Name: "common", F: common},
 	}
 
-	result = createGitRepo(obj, data)
-	if resultNotOK(result) {
-		return wrapError("create or uptdate git repo", result.Err)
-	}
-
-	result = setGitRepoURLAndHostKeys(obj, data)
-	if resultNotOK(result) {
-		return wrapError("set gitrepo url and hostkeys", result.Err)
-	}
-
-	result = common(obj, data)
-	if resultNotOK(result) {
-		return wrapError("common", result.Err)
-	}
-
-	return nil
+	return RunPipeline(obj, data, steps)
 }
 
 func ReconcileGitRep(obj PipelineObject, data *ExecutionContext) error {
 
-	result := checkIfDeleted(obj, data)
-	if resultNotOK(result) {
-		return wrapError("deletion check", result.Err)
+	steps := []Step{
+		{Name: "deletion check", F: checkIfDeleted},
+		{Name: "git repo specific steps", F: gitRepoSpecificSteps},
+		{Name: "add tenant label", F: addTenantLabel},
+		{Name: "common", F: common},
 	}
 
-	result = gitRepoSpecificSteps(obj, data)
-	if resultNotOK(result) {
-		return wrapError("git repo specific steps failes", result.Err)
-	}
+	return RunPipeline(obj, data, steps)
+}
 
-	result = common(obj, data)
-	if resultNotOK(result) {
-		return wrapError("common", result.Err)
+func RunPipeline(obj PipelineObject, data *ExecutionContext, steps []Step) error {
+
+	for _, step := range steps {
+		if r := step.F(obj, data); resultNotOK(r) {
+			return wrapError(step.Name, r.Err)
+		}
 	}
 
 	return nil
