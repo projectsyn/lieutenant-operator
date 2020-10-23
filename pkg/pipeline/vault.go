@@ -8,7 +8,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
+	"github.com/projectsyn/lieutenant-operator/pkg/collection"
 	"github.com/projectsyn/lieutenant-operator/pkg/vault"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -57,7 +57,7 @@ func GetServiceAccountToken(instance metav1.Object, data *ExecutionContext) (str
 		return "", err
 	}
 
-	sortSecrets := helpers.SecretSortList(*secrets)
+	sortSecrets := collection.SecretSortList(*secrets)
 
 	sort.Sort(sort.Reverse(sortSecrets))
 
