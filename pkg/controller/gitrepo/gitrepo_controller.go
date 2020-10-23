@@ -34,7 +34,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	// Watch for changes to primary resource Tenant
+	// Watch for changes to primary resource GitRepo
 	err = c.Watch(&source.Kind{Type: &synv1alpha1.GitRepo{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err

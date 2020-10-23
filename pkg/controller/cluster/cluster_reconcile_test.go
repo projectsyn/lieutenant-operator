@@ -242,6 +242,10 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 				t.Errorf("Reconcile() got = %v, want %v", got, tt.want)
 			}
 
+			// BootstrapToken is now only populated after the second reconcile.
+			_, err = r.Reconcile(req)
+			assert.NoError(t, err)
+
 			gitRepoNamespacedName := types.NamespacedName{
 				Name:      tt.fields.objName,
 				Namespace: tt.fields.objNamespace,
@@ -258,6 +262,7 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 
 			assert.Equal(t, tt.fields.tenantName, newCluster.Labels[apis.LabelNameTenant])
 
+			assert.NotNil(t, newCluster.Status.BootstrapToken)
 			assert.NotEmpty(t, newCluster.Status.BootstrapToken.Token)
 
 			sa := &corev1.ServiceAccount{}
