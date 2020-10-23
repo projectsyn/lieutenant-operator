@@ -42,18 +42,19 @@ func Test_createClusterRBAC(t *testing.T) {
 			if got := createClusterRBAC(tt.args.cluster, tt.args.data); got.Err != nil != tt.wantErr {
 				t.Errorf("createClusterRBAC() = had error: %v", got.Err)
 			}
+
+			roleBinding := &rbacv1.RoleBinding{}
+			serviceAccount := &corev1.ServiceAccount{}
+
+			namespacedName := types.NamespacedName{Name: tt.args.cluster.Name, Namespace: tt.args.cluster.Namespace}
+
+			assert.NoError(t, client.Get(context.TODO(), namespacedName, roleBinding))
+			assert.NoError(t, client.Get(context.TODO(), namespacedName, serviceAccount))
+
+			assert.Equal(t, serviceAccount.Name, roleBinding.Subjects[len(roleBinding.Subjects)-1].Name)
+			assert.Equal(t, serviceAccount.Namespace, roleBinding.Subjects[len(roleBinding.Subjects)-1].Namespace)
+
 		})
-
-		roleBinding := &rbacv1.RoleBinding{}
-		serviceAccount := &corev1.ServiceAccount{}
-
-		namespacedName := types.NamespacedName{Name: tt.args.cluster.Name, Namespace: tt.args.cluster.Namespace}
-
-		assert.NoError(t, client.Get(context.TODO(), namespacedName, roleBinding))
-		assert.NoError(t, client.Get(context.TODO(), namespacedName, serviceAccount))
-
-		assert.Equal(t, serviceAccount.Name, roleBinding.Subjects[len(roleBinding.Subjects)-1].Name)
-		assert.Equal(t, serviceAccount.Namespace, roleBinding.Subjects[len(roleBinding.Subjects)-1].Namespace)
 
 	}
 }
@@ -75,9 +76,10 @@ func Test_setBootstrapToken(t *testing.T) {
 			if got := setBootstrapToken(tt.args.cluster, tt.args.data); got.Err != nil != tt.wantErr {
 				t.Errorf("setBootstrapToken() = had error: %v", got.Err)
 			}
-		})
 
-		assert.NotNil(t, tt.args.cluster.Status.BootstrapToken)
+			assert.NotNil(t, tt.args.cluster.Status.BootstrapToken)
+
+		})
 
 	}
 }
@@ -96,9 +98,10 @@ func Test_newClusterStatus(t *testing.T) {
 			if err := newClusterStatus(tt.args.cluster); (err != nil) != tt.wantErr {
 				t.Errorf("newClusterStatus() error = %v, wantErr %v", err, tt.wantErr)
 			}
-		})
 
-		assert.NotNil(t, tt.args.cluster.Status.BootstrapToken)
+			assert.NotNil(t, tt.args.cluster.Status.BootstrapToken)
+
+		})
 
 	}
 }
@@ -149,11 +152,12 @@ func Test_setTenantOwner(t *testing.T) {
 			if got := setTenantOwner(tt.args.cluster, tt.args.data); (got.Err != nil) != tt.wantErr {
 				t.Errorf("setTenantOwner() = had error: %v", got.Err)
 			}
-		})
 
-		if !tt.wantErr {
-			assert.NotEmpty(t, tt.args.cluster.GetOwnerReferences())
-		}
+			if !tt.wantErr {
+				assert.NotEmpty(t, tt.args.cluster.GetOwnerReferences())
+			}
+
+		})
 
 	}
 }
@@ -215,11 +219,12 @@ func Test_applyTenantTemplate(t *testing.T) {
 			if got := applyTenantTemplate(tt.args.cluster, tt.args.data); (got.Err != nil) != tt.wantErr {
 				t.Errorf("applyTenantTemplate() = had error: %v", got.Err)
 			}
-		})
 
-		if !tt.wantErr {
-			assert.Equal(t, "c-some-test", tt.args.cluster.Spec.GitRepoTemplate.RepoName)
-		}
+			if !tt.wantErr {
+				assert.Equal(t, "c-some-test", tt.args.cluster.Spec.GitRepoTemplate.RepoName)
+			}
+
+		})
 
 	}
 }
