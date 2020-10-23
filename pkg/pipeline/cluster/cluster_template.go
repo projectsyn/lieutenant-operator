@@ -1,11 +1,12 @@
 package cluster
 
 import (
+	"bytes"
 	"fmt"
+	"text/template"
 
 	"github.com/imdario/mergo"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
-	"github.com/projectsyn/lieutenant-operator/pkg/helpers"
 	"github.com/ryankurte/go-structparse"
 )
 
@@ -18,7 +19,7 @@ func (r *templateParser) ParseString(in string) interface{} {
 	if r.err != nil || len(in) == 0 {
 		return in
 	}
-	str, err := helpers.RenderTemplate(in, r.cluster)
+	str, err := RenderTemplate(in, r.cluster)
 	if err != nil {
 		r.err = err
 		return in
@@ -49,4 +50,17 @@ func ApplyClusterTemplate(cluster *synv1alpha1.Cluster, tenant *synv1alpha1.Tena
 	}
 
 	return nil
+}
+
+// RenderTemplate renders a given template with the given data
+func RenderTemplate(tmpl string, data interface{}) (string, error) {
+	tmp, err := template.New("template").Parse(tmpl)
+	if err != nil {
+		return "", fmt.Errorf("Could not parse template: %w", err)
+	}
+	buf := new(bytes.Buffer)
+	if err := tmp.Execute(buf, data); err != nil {
+		return "", fmt.Errorf("Could not render template: %w", err)
+	}
+	return buf.String(), nil
 }

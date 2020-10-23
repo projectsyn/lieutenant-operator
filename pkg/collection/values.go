@@ -1,10 +1,6 @@
 package collection
 
 import (
-	"bytes"
-	"fmt"
-	"text/template"
-
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -25,17 +21,4 @@ func (s SecretSortList) Less(i, j int) bool {
 	}
 
 	return s.Items[i].CreationTimestamp.Before(&s.Items[j].CreationTimestamp)
-}
-
-// RenderTemplate renders a given template with the given data
-func RenderTemplate(tmpl string, data interface{}) (string, error) {
-	tmp, err := template.New("template").Parse(tmpl)
-	if err != nil {
-		return "", fmt.Errorf("Could not parse template: %w", err)
-	}
-	buf := new(bytes.Buffer)
-	if err := tmp.Execute(buf, data); err != nil {
-		return "", fmt.Errorf("Could not render template: %w", err)
-	}
-	return buf.String(), nil
 }

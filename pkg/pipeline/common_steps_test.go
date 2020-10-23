@@ -35,30 +35,25 @@ func TestGetDeletionPolicyNonDefault(t *testing.T) {
 	assert.Equal(t, synv1alpha1.RetainPolicy, policy)
 }
 
-func TestAddTenantLabel(t *testing.T) {
-	type args struct {
-		obj *synv1alpha1.Cluster
-	}
-	tests := []struct {
-		name string
-		args args
-	}{
-		{
-			name: "add labels",
-			args: args{
-				obj: &synv1alpha1.Cluster{
-					Spec: synv1alpha1.ClusterSpec{
-						TenantRef: corev1.LocalObjectReference{Name: "test"},
-					},
+var addTenantLabelCases = genericCases{
+	"add labels": {
+		args: args{
+			cluster: &synv1alpha1.Cluster{
+				Spec: synv1alpha1.ClusterSpec{
+					TenantRef: corev1.LocalObjectReference{Name: "test"},
 				},
 			},
 		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			addTenantLabel(tt.args.obj, &ExecutionContext{})
+	},
+}
 
-			if tt.args.obj.GetLabels()[apis.LabelNameTenant] != tt.args.obj.Spec.TenantRef.Name {
+func TestAddTenantLabel(t *testing.T) {
+
+	for name, tt := range addTenantLabelCases {
+		t.Run(name, func(t *testing.T) {
+			addTenantLabel(tt.args.cluster, &ExecutionContext{})
+
+			if tt.args.cluster.GetLabels()[apis.LabelNameTenant] != tt.args.cluster.Spec.TenantRef.Name {
 				t.Error("labels do not match")
 			}
 
@@ -66,69 +61,60 @@ func TestAddTenantLabel(t *testing.T) {
 	}
 }
 
+var handleDeletionCases = genericCases{
+	"Normal deletion": {
+		args: args{
+			cluster: &synv1alpha1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					DeletionTimestamp: &metav1.Time{Time: time.Now()},
+					Finalizers: []string{
+						"test",
+					},
+				},
+			},
+			finalizerName: "test",
+		},
+	},
+	"Deletion protection set": {
+		wantErr: true,
+		args: args{
+			cluster: &synv1alpha1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						DeleteProtectionAnnotation: "true",
+					},
+					DeletionTimestamp: &metav1.Time{Time: time.Now()},
+					Finalizers: []string{
+						"test",
+					},
+				},
+			},
+			finalizerName: "test",
+		},
+	},
+	"Nonsense annotation value": {
+		wantErr: true,
+		args: args{
+			cluster: &synv1alpha1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						DeleteProtectionAnnotation: "trugadse",
+					},
+					DeletionTimestamp: &metav1.Time{Time: time.Now()},
+					Finalizers: []string{
+						"test",
+					},
+				},
+			},
+			finalizerName: "test",
+		},
+	},
+}
+
 func TestHandleDeletion(t *testing.T) {
-	type args struct {
-		instance      *synv1alpha1.Cluster
-		finalizerName string
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		{
-			name: "Normal deletion",
-			args: args{
-				instance: &synv1alpha1.Cluster{
-					ObjectMeta: metav1.ObjectMeta{
-						DeletionTimestamp: &metav1.Time{Time: time.Now()},
-						Finalizers: []string{
-							"test",
-						},
-					},
-				},
-				finalizerName: "test",
-			},
-		},
-		{
-			name:    "Deletion protection set",
-			wantErr: true,
-			args: args{
-				instance: &synv1alpha1.Cluster{
-					ObjectMeta: metav1.ObjectMeta{
-						Annotations: map[string]string{
-							DeleteProtectionAnnotation: "true",
-						},
-						DeletionTimestamp: &metav1.Time{Time: time.Now()},
-						Finalizers: []string{
-							"test",
-						},
-					},
-				},
-				finalizerName: "test",
-			},
-		},
-		{
-			name:    "Nonsense annotation value",
-			wantErr: true,
-			args: args{
-				instance: &synv1alpha1.Cluster{
-					ObjectMeta: metav1.ObjectMeta{
-						Annotations: map[string]string{
-							DeleteProtectionAnnotation: "trugadse",
-						},
-						DeletionTimestamp: &metav1.Time{Time: time.Now()},
-						Finalizers: []string{
-							"test",
-						},
-					},
-				},
-				finalizerName: "test",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+
+	for name, tt := range handleDeletionCases {
+		t.Run(name, func(t *testing.T) {
 
 			client, _ := testSetupClient([]runtime.Object{&synv1alpha1.Cluster{}})
 
@@ -138,56 +124,56 @@ func TestHandleDeletion(t *testing.T) {
 				FinalizerName: tt.args.finalizerName,
 			}
 
-			got := handleDeletion(tt.args.instance, data)
+			got := handleDeletion(tt.args.cluster, data)
 			if got.Err != nil != tt.wantErr {
 				t.Errorf("HandleDeletion() = had error: %v", got.Err)
 			}
 
 			want := []string{tt.args.finalizerName}
 
-			assert.Equal(t, want, tt.args.instance.GetFinalizers())
+			assert.Equal(t, want, tt.args.cluster.GetFinalizers())
 
 		})
 	}
 }
 
+type addDeletionProtectionArgs struct {
+	instance *synv1alpha1.Cluster
+	enable   string
+	result   string
+}
+
+var addDeletionProtectionCases = map[string]struct {
+	args    addDeletionProtectionArgs
+	wantErr bool
+}{
+	"Add deletion protection": {
+		args: addDeletionProtectionArgs{
+			instance: &synv1alpha1.Cluster{},
+			enable:   "true",
+			result:   "true",
+		},
+	},
+	"Don't add deletion protection": {
+		args: addDeletionProtectionArgs{
+			instance: &synv1alpha1.Cluster{},
+			enable:   "false",
+			result:   "",
+		},
+	},
+	"Invalid setting": {
+		args: addDeletionProtectionArgs{
+			instance: &synv1alpha1.Cluster{},
+			enable:   "gaga",
+			result:   "true",
+		},
+	},
+}
+
 func TestAddDeletionProtection(t *testing.T) {
-	type args struct {
-		instance *synv1alpha1.Cluster
-		enable   string
-		result   string
-	}
-	tests := []struct {
-		name string
-		args args
-	}{
-		{
-			name: "Add deletion protection",
-			args: args{
-				instance: &synv1alpha1.Cluster{},
-				enable:   "true",
-				result:   "true",
-			},
-		},
-		{
-			name: "Don't add deletion protection",
-			args: args{
-				instance: &synv1alpha1.Cluster{},
-				enable:   "false",
-				result:   "",
-			},
-		},
-		{
-			name: "Invalid setting",
-			args: args{
-				instance: &synv1alpha1.Cluster{},
-				enable:   "gaga",
-				result:   "true",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+
+	for name, tt := range addDeletionProtectionCases {
+		t.Run(name, func(t *testing.T) {
 
 			os.Setenv(protectionSettingEnvVar, tt.args.enable)
 
@@ -201,46 +187,41 @@ func TestAddDeletionProtection(t *testing.T) {
 	}
 }
 
+var checkIfDeletedCases = map[string]struct {
+	args    args
+	wantErr bool
+	want    bool
+}{
+	"object deleted": {
+		want: true,
+		args: args{
+			data: &ExecutionContext{},
+			tenant: &synv1alpha1.Tenant{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:              "test",
+					DeletionTimestamp: &metav1.Time{Time: time.Now()},
+				},
+			},
+		},
+	},
+	"object not deleted": {
+		want: false,
+		args: args{
+			data: &ExecutionContext{},
+			tenant: &synv1alpha1.Tenant{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
+			},
+		},
+	},
+}
+
 func Test_checkIfDeleted(t *testing.T) {
-	type args struct {
-		obj  *synv1alpha1.Tenant
-		data *ExecutionContext
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-		want    bool
-	}{
-		{
-			name: "object deleted",
-			want: true,
-			args: args{
-				data: &ExecutionContext{},
-				obj: &synv1alpha1.Tenant{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:              "test",
-						DeletionTimestamp: &metav1.Time{Time: time.Now()},
-					},
-				},
-			},
-		},
-		{
-			name: "object not deleted",
-			want: false,
-			args: args{
-				data: &ExecutionContext{},
-				obj: &synv1alpha1.Tenant{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test",
-					},
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := checkIfDeleted(tt.args.obj, tt.args.data); (got.Err != nil) != tt.wantErr {
+
+	for name, tt := range checkIfDeletedCases {
+		t.Run(name, func(t *testing.T) {
+			if got := checkIfDeleted(tt.args.tenant, tt.args.data); (got.Err != nil) != tt.wantErr {
 				t.Errorf("checkIfDeleted() = had error %v", got.Err)
 			}
 
@@ -250,54 +231,46 @@ func Test_checkIfDeleted(t *testing.T) {
 	}
 }
 
+var handleFinalizerCases = genericCases{
+	"add finalizers": {
+		args: args{
+			data: &ExecutionContext{
+				FinalizerName: "test",
+			},
+			cluster: &synv1alpha1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
+			},
+		},
+	},
+	"remove finalizers": {
+		args: args{
+			data: &ExecutionContext{
+				Deleted:       true,
+				FinalizerName: "test",
+			},
+			cluster: &synv1alpha1.Cluster{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
+				},
+			},
+		},
+	},
+}
+
 func Test_handleFinalizer(t *testing.T) {
-	type args struct {
-		obj  *synv1alpha1.Cluster
-		data *ExecutionContext
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		{
-			name: "add finalizers",
-			args: args{
-				data: &ExecutionContext{
-					FinalizerName: "test",
-				},
-				obj: &synv1alpha1.Cluster{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test",
-					},
-				},
-			},
-		},
-		{
-			name: "remove finalizers",
-			args: args{
-				data: &ExecutionContext{
-					Deleted:       true,
-					FinalizerName: "test",
-				},
-				obj: &synv1alpha1.Cluster{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test",
-					},
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := handleFinalizer(tt.args.obj, tt.args.data); (got.Err != nil) != tt.wantErr {
+
+	for name, tt := range handleFinalizerCases {
+		t.Run(name, func(t *testing.T) {
+			if got := handleFinalizer(tt.args.cluster, tt.args.data); (got.Err != nil) != tt.wantErr {
 				t.Errorf("handleFinalizer() = had error: %v", got.Err)
 			}
 
 			if tt.args.data.Deleted {
-				assert.Empty(t, tt.args.obj.GetFinalizers())
+				assert.Empty(t, tt.args.cluster.GetFinalizers())
 			} else {
-				assert.NotEmpty(t, tt.args.obj.GetFinalizers())
+				assert.NotEmpty(t, tt.args.cluster.GetFinalizers())
 			}
 
 		})
@@ -314,43 +287,35 @@ func Test_wrapError(t *testing.T) {
 	assert.Nil(t, wrapError("test", nil))
 }
 
-func Test_updateObject(t *testing.T) {
-	type args struct {
-		obj  *synv1alpha1.Tenant
-		data *ExecutionContext
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
-	}{
-		{
-			name: "update objects",
-			args: args{
-				data: &ExecutionContext{},
-				obj: &synv1alpha1.Tenant{
-					ObjectMeta: metav1.ObjectMeta{
-						Name: "test",
-					},
+var updateObjectCases = genericCases{
+	"update objects": {
+		args: args{
+			data: &ExecutionContext{},
+			tenant: &synv1alpha1.Tenant{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test",
 				},
 			},
 		},
-		{
-			name: "update fail",
-			args: args{
-				data: &ExecutionContext{},
-				obj:  &synv1alpha1.Tenant{},
-			},
+	},
+	"update fail": {
+		args: args{
+			data:   &ExecutionContext{},
+			tenant: &synv1alpha1.Tenant{},
 		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	},
+}
+
+func Test_updateObject(t *testing.T) {
+
+	for name, tt := range updateObjectCases {
+		t.Run(name, func(t *testing.T) {
 
 			tt.args.data.Client, _ = testSetupClient([]runtime.Object{
-				tt.args.obj,
+				tt.args.tenant,
 			})
 
-			if got := updateObject(tt.args.obj, tt.args.data); (got.Err != nil) != tt.wantErr {
+			if got := updateObject(tt.args.tenant, tt.args.data); (got.Err != nil) != tt.wantErr {
 				t.Errorf("updateObject() = had error: %v", got.Err)
 			}
 
