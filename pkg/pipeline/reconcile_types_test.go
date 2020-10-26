@@ -10,7 +10,6 @@ type genericCases map[string]struct {
 type args struct {
 	cluster       *synv1alpha1.Cluster
 	tenant        *synv1alpha1.Tenant
-	gitRepo       synv1alpha1.GitRepo
 	data          *ExecutionContext
 	finalizerName string
 }
