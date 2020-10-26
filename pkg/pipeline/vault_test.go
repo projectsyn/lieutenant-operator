@@ -12,7 +12,6 @@ import (
 )
 
 type testMockClient struct {
-	secrets        []vault.VaultSecret
 	deletionPolicy synv1alpha1.DeletionPolicy
 }
 
