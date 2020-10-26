@@ -121,8 +121,6 @@ func handleDeletion(obj PipelineObject, data *ExecutionContext) ExecutionResult 
 		// Assume true if it can't be parsed
 		if err != nil {
 			protected = true
-			// We need to reset the error again, so we don't trigger any unwanted side effects...
-			err = nil
 		}
 	} else {
 		protected = false
