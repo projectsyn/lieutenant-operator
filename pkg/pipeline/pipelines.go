@@ -9,7 +9,6 @@ type Step struct {
 }
 
 func ReconcileTenant(obj PipelineObject, data *ExecutionContext) error {
-
 	steps := []Step{
 		{Name: "tenant specific steps", F: tenantSpecificSteps},
 		{Name: "create git repo", F: createGitRepo},
@@ -21,7 +20,6 @@ func ReconcileTenant(obj PipelineObject, data *ExecutionContext) error {
 }
 
 func ReconcileCluster(obj PipelineObject, data *ExecutionContext) error {
-
 	steps := []Step{
 		{Name: "cluster specific steps", F: clusterSpecificSteps},
 		{Name: "create git repo", F: createGitRepo},
@@ -34,7 +32,6 @@ func ReconcileCluster(obj PipelineObject, data *ExecutionContext) error {
 }
 
 func ReconcileGitRep(obj PipelineObject, data *ExecutionContext) error {
-
 	steps := []Step{
 		{Name: "deletion check", F: checkIfDeleted},
 		{Name: "git repo specific steps", F: gitRepoSpecificSteps},
@@ -46,7 +43,6 @@ func ReconcileGitRep(obj PipelineObject, data *ExecutionContext) error {
 }
 
 func RunPipeline(obj PipelineObject, data *ExecutionContext, steps []Step) error {
-
 	for _, step := range steps {
 		if r := step.F(obj, data); resultNotOK(r) {
 			return wrapError(step.Name, r.Err)

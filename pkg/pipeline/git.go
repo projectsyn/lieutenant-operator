@@ -13,7 +13,6 @@ import (
 )
 
 func gitRepoSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionResult {
-
 	instance, ok := obj.(*synv1alpha1.GitRepo)
 	if !ok {
 		return ExecutionResult{Err: fmt.Errorf("object is not a GitRepository")}
@@ -78,7 +77,6 @@ func gitRepoSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionR
 
 // createGitRepo will create the gitRepo object if it doesn't already exist.
 func createGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionResult {
-
 	template := obj.GetGitTemplate()
 
 	if template == nil {

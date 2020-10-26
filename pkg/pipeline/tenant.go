@@ -7,7 +7,6 @@ const (
 )
 
 func tenantSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionResult {
-
 	steps := []Step{
 		{Name: "add default class file", F: addDefaultClassFile},
 		{Name: "uptade tenant git repo", F: updateTenantGitRepo},
@@ -17,5 +16,4 @@ func tenantSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionRe
 	err := RunPipeline(obj, data, steps)
 
 	return ExecutionResult{Err: err}
-
 }

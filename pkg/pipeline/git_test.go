@@ -156,7 +156,6 @@ func Test_fetchGitRepoTemplate(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			rtObj := tt.args.templateObj.(runtime.Object)
 
 			tt.args.data.Client, _ = testSetupClient([]runtime.Object{
@@ -176,7 +175,6 @@ func Test_fetchGitRepoTemplate(t *testing.T) {
 			assert.NoError(t, tt.args.data.Client.Update(context.TODO(), rtObj))
 			assert.NoError(t, fetchGitRepoTemplate(tt.args.obj, tt.args.data))
 			assert.Equal(t, tt.args.templateObj.GetGitTemplate(), &tt.args.obj.Spec.GitRepoTemplate)
-
 		})
 	}
 }
@@ -335,7 +333,6 @@ func Test_setGitRepoURLAndHostKeys(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			tt.args.data.Client, _ = testSetupClient([]runtime.Object{
 				tt.args.obj,
 				tt.args.gitRepo,
@@ -347,7 +344,6 @@ func Test_setGitRepoURLAndHostKeys(t *testing.T) {
 
 			assert.Equal(t, tt.args.gitRepo.Status.URL, tt.args.obj.Spec.GitRepoURL)
 			assert.Equal(t, tt.args.gitRepo.Status.HostKeys, tt.args.obj.Spec.GitHostKeys)
-
 		})
 	}
 }

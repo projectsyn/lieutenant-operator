@@ -65,7 +65,6 @@ var setGlobalGitRepoURLCases = map[string]struct {
 }
 
 func Test_setGlobalGitRepoURL(t *testing.T) {
-
 	for name, tt := range setGlobalGitRepoURLCases {
 		t.Run(name, func(t *testing.T) {
 
@@ -155,7 +154,6 @@ var updateTenantGitRepoCases = map[string]struct {
 }
 
 func Test_updateTenantGitRepo(t *testing.T) {
-
 	for name, tt := range updateTenantGitRepoCases {
 		t.Run(name, func(t *testing.T) {
 

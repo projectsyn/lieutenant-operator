@@ -9,7 +9,6 @@ const (
 )
 
 func common(obj PipelineObject, data *ExecutionContext) ExecutionResult {
-
 	steps := []Step{
 		{Name: "deletion", F: handleDeletion},
 		{Name: "add deletion protection", F: addDeletionProtection},
@@ -20,5 +19,4 @@ func common(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 	err := RunPipeline(obj, data, steps)
 
 	return ExecutionResult{Err: err}
-
 }

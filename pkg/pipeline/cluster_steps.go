@@ -54,7 +54,6 @@ func createClusterRBAC(obj PipelineObject, data *ExecutionContext) ExecutionResu
 }
 
 func setBootstrapToken(obj PipelineObject, data *ExecutionContext) ExecutionResult {
-
 	instance, ok := obj.(*synv1alpha1.Cluster)
 	if !ok {
 		return ExecutionResult{Err: fmt.Errorf("%s is not a cluster object", obj.GetObjectMeta().GetName())}
@@ -73,12 +72,10 @@ func setBootstrapToken(obj PipelineObject, data *ExecutionContext) ExecutionResu
 	}
 
 	return ExecutionResult{}
-
 }
 
 //newClusterStatus will create a default lifetime of 30 minutes if it wasn't set in the object.
 func newClusterStatus(cluster *synv1alpha1.Cluster) error {
-
 	parseTime := "30m"
 	if cluster.Spec.TokenLifeTime != "" {
 		parseTime = cluster.Spec.TokenLifeTime
@@ -114,9 +111,7 @@ func generateToken() (string, error) {
 }
 
 func setTenantOwner(obj PipelineObject, data *ExecutionContext) ExecutionResult {
-
 	tenant := &synv1alpha1.Tenant{}
-
 	tenantName := types.NamespacedName{Name: obj.GetTenantRef().Name, Namespace: obj.GetObjectMeta().GetNamespace()}
 
 	err := data.Client.Get(context.TODO(), tenantName, tenant)
@@ -135,7 +130,6 @@ func applyTenantTemplate(obj PipelineObject, data *ExecutionContext) ExecutionRe
 	nsName := types.NamespacedName{Name: obj.GetTenantRef().Name, Namespace: obj.GetObjectMeta().GetNamespace()}
 
 	tenant := &synv1alpha1.Tenant{}
-
 	if err := data.Client.Get(context.TODO(), nsName, tenant); err != nil {
 		return ExecutionResult{Err: fmt.Errorf("Couldn't find tenant: %w", err)}
 	}

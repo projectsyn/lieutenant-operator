@@ -48,7 +48,6 @@ var addTenantLabelCases = genericCases{
 }
 
 func TestAddTenantLabel(t *testing.T) {
-
 	for name, tt := range addTenantLabelCases {
 		t.Run(name, func(t *testing.T) {
 			addTenantLabel(tt.args.cluster, &ExecutionContext{})
@@ -56,7 +55,6 @@ func TestAddTenantLabel(t *testing.T) {
 			if tt.args.cluster.GetLabels()[apis.LabelNameTenant] != tt.args.cluster.Spec.TenantRef.Name {
 				t.Error("labels do not match")
 			}
-
 		})
 	}
 }
@@ -112,10 +110,8 @@ var handleDeletionCases = genericCases{
 }
 
 func TestHandleDeletion(t *testing.T) {
-
 	for name, tt := range handleDeletionCases {
 		t.Run(name, func(t *testing.T) {
-
 			client, _ := testSetupClient([]runtime.Object{&synv1alpha1.Cluster{}})
 
 			data := &ExecutionContext{
@@ -132,7 +128,6 @@ func TestHandleDeletion(t *testing.T) {
 			want := []string{tt.args.finalizerName}
 
 			assert.Equal(t, want, tt.args.cluster.GetFinalizers())
-
 		})
 	}
 }
@@ -171,10 +166,8 @@ var addDeletionProtectionCases = map[string]struct {
 }
 
 func TestAddDeletionProtection(t *testing.T) {
-
 	for name, tt := range addDeletionProtectionCases {
 		t.Run(name, func(t *testing.T) {
-
 			os.Setenv(protectionSettingEnvVar, tt.args.enable)
 
 			addDeletionProtection(tt.args.instance, &ExecutionContext{})
@@ -218,7 +211,6 @@ var checkIfDeletedCases = map[string]struct {
 }
 
 func Test_checkIfDeleted(t *testing.T) {
-
 	for name, tt := range checkIfDeletedCases {
 		t.Run(name, func(t *testing.T) {
 			if got := checkIfDeleted(tt.args.tenant, tt.args.data); (got.Err != nil) != tt.wantErr {
@@ -226,7 +218,6 @@ func Test_checkIfDeleted(t *testing.T) {
 			}
 
 			assert.Equal(t, tt.want, tt.args.data.Deleted)
-
 		})
 	}
 }
@@ -260,7 +251,6 @@ var handleFinalizerCases = genericCases{
 }
 
 func Test_handleFinalizer(t *testing.T) {
-
 	for name, tt := range handleFinalizerCases {
 		t.Run(name, func(t *testing.T) {
 			if got := handleFinalizer(tt.args.cluster, tt.args.data); (got.Err != nil) != tt.wantErr {
@@ -272,7 +262,6 @@ func Test_handleFinalizer(t *testing.T) {
 			} else {
 				assert.NotEmpty(t, tt.args.cluster.GetFinalizers())
 			}
-
 		})
 	}
 }
@@ -307,10 +296,8 @@ var updateObjectCases = genericCases{
 }
 
 func Test_updateObject(t *testing.T) {
-
 	for name, tt := range updateObjectCases {
 		t.Run(name, func(t *testing.T) {
-
 			tt.args.data.Client, _ = testSetupClient([]runtime.Object{
 				tt.args.tenant,
 			})
@@ -318,7 +305,6 @@ func Test_updateObject(t *testing.T) {
 			if got := updateObject(tt.args.tenant, tt.args.data); (got.Err != nil) != tt.wantErr {
 				t.Errorf("updateObject() = had error: %v", got.Err)
 			}
-
 		})
 	}
 }

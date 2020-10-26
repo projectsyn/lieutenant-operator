@@ -29,9 +29,7 @@ var rbacCases = genericCases{
 }
 
 func Test_createClusterRBAC(t *testing.T) {
-
 	for name, tt := range rbacCases {
-
 		client, _ := testSetupClient([]runtime.Object{
 			tt.args.cluster,
 		})
@@ -55,7 +53,6 @@ func Test_createClusterRBAC(t *testing.T) {
 			assert.Equal(t, serviceAccount.Namespace, roleBinding.Subjects[len(roleBinding.Subjects)-1].Namespace)
 
 		})
-
 	}
 }
 
@@ -78,9 +75,7 @@ func Test_setBootstrapToken(t *testing.T) {
 			}
 
 			assert.NotNil(t, tt.args.cluster.Status.BootstrapToken)
-
 		})
-
 	}
 }
 
@@ -102,7 +97,6 @@ func Test_newClusterStatus(t *testing.T) {
 			assert.NotNil(t, tt.args.cluster.Status.BootstrapToken)
 
 		})
-
 	}
 }
 
@@ -142,7 +136,6 @@ var setTenantOwnerCases = genericCases{
 
 func Test_setTenantOwner(t *testing.T) {
 	for name, tt := range setTenantOwnerCases {
-
 		tt.args.data.Client, _ = testSetupClient([]runtime.Object{
 			tt.args.cluster,
 			tt.args.tenant,
@@ -156,9 +149,7 @@ func Test_setTenantOwner(t *testing.T) {
 			if !tt.wantErr {
 				assert.NotEmpty(t, tt.args.cluster.GetOwnerReferences())
 			}
-
 		})
-
 	}
 }
 
@@ -207,9 +198,7 @@ var applyTenantTemplateCases = genericCases{
 }
 
 func Test_applyTenantTemplate(t *testing.T) {
-
 	for name, tt := range applyTenantTemplateCases {
-
 		tt.args.data.Client, _ = testSetupClient([]runtime.Object{
 			tt.args.cluster,
 			tt.args.tenant,
@@ -223,8 +212,6 @@ func Test_applyTenantTemplate(t *testing.T) {
 			if !tt.wantErr {
 				assert.Equal(t, "c-some-test", tt.args.cluster.Spec.GitRepoTemplate.RepoName)
 			}
-
 		})
-
 	}
 }

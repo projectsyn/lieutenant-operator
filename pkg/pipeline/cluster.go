@@ -7,7 +7,6 @@ const (
 )
 
 func clusterSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionResult {
-
 	steps := []Step{
 		{Name: "create cluster RBAC", F: createClusterRBAC},
 		{Name: "deletion check", F: checkIfDeleted},

@@ -53,7 +53,6 @@ var getVaultCases = map[string]struct {
 }
 
 func Test_getVaultClient(t *testing.T) {
-
 	// ensure that it isn't set to anything from previous tests
 	os.Unsetenv("DEFAULT_DELETION_POLICY")
 
@@ -117,7 +116,6 @@ var handleVaultDeletionCases = map[string]struct {
 }
 
 func Test_handleVaultDeletion(t *testing.T) {
-
 	// ensure that it isn't set to anything from previous tests
 	os.Unsetenv("DEFAULT_DELETION_POLICY")
 

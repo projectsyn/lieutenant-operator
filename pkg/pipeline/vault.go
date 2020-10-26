@@ -80,7 +80,6 @@ func GetServiceAccountToken(instance metav1.Object, data *ExecutionContext) (str
 }
 
 func handleVaultDeletion(obj PipelineObject, data *ExecutionContext) ExecutionResult {
-
 	if strings.ToLower(os.Getenv("SKIP_VAULT_SETUP")) == "true" {
 		return ExecutionResult{}
 	}

@@ -24,7 +24,6 @@ func addDefaultClassFile(obj PipelineObject, data *ExecutionContext) ExecutionRe
 }
 
 func updateTenantGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionResult {
-
 	tenantCR, ok := obj.(*synv1alpha1.Tenant)
 	if !ok {
 		return ExecutionResult{Err: fmt.Errorf("object is not a tenant")}
@@ -73,7 +72,6 @@ func updateTenantGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionRe
 }
 
 func setGlobalGitRepoURL(obj PipelineObject, data *ExecutionContext) ExecutionResult {
-
 	instance, ok := obj.(*synv1alpha1.Tenant)
 	if !ok {
 		return ExecutionResult{Err: fmt.Errorf("object is not a tenant")}

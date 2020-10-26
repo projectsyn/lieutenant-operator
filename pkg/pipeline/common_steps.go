@@ -23,7 +23,6 @@ func getDefaultDeletionPolicy() synv1alpha1.DeletionPolicy {
 }
 
 func addDeletionProtection(instance PipelineObject, data *ExecutionContext) ExecutionResult {
-
 	if data.Deleted {
 		return ExecutionResult{}
 	}
