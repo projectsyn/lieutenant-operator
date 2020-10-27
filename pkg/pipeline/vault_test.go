@@ -75,17 +75,6 @@ var handleVaultDeletionCases = map[string]struct {
 	want synv1alpha1.DeletionPolicy
 	args args
 }{
-	"noop": {
-		want: getDefaultDeletionPolicy(),
-		args: args{
-			cluster: &synv1alpha1.Cluster{
-				Spec: synv1alpha1.ClusterSpec{
-					DeletionPolicy: getDefaultDeletionPolicy(),
-				},
-			},
-			data: &ExecutionContext{},
-		},
-	},
 	"archive": {
 		want: synv1alpha1.ArchivePolicy,
 		args: args{
