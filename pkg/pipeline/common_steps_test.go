@@ -1,7 +1,6 @@
 package pipeline
 
 import (
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -264,16 +263,6 @@ func Test_handleFinalizer(t *testing.T) {
 			}
 		})
 	}
-}
-
-func Test_resultNotOK(t *testing.T) {
-	assert.True(t, resultNotOK(ExecutionResult{Err: fmt.Errorf("test")}))
-	assert.False(t, resultNotOK(ExecutionResult{}))
-}
-
-func Test_wrapError(t *testing.T) {
-	assert.Equal(t, "step test failed: test", wrapError("test", fmt.Errorf("test")).Error())
-	assert.Nil(t, wrapError("test", nil))
 }
 
 var updateObjectCases = genericCases{

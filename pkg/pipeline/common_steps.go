@@ -92,17 +92,6 @@ func updateObject(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 	return ExecutionResult{Abort: true, Err: err}
 }
 
-func wrapError(name string, err error) error {
-	if err == nil {
-		return nil
-	}
-	return fmt.Errorf("step %s failed: %w", name, err)
-}
-
-func resultNotOK(result ExecutionResult) bool {
-	return result.Abort || result.Err != nil
-}
-
 // handleDeletion will handle the finalizers if the object was deleted.
 // It will only trigger if data.Deleted is true.
 func handleDeletion(obj PipelineObject, data *ExecutionContext) ExecutionResult {

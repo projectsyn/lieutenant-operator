@@ -1,5 +1,7 @@
 package pipeline
 
+import "fmt"
+
 // Function defines the general form of a pipeline function.
 type Function func(PipelineObject, *ExecutionContext) ExecutionResult
 
@@ -44,8 +46,11 @@ func ReconcileGitRep(obj PipelineObject, data *ExecutionContext) error {
 
 func RunPipeline(obj PipelineObject, data *ExecutionContext, steps []Step) error {
 	for _, step := range steps {
-		if r := step.F(obj, data); resultNotOK(r) {
-			return wrapError(step.Name, r.Err)
+		if r := step.F(obj, data); r.Abort || r.Err != nil {
+			if r.Err == nil {
+				return nil
+			}
+			return fmt.Errorf("step %s failed: %w", step.Name, r.Err)
 		}
 	}
 
