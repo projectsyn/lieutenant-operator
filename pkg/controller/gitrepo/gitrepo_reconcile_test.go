@@ -29,7 +29,7 @@ var savedGitRepoOpt manager.RepoOptions
 func testSetupClient(objs []runtime.Object) (client.Client, *runtime.Scheme) {
 	s := scheme.Scheme
 	s.AddKnownTypes(synv1alpha1.SchemeGroupVersion, objs...)
-	return fake.NewFakeClient(objs...), s
+	return fake.NewFakeClientWithScheme(s, objs...), s
 }
 
 func TestReconcileGitRepo_Reconcile(t *testing.T) {
@@ -110,6 +110,8 @@ func TestReconcileGitRepo_Reconcile(t *testing.T) {
 
 			objs := []runtime.Object{
 				repo,
+				&synv1alpha1.Tenant{},
+				&synv1alpha1.Cluster{},
 			}
 
 			cl, s := testSetupClient(objs)

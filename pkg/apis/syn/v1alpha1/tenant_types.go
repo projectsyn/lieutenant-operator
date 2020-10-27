@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -61,4 +62,32 @@ type TenantList struct {
 
 func init() {
 	SchemeBuilder.Register(&Tenant{}, &TenantList{})
+}
+
+// GetGitTemplate returns the git repository template
+func (t *Tenant) GetGitTemplate() *GitRepoTemplate {
+	if t.Spec.GitRepoTemplate == nil {
+		t.Spec.GitRepoTemplate = &GitRepoTemplate{}
+	}
+	return t.Spec.GitRepoTemplate
+}
+
+// GetTenantRef returns the tenant of this CR
+func (t *Tenant) GetTenantRef() corev1.LocalObjectReference {
+	return corev1.LocalObjectReference{Name: t.GetName()}
+}
+
+// GetDeletionPolicy returns the object's deletion policy
+func (t *Tenant) GetDeletionPolicy() DeletionPolicy {
+	return t.Spec.DeletionPolicy
+}
+
+// GetDisplayName returns the display name of the object
+func (t *Tenant) GetDisplayName() string {
+	return t.Spec.DisplayName
+}
+
+// SetGitRepoURLAndHostKeys will only set the URL for the tenant
+func (t *Tenant) SetGitRepoURLAndHostKeys(URL, hostKeys string) {
+	t.Spec.GitRepoURL = URL
 }

@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path"
 	"reflect"
@@ -12,7 +11,7 @@ import (
 
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
-	"github.com/projectsyn/lieutenant-operator/pkg/controller/tenant"
+	"github.com/projectsyn/lieutenant-operator/pkg/pipeline"
 	"github.com/projectsyn/lieutenant-operator/pkg/vault"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -30,7 +29,7 @@ import (
 func testSetupClient(objs []runtime.Object) (client.Client, *runtime.Scheme) {
 	s := scheme.Scheme
 	s.AddKnownTypes(synv1alpha1.SchemeGroupVersion, objs...)
-	return fake.NewFakeClient(objs...), s
+	return fake.NewFakeClientWithScheme(s, objs...), s
 }
 
 func TestReconcileCluster_NoCluster(t *testing.T) {
@@ -76,7 +75,7 @@ func TestReconcileCluster_NoTenant(t *testing.T) {
 
 	_, err := r.Reconcile(req)
 	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "find tenant")
+	assert.Contains(t, err.Error(), "no matching secrets found")
 }
 
 func TestReconcileCluster_NoGitRepoTemplate(t *testing.T) {
@@ -99,6 +98,7 @@ func TestReconcileCluster_NoGitRepoTemplate(t *testing.T) {
 	objs := []runtime.Object{
 		tenant,
 		cluster,
+		&synv1alpha1.GitRepo{},
 	}
 
 	cl, s := testSetupClient(objs)
@@ -242,6 +242,10 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 				t.Errorf("Reconcile() got = %v, want %v", got, tt.want)
 			}
 
+			// BootstrapToken is now only populated after the second reconcile.
+			_, err = r.Reconcile(req)
+			assert.NoError(t, err)
+
 			gitRepoNamespacedName := types.NamespacedName{
 				Name:      tt.fields.objName,
 				Namespace: tt.fields.objNamespace,
@@ -258,6 +262,7 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 
 			assert.Equal(t, tt.fields.tenantName, newCluster.Labels[apis.LabelNameTenant])
 
+			assert.NotNil(t, newCluster.Status.BootstrapToken)
 			assert.NotEmpty(t, newCluster.Status.BootstrapToken.Token)
 
 			sa := &corev1.ServiceAccount{}
@@ -267,7 +272,7 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			if tt.skipVault {
 				assert.Empty(t, testMockClient.secrets)
 			} else {
-				saToken, err := r.getServiceAccountToken(newCluster)
+				saToken, err := pipeline.GetServiceAccountToken(newCluster, &pipeline.ExecutionContext{Client: cl})
 				saSecrets := []vault.VaultSecret{{Value: saToken, Path: path.Join(tt.fields.tenantName, tt.fields.objName, "steward")}}
 				assert.NoError(t, err)
 				assert.Equal(t, testMockClient.secrets, saSecrets)
@@ -283,12 +288,6 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			assert.Equal(t, roleBinding.RoleRef.Name, role.Name)
 			assert.Equal(t, roleBinding.Subjects[0].Name, sa.Name)
 
-			testTenant := &synv1alpha1.Tenant{}
-			err = cl.Get(context.TODO(), types.NamespacedName{Name: tt.fields.tenantName, Namespace: tt.fields.objNamespace}, testTenant)
-			assert.NoError(t, err)
-			fileContent, found := testTenant.Spec.GitRepoTemplate.TemplateFiles[tt.fields.objName+".yml"]
-			assert.True(t, found)
-			assert.Equal(t, fileContent, fmt.Sprintf(clusterClassContent, tt.fields.tenantName, tenant.CommonClassName))
 		})
 	}
 }
@@ -305,6 +304,8 @@ func (m *TestMockClient) AddSecrets(secrets []vault.VaultSecret) error {
 func (m *TestMockClient) RemoveSecrets(secrets []vault.VaultSecret) error {
 	return nil
 }
+
+func (m *TestMockClient) SetDeletionPolicy(deletionPolicy synv1alpha1.DeletionPolicy) {}
 
 func TestReconcileCluster_getServiceAccountToken(t *testing.T) {
 	type args struct {
@@ -435,13 +436,9 @@ func TestReconcileCluster_getServiceAccountToken(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			cl, s := testSetupClient(tt.args.objs)
+			cl, _ := testSetupClient(tt.args.objs)
 
-			r := &ReconcileCluster{
-				client: cl,
-				scheme: s,
-			}
-			got, err := r.getServiceAccountToken(tt.args.instance)
+			got, err := pipeline.GetServiceAccountToken(tt.args.instance, &pipeline.ExecutionContext{Client: cl})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ReconcileCluster.getServiceAccountToken() error = %v, wantErr %v", err, tt.wantErr)
 				return

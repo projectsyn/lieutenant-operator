@@ -6,3 +6,5 @@ lieutenant-operator
 cmd/manager/__debug_bin
 
 tempgopath
+
+.cache/
