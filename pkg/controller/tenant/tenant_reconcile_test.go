@@ -6,7 +6,9 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pkg/pipeline"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -127,4 +129,64 @@ func TestCreateGitRepo(t *testing.T) {
 			assert.Equal(t, "", fileContent)
 		})
 	}
+}
+
+func TestCreateClusterClass(t *testing.T) {
+	tenant := &synv1alpha1.Tenant{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "tenant-a",
+		},
+		Spec: synv1alpha1.TenantSpec{
+			DisplayName: "Display Name",
+			GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
+				RepoName: "repo-name",
+			},
+		},
+	}
+	clusterA := &synv1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "cluster-a",
+			Labels: map[string]string{
+				apis.LabelNameTenant: tenant.Name,
+			},
+		},
+		Spec: synv1alpha1.ClusterSpec{},
+	}
+	clusterB := &synv1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "cluster-b",
+			Labels: map[string]string{
+				apis.LabelNameTenant: tenant.Name,
+			},
+		},
+		Spec: synv1alpha1.ClusterSpec{},
+	}
+
+	objs := []runtime.Object{
+		tenant,
+		clusterA,
+		clusterB,
+		&synv1alpha1.GitRepo{},
+		&synv1alpha1.ClusterList{},
+	}
+
+	cl, s := testSetupClient(objs)
+
+	r := &ReconcileTenant{client: cl, scheme: s}
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name: tenant.Name,
+		},
+	}
+
+	_, err := r.Reconcile(req)
+	require.NoError(t, err)
+
+	updatedTenant := &synv1alpha1.Tenant{}
+	err = cl.Get(context.Background(), req.NamespacedName, updatedTenant)
+	require.NoError(t, err)
+
+	assert.Contains(t, updatedTenant.Spec.GitRepoTemplate.TemplateFiles[clusterA.Name+".yml"], tenant.Name)
+	assert.Contains(t, updatedTenant.Spec.GitRepoTemplate.TemplateFiles[clusterB.Name+".yml"], tenant.Name)
 }
