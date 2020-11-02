@@ -10,9 +10,6 @@ import (
 )
 
 const (
-	clusterClassContent = `classes:
-- %s.%s
-`
 	finalizerName = "cluster.lieutenant.syn.tools"
 )
 
