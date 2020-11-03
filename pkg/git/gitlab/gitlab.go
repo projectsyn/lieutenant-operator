@@ -197,6 +197,12 @@ func (g *Gitlab) getProject() error {
 	if err != nil {
 		return err
 	}
+	if project.Archived {
+		project, _, err = g.client.Projects.UnarchiveProject(project.ID)
+		if err != nil {
+			return err
+		}
+	}
 
 	g.project = project
 
