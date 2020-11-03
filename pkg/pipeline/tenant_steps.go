@@ -54,7 +54,7 @@ func updateTenantGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionRe
 
 	for _, cluster := range clusterList.Items {
 		fileName := cluster.GetName() + ".yml"
-		fileContent := fmt.Sprintf(clusterClassContent, cluster.GetName(), CommonClassName)
+		fileContent := fmt.Sprintf(clusterClassContent, tenantCR.Name, CommonClassName)
 		tenantCR.Spec.GitRepoTemplate.TemplateFiles[fileName] = fileContent
 		delete(oldFiles, fileName)
 	}

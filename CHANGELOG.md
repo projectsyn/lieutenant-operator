@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitRepo objects now fetch their information instead of them receiving from other controllers ([#120])
 ### Fixed
 - Lot's of race conditions and smaller bugs ([#120])
+- Tenant `common` class import ([#124])
 
 ## [v0.4.0] - 2020-10-20
 ### Added
@@ -122,3 +123,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#110]: https://github.com/projectsyn/lieutenant-operator/pull/110
 [#116]: https://github.com/projectsyn/lieutenant-operator/pull/116
 [#120]: https://github.com/projectsyn/lieutenant-operator/pull/120
+[#124]: https://github.com/projectsyn/lieutenant-operator/pull/124

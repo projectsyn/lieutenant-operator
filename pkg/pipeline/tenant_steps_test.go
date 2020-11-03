@@ -86,7 +86,7 @@ var updateTenantGitRepoCases = map[string]struct {
 	"fetch git repos": {
 		want: &synv1alpha1.GitRepoTemplate{
 			TemplateFiles: map[string]string{
-				"testCluster.yml": "classes:\n- testCluster.common\n",
+				"testCluster.yml": "classes:\n- testTenant.common\n",
 			},
 		},
 		args: args{
@@ -106,7 +106,7 @@ var updateTenantGitRepoCases = map[string]struct {
 				Spec: synv1alpha1.ClusterSpec{
 					GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
 						TemplateFiles: map[string]string{
-							"testCluster.yml": "classes:\n- testCluster.common\n",
+							"testCluster.yml": "classes:\n- testTenant.common\n",
 						},
 					},
 				},
@@ -116,7 +116,7 @@ var updateTenantGitRepoCases = map[string]struct {
 	"remove files": {
 		want: &synv1alpha1.GitRepoTemplate{
 			TemplateFiles: map[string]string{
-				"testCluster.yml": "classes:\n- testCluster.common\n",
+				"testCluster.yml": "classes:\n- testTenant.common\n",
 				"oldFile.yml":     "{delete}",
 			},
 		},
@@ -144,7 +144,7 @@ var updateTenantGitRepoCases = map[string]struct {
 				Spec: synv1alpha1.ClusterSpec{
 					GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
 						TemplateFiles: map[string]string{
-							"testCluster.yml": "classes:\n- testCluster.common\n",
+							"testCluster.yml": "classes:\n- testTenant.common\n",
 						},
 					},
 				},
