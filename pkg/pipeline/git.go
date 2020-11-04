@@ -161,7 +161,6 @@ func repoExists(repo manager.Repo) bool {
 func handleRepoError(err error, instance *synv1alpha1.GitRepo, repo manager.Repo, client client.Client) error {
 	phase := synv1alpha1.Failed
 	instance.Status.Phase = &phase
-	instance.Status.URL = repo.FullURL().String()
 	if updateErr := client.Status().Update(context.TODO(), instance); updateErr != nil {
 		return fmt.Errorf("could not set status while handling error: %s: %s", updateErr, err)
 	}
