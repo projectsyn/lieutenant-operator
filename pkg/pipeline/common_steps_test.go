@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"context"
 	"os"
 	"testing"
 	"time"
@@ -8,9 +9,11 @@ import (
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
@@ -296,4 +299,36 @@ func Test_updateObject(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_updateObjectStatus(t *testing.T) {
+	ex := &ExecutionContext{}
+	cluster := &synv1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:            "cluster-a",
+			ResourceVersion: "1234",
+		},
+		Spec: synv1alpha1.ClusterSpec{
+			DisplayName: "My Test cluster",
+		},
+	}
+	ex.Client, _ = testSetupClient([]runtime.Object{cluster})
+
+	res := updateObject(&synv1alpha1.Cluster{
+		ObjectMeta: cluster.ObjectMeta,
+		Spec:       cluster.Spec,
+		Status: synv1alpha1.ClusterStatus{
+			BootstrapToken: &synv1alpha1.BootstrapToken{
+				Token: "token-1234",
+			},
+		},
+	}, ex)
+	require.NoError(t, res.Err)
+
+	updatedCluster := &synv1alpha1.Cluster{}
+	err := ex.Client.Get(context.Background(), types.NamespacedName{Name: cluster.Name}, updatedCluster)
+	require.NoError(t, err)
+
+	assert.NotNil(t, updatedCluster.Status.BootstrapToken)
+	assert.Equal(t, "token-1234", updatedCluster.Status.BootstrapToken.Token)
 }
