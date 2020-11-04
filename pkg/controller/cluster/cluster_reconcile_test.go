@@ -14,6 +14,7 @@ import (
 	"github.com/projectsyn/lieutenant-operator/pkg/pipeline"
 	"github.com/projectsyn/lieutenant-operator/pkg/vault"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -448,4 +449,55 @@ func TestReconcileCluster_getServiceAccountToken(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestReconcileCluster_unmanagedGitRepo(t *testing.T) {
+	objs := []runtime.Object{
+		&synv1alpha1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "cluster-a",
+			},
+			Spec: synv1alpha1.ClusterSpec{
+				GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
+					RepoType: synv1alpha1.UnmanagedRepoType,
+				},
+				GitRepoURL: "someURL",
+				TenantRef: corev1.LocalObjectReference{
+					Name: "tenant-a",
+				},
+			},
+		},
+		&synv1alpha1.GitRepo{},
+		&synv1alpha1.Tenant{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "tenant-a",
+			},
+			Spec: synv1alpha1.TenantSpec{
+				GitRepoTemplate: &synv1alpha1.GitRepoTemplate{},
+			},
+		},
+	}
+
+	cl, s := testSetupClient(objs)
+
+	r := &ReconcileCluster{client: cl, scheme: s}
+
+	req := reconcile.Request{
+		NamespacedName: types.NamespacedName{
+			Name: "cluster-a",
+		},
+	}
+	testMockClient := &TestMockClient{}
+	vault.SetCustomClient(testMockClient)
+	os.Setenv("SKIP_VAULT_SETUP", "true")
+
+	_, err := r.Reconcile(req)
+	require.NoError(t, err)
+
+	updatedCluster := &synv1alpha1.Cluster{}
+	err = cl.Get(context.TODO(), types.NamespacedName{Name: "cluster-a"}, updatedCluster)
+	require.NoError(t, err)
+	assert.NotEmpty(t, updatedCluster.Spec.GitRepoURL)
+	assert.Equal(t, "someURL", updatedCluster.Spec.GitRepoURL)
+
 }

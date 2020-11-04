@@ -144,8 +144,9 @@ func setGitRepoURLAndHostKeys(obj PipelineObject, data *ExecutionContext) Execut
 		return ExecutionResult{Abort: true, Err: err}
 	}
 
-	obj.SetGitRepoURLAndHostKeys(gitRepo.Status.URL, gitRepo.Status.HostKeys)
-
+	if gitRepo.Spec.RepoType != synv1alpha1.UnmanagedRepoType {
+		obj.SetGitRepoURLAndHostKeys(gitRepo.Status.URL, gitRepo.Status.HostKeys)
+	}
 	return ExecutionResult{}
 }
 
