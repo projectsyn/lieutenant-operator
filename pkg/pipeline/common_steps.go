@@ -69,7 +69,7 @@ func addTenantLabel(obj PipelineObject, data *ExecutionContext) ExecutionResult 
 
 func updateObject(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 
-	resourceVersion := obj.GetObjectMeta().GetResourceVersion()
+	oldResourceVersion := obj.GetObjectMeta().GetResourceVersion()
 
 	rtObj, ok := obj.(runtime.Object)
 	if !ok {
@@ -79,14 +79,16 @@ func updateObject(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 		}
 	}
 
-	err := data.Client.Update(context.TODO(), rtObj)
+	updatedObj := rtObj.DeepCopyObject()
+	err := data.Client.Update(context.TODO(), updatedObj)
 	if err != nil {
 		return ExecutionResult{Err: err}
 	}
 
+	newResourceVersion := (updatedObj.(PipelineObject)).GetObjectMeta().GetResourceVersion()
 	// Updating the status if either there were changes or the object is deleted will
 	// lead to some race conditions. By checking first we can avoid them.
-	if resourceVersion == obj.GetObjectMeta().GetResourceVersion() && !data.Deleted {
+	if oldResourceVersion == newResourceVersion && !data.Deleted {
 		err = data.Client.Status().Update(context.TODO(), rtObj)
 	}
 	return ExecutionResult{Abort: true, Err: err}
@@ -116,8 +118,6 @@ func handleDeletion(obj PipelineObject, data *ExecutionContext) ExecutionResult 
 	}
 
 	if sliceContainsString(instance.GetFinalizers(), data.FinalizerName) && !protected {
-
-		data.Deleted = true
 		return ExecutionResult{}
 	}
 
