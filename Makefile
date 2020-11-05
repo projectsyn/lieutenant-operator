@@ -64,7 +64,7 @@ clean:
 
 .PHONY: docker
 docker:
-	DOCKER_BUILDKIT=1 docker build -t $(IMAGE_NAME) .
+	DOCKER_BUILDKIT=1 docker build -t $(IMAGE_NAME) --build-arg VERSION="$(VERSION)" .
 	@echo built image $(IMAGE_NAME)
 
 .PHONY: lint

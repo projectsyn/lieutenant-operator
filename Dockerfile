@@ -1,4 +1,5 @@
 FROM docker.io/golang:1.15 as build
+ARG VERSION
 
 WORKDIR /app
 
