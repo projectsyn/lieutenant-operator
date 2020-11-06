@@ -331,4 +331,5 @@ func Test_updateObjectStatus(t *testing.T) {
 
 	assert.NotNil(t, updatedCluster.Status.BootstrapToken)
 	assert.Equal(t, "token-1234", updatedCluster.Status.BootstrapToken.Token)
+	assert.NotEqual(t, updatedCluster.ResourceVersion, cluster.GetResourceVersion())
 }

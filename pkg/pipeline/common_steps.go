@@ -8,6 +8,7 @@ import (
 
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -69,8 +70,6 @@ func addTenantLabel(obj PipelineObject, data *ExecutionContext) ExecutionResult 
 
 func updateObject(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 
-	oldResourceVersion := obj.GetObjectMeta().GetResourceVersion()
-
 	rtObj, ok := obj.(runtime.Object)
 	if !ok {
 		return ExecutionResult{
@@ -79,18 +78,25 @@ func updateObject(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 		}
 	}
 
-	updatedObj := rtObj.DeepCopyObject()
-	err := data.Client.Update(context.TODO(), updatedObj)
+	if !data.Deleted {
+		err := data.Client.Status().Update(context.TODO(), rtObj)
+		if err != nil {
+			abort := false
+			// If the object has been modified we simply return and wait
+			// for the next reconcile.
+			if errors.IsConflict(err) {
+				abort = true
+				err = nil
+			}
+			return ExecutionResult{Abort: abort, Err: err}
+		}
+	}
+
+	err := data.Client.Update(context.TODO(), rtObj)
 	if err != nil {
 		return ExecutionResult{Err: err}
 	}
 
-	newResourceVersion := (updatedObj.(PipelineObject)).GetObjectMeta().GetResourceVersion()
-	// Updating the status if either there were changes or the object is deleted will
-	// lead to some race conditions. By checking first we can avoid them.
-	if oldResourceVersion == newResourceVersion && !data.Deleted {
-		err = data.Client.Status().Update(context.TODO(), rtObj)
-	}
 	return ExecutionResult{Abort: true, Err: err}
 }
 
