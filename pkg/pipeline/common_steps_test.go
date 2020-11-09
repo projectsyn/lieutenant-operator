@@ -271,7 +271,13 @@ func Test_handleFinalizer(t *testing.T) {
 var updateObjectCases = genericCases{
 	"update objects": {
 		args: args{
-			data: &ExecutionContext{},
+			data: &ExecutionContext{
+				originalObject: &synv1alpha1.Tenant{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test",
+					},
+				},
+			},
 			tenant: &synv1alpha1.Tenant{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",
@@ -281,7 +287,13 @@ var updateObjectCases = genericCases{
 	},
 	"update fail": {
 		args: args{
-			data:   &ExecutionContext{},
+			data: &ExecutionContext{
+				originalObject: &synv1alpha1.Tenant{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test",
+					},
+				},
+			},
 			tenant: &synv1alpha1.Tenant{},
 		},
 	},
