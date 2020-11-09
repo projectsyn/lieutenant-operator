@@ -13,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/equality"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
@@ -91,10 +90,11 @@ func updateObject(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 
 	if !equality.Semantic.DeepEqual(data.originalObject.GetStatus(), obj.GetStatus()) {
 
-		origRtObj := data.originalObject.(runtime.Object)
-
-		err := data.Client.Status().Patch(context.TODO(), rtObj, client.MergeFrom(origRtObj))
+		err := data.Client.Status().Update(context.TODO(), rtObj)
 		if err != nil {
+			if k8serrors.IsConflict(err) {
+				return ExecutionResult{Abort: true}
+			}
 			return ExecutionResult{Err: err}
 		}
 	}
