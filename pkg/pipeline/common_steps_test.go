@@ -314,7 +314,14 @@ func Test_updateObject(t *testing.T) {
 }
 
 func Test_updateObjectStatus(t *testing.T) {
-	ex := &ExecutionContext{}
+	ex := &ExecutionContext{
+		originalObject: &synv1alpha1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "cluster-a",
+				ResourceVersion: "1234",
+			},
+		},
+	}
 	cluster := &synv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            "cluster-a",
