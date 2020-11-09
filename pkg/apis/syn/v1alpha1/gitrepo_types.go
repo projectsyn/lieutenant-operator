@@ -155,3 +155,11 @@ func (g *GitRepo) GetDisplayName() string {
 func (g *GitRepo) SetGitRepoURLAndHostKeys(URL, hostKeys string) {
 	//NOOP
 }
+
+func (g *GitRepo) GetSpec() interface{} {
+	return g.Spec
+}
+
+func (g *GitRepo) GetStatus() interface{} {
+	return g.Status
+}

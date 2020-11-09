@@ -12,6 +12,7 @@ type Step struct {
 
 func ReconcileTenant(obj PipelineObject, data *ExecutionContext) error {
 	steps := []Step{
+		{Name: "copy original object", F: deepCopyOriginal},
 		{Name: "tenant specific steps", F: tenantSpecificSteps},
 		{Name: "create git repo", F: createGitRepo},
 		{Name: "set gitrepo url and hostkeys", F: setGitRepoURLAndHostKeys},
@@ -23,6 +24,7 @@ func ReconcileTenant(obj PipelineObject, data *ExecutionContext) error {
 
 func ReconcileCluster(obj PipelineObject, data *ExecutionContext) error {
 	steps := []Step{
+		{Name: "copy original object", F: deepCopyOriginal},
 		{Name: "cluster specific steps", F: clusterSpecificSteps},
 		{Name: "create git repo", F: createGitRepo},
 		{Name: "set gitrepo url and hostkeys", F: setGitRepoURLAndHostKeys},
@@ -35,6 +37,7 @@ func ReconcileCluster(obj PipelineObject, data *ExecutionContext) error {
 
 func ReconcileGitRep(obj PipelineObject, data *ExecutionContext) error {
 	steps := []Step{
+		{Name: "copy original object", F: deepCopyOriginal},
 		{Name: "deletion check", F: checkIfDeleted},
 		{Name: "git repo specific steps", F: gitRepoSpecificSteps},
 		{Name: "add tenant label", F: addTenantLabel},

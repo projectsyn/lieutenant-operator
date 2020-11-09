@@ -91,3 +91,11 @@ func (t *Tenant) GetDisplayName() string {
 func (t *Tenant) SetGitRepoURLAndHostKeys(URL, hostKeys string) {
 	t.Spec.GitRepoURL = URL
 }
+
+func (t *Tenant) GetSpec() interface{} {
+	return t.Spec
+}
+
+func (t *Tenant) GetStatus() interface{} {
+	return t.Status
+}
