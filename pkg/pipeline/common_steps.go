@@ -95,9 +95,6 @@ func updateObject(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 
 		err := data.Client.Status().Patch(context.TODO(), rtObj, client.MergeFrom(origRtObj))
 		if err != nil {
-			if k8serrors.IsConflict(err) {
-				return ExecutionResult{Abort: true}
-			}
 			return ExecutionResult{Err: err}
 		}
 	}
