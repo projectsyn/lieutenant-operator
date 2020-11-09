@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [unrelease]
+## [Unreleased]
 ### Fixed
 - Update loop for newly created GitRepos ([#130])
 
@@ -133,4 +133,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#124]: https://github.com/projectsyn/lieutenant-operator/pull/124
 [#126]: https://github.com/projectsyn/lieutenant-operator/pull/126
 [#127]: https://github.com/projectsyn/lieutenant-operator/pull/127
-[#120]: https://github.com/projectsyn/lieutenant-operator/pull/130
+[#130]: https://github.com/projectsyn/lieutenant-operator/pull/130
