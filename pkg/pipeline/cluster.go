@@ -17,7 +17,5 @@ func clusterSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionR
 		{Name: "apply tenant template", F: applyTenantTemplate},
 	}
 
-	err := RunPipeline(obj, data, steps)
-
-	return ExecutionResult{Err: err}
+	return RunPipeline(obj, data, steps)
 }

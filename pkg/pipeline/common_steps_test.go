@@ -271,7 +271,13 @@ func Test_handleFinalizer(t *testing.T) {
 var updateObjectCases = genericCases{
 	"update objects": {
 		args: args{
-			data: &ExecutionContext{},
+			data: &ExecutionContext{
+				originalObject: &synv1alpha1.Tenant{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test",
+					},
+				},
+			},
 			tenant: &synv1alpha1.Tenant{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",
@@ -281,7 +287,13 @@ var updateObjectCases = genericCases{
 	},
 	"update fail": {
 		args: args{
-			data:   &ExecutionContext{},
+			data: &ExecutionContext{
+				originalObject: &synv1alpha1.Tenant{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "test",
+					},
+				},
+			},
 			tenant: &synv1alpha1.Tenant{},
 		},
 	},
@@ -302,7 +314,14 @@ func Test_updateObject(t *testing.T) {
 }
 
 func Test_updateObjectStatus(t *testing.T) {
-	ex := &ExecutionContext{}
+	ex := &ExecutionContext{
+		originalObject: &synv1alpha1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:            "cluster-a",
+				ResourceVersion: "1234",
+			},
+		},
+	}
 	cluster := &synv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            "cluster-a",
@@ -331,4 +350,5 @@ func Test_updateObjectStatus(t *testing.T) {
 
 	assert.NotNil(t, updatedCluster.Status.BootstrapToken)
 	assert.Equal(t, "token-1234", updatedCluster.Status.BootstrapToken.Token)
+	assert.NotEqual(t, updatedCluster.ResourceVersion, cluster.GetResourceVersion())
 }

@@ -18,19 +18,23 @@ type PipelineObject interface {
 	GetDeletionPolicy() synv1alpha1.DeletionPolicy
 	GetDisplayName() string
 	SetGitRepoURLAndHostKeys(URL, hostKeys string)
+	GetSpec() interface{}
+	GetStatus() interface{}
 }
 
 // ExecutionContext contains additional data about the CRD bein processed.
 type ExecutionContext struct {
-	FinalizerName string
-	Client        client.Client
-	Log           logr.Logger
-	Deleted       bool
+	FinalizerName  string
+	Client         client.Client
+	Log            logr.Logger
+	Deleted        bool
+	originalObject PipelineObject
 }
 
 // ExecutionResult indicates wether the current execution should be aborted and
 // if there was an error.
 type ExecutionResult struct {
-	Abort bool
-	Err   error
+	Abort   bool
+	Err     error
+	Requeue bool
 }

@@ -1,6 +1,8 @@
 package pipeline
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Function defines the general form of a pipeline function.
 type Function func(PipelineObject, *ExecutionContext) ExecutionResult
@@ -10,8 +12,9 @@ type Step struct {
 	F    Function
 }
 
-func ReconcileTenant(obj PipelineObject, data *ExecutionContext) error {
+func ReconcileTenant(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 	steps := []Step{
+		{Name: "copy original object", F: deepCopyOriginal},
 		{Name: "tenant specific steps", F: tenantSpecificSteps},
 		{Name: "create git repo", F: createGitRepo},
 		{Name: "set gitrepo url and hostkeys", F: setGitRepoURLAndHostKeys},
@@ -21,8 +24,9 @@ func ReconcileTenant(obj PipelineObject, data *ExecutionContext) error {
 	return RunPipeline(obj, data, steps)
 }
 
-func ReconcileCluster(obj PipelineObject, data *ExecutionContext) error {
+func ReconcileCluster(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 	steps := []Step{
+		{Name: "copy original object", F: deepCopyOriginal},
 		{Name: "cluster specific steps", F: clusterSpecificSteps},
 		{Name: "create git repo", F: createGitRepo},
 		{Name: "set gitrepo url and hostkeys", F: setGitRepoURLAndHostKeys},
@@ -33,8 +37,9 @@ func ReconcileCluster(obj PipelineObject, data *ExecutionContext) error {
 	return RunPipeline(obj, data, steps)
 }
 
-func ReconcileGitRep(obj PipelineObject, data *ExecutionContext) error {
+func ReconcileGitRep(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 	steps := []Step{
+		{Name: "copy original object", F: deepCopyOriginal},
 		{Name: "deletion check", F: checkIfDeleted},
 		{Name: "git repo specific steps", F: gitRepoSpecificSteps},
 		{Name: "add tenant label", F: addTenantLabel},
@@ -44,15 +49,15 @@ func ReconcileGitRep(obj PipelineObject, data *ExecutionContext) error {
 	return RunPipeline(obj, data, steps)
 }
 
-func RunPipeline(obj PipelineObject, data *ExecutionContext, steps []Step) error {
+func RunPipeline(obj PipelineObject, data *ExecutionContext, steps []Step) ExecutionResult {
 	for _, step := range steps {
 		if r := step.F(obj, data); r.Abort || r.Err != nil {
 			if r.Err == nil {
-				return nil
+				return ExecutionResult{}
 			}
-			return fmt.Errorf("step %s failed: %w", step.Name, r.Err)
+			return ExecutionResult{Err: fmt.Errorf("step %s failed: %w", step.Name, r.Err)}
 		}
 	}
 
-	return nil
+	return ExecutionResult{}
 }

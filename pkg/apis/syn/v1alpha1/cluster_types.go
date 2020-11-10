@@ -107,3 +107,11 @@ func (c *Cluster) SetGitRepoURLAndHostKeys(URL, hostKeys string) {
 	c.Spec.GitRepoURL = URL
 	c.Spec.GitHostKeys = hostKeys
 }
+
+func (c *Cluster) GetSpec() interface{} {
+	return c.Spec
+}
+
+func (c *Cluster) GetStatus() interface{} {
+	return c.Status
+}

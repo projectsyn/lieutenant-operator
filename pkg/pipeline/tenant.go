@@ -13,7 +13,5 @@ func tenantSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionRe
 		{Name: "set global git repo url", F: setGlobalGitRepoURL},
 	}
 
-	err := RunPipeline(obj, data, steps)
-
-	return ExecutionResult{Err: err}
+	return RunPipeline(obj, data, steps)
 }

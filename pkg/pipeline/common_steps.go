@@ -6,8 +6,12 @@ import (
 	"os"
 	"strconv"
 
+	"errors"
+
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
+	"k8s.io/apimachinery/pkg/api/equality"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -69,29 +73,47 @@ func addTenantLabel(obj PipelineObject, data *ExecutionContext) ExecutionResult 
 
 func updateObject(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 
-	oldResourceVersion := obj.GetObjectMeta().GetResourceVersion()
-
 	rtObj, ok := obj.(runtime.Object)
 	if !ok {
-		return ExecutionResult{
-			Abort: true,
-			Err:   fmt.Errorf("object ist not a valid runtime.object: %v", obj.GetObjectMeta().GetName()),
+		return ExecutionResult{Err: errors.New("object is not a runtime object")}
+	}
+
+	if !specAndMetaEqual(obj, data.originalObject) {
+		err := data.Client.Update(context.TODO(), rtObj)
+		if err != nil {
+			if k8serrors.IsConflict(err) {
+				return ExecutionResult{Requeue: true}
+			}
+			return ExecutionResult{Err: err}
 		}
 	}
 
-	updatedObj := rtObj.DeepCopyObject()
-	err := data.Client.Update(context.TODO(), updatedObj)
-	if err != nil {
-		return ExecutionResult{Err: err}
+	if !equality.Semantic.DeepEqual(data.originalObject.GetStatus(), obj.GetStatus()) {
+
+		err := data.Client.Status().Update(context.TODO(), rtObj)
+		if err != nil {
+			if k8serrors.IsConflict(err) {
+				return ExecutionResult{Requeue: true}
+			}
+			return ExecutionResult{Err: err}
+		}
 	}
 
-	newResourceVersion := (updatedObj.(PipelineObject)).GetObjectMeta().GetResourceVersion()
-	// Updating the status if either there were changes or the object is deleted will
-	// lead to some race conditions. By checking first we can avoid them.
-	if oldResourceVersion == newResourceVersion && !data.Deleted {
-		err = data.Client.Status().Update(context.TODO(), rtObj)
+	return ExecutionResult{Abort: true}
+}
+
+func specAndMetaEqual(a, b PipelineObject) bool {
+
+	if !equality.Semantic.DeepEqual(a.GetObjectMeta(), b.GetObjectMeta()) {
+		return false
 	}
-	return ExecutionResult{Abort: true, Err: err}
+
+	if !equality.Semantic.DeepEqual(a.GetSpec(), b.GetSpec()) {
+		return false
+	}
+
+	return true
+
 }
 
 // handleDeletion will handle the finalizers if the object was deleted.
@@ -149,5 +171,18 @@ func handleFinalizer(obj PipelineObject, data *ExecutionContext) ExecutionResult
 	} else {
 		controllerutil.RemoveFinalizer(obj.GetObjectMeta(), data.FinalizerName)
 	}
+	return ExecutionResult{}
+}
+
+func deepCopyOriginal(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+	rtObj, ok := obj.(runtime.Object)
+	if !ok {
+		return ExecutionResult{Err: errors.New("object is not a runtime.Object")}
+	}
+
+	copy := rtObj.DeepCopyObject()
+
+	data.originalObject = copy.(PipelineObject)
+
 	return ExecutionResult{}
 }
