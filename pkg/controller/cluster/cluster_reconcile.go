@@ -37,6 +37,8 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 		FinalizerName: finalizerName,
 	}
 
-	return reconcile.Result{}, pipeline.ReconcileCluster(instance, data)
+	res := pipeline.ReconcileCluster(instance, data)
+
+	return reconcile.Result{Requeue: res.Requeue}, res.Err
 
 }

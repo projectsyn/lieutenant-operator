@@ -32,5 +32,7 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 		FinalizerName: "",
 	}
 
-	return reconcile.Result{}, pipeline.ReconcileTenant(instance, data)
+	res := pipeline.ReconcileTenant(instance, data)
+
+	return reconcile.Result{Requeue: res.Requeue}, res.Err
 }

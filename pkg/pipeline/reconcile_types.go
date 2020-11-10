@@ -34,6 +34,7 @@ type ExecutionContext struct {
 // ExecutionResult indicates wether the current execution should be aborted and
 // if there was an error.
 type ExecutionResult struct {
-	Abort bool
-	Err   error
+	Abort   bool
+	Err     error
+	Requeue bool
 }

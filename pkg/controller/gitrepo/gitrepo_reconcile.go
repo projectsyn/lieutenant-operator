@@ -40,6 +40,8 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 		FinalizerName: finalizerName,
 	}
 
-	return reconcile.Result{}, pipeline.ReconcileGitRep(instance, data)
+	res := pipeline.ReconcileGitRep(instance, data)
+
+	return reconcile.Result{Requeue: res.Requeue}, res.Err
 
 }

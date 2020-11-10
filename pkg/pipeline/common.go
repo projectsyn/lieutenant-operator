@@ -16,7 +16,5 @@ func common(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 		{Name: "update object", F: updateObject},
 	}
 
-	err := RunPipeline(obj, data, steps)
-
-	return ExecutionResult{Err: err}
+	return RunPipeline(obj, data, steps)
 }

@@ -82,7 +82,7 @@ func updateObject(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 		err := data.Client.Update(context.TODO(), rtObj)
 		if err != nil {
 			if k8serrors.IsConflict(err) {
-				return ExecutionResult{Abort: true}
+				return ExecutionResult{Requeue: true}
 			}
 			return ExecutionResult{Err: err}
 		}
@@ -93,7 +93,7 @@ func updateObject(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 		err := data.Client.Status().Update(context.TODO(), rtObj)
 		if err != nil {
 			if k8serrors.IsConflict(err) {
-				return ExecutionResult{Abort: true}
+				return ExecutionResult{Requeue: true}
 			}
 			return ExecutionResult{Err: err}
 		}
