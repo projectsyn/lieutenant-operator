@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Fixed
 - Update loop for newly created GitRepos ([#130])
+- Watch correct gitRepo rsources ([#133])
+- Fix dropped requeue ([#133])
 
 ## [v0.4.1] - 2020-11-05
 ### Changed
@@ -134,3 +136,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#126]: https://github.com/projectsyn/lieutenant-operator/pull/126
 [#127]: https://github.com/projectsyn/lieutenant-operator/pull/127
 [#130]: https://github.com/projectsyn/lieutenant-operator/pull/130
+[#133]: https://github.com/projectsyn/lieutenant-operator/pull/133
