@@ -53,7 +53,7 @@ func RunPipeline(obj PipelineObject, data *ExecutionContext, steps []Step) Execu
 	for _, step := range steps {
 		if r := step.F(obj, data); r.Abort || r.Err != nil {
 			if r.Err == nil {
-				return ExecutionResult{}
+				return ExecutionResult{Requeue: r.Requeue}
 			}
 			return ExecutionResult{Err: fmt.Errorf("step %s failed: %w", step.Name, r.Err)}
 		}
