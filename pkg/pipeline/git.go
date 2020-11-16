@@ -122,12 +122,13 @@ func createGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 
 	err := data.Client.Create(context.TODO(), repo)
 	if err != nil {
-		if !errors.IsAlreadyExists(err) {
+		if errors.IsAlreadyExists(err) {
 			return ExecutionResult{}
 		}
 	}
 
-	return ExecutionResult{}
+	return ExecutionResult{Err: err}
+
 }
 
 func setGitRepoURLAndHostKeys(obj PipelineObject, data *ExecutionContext) ExecutionResult {
