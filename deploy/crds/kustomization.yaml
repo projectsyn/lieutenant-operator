@@ -7,3 +7,4 @@ resources:
   - syn.tools_clusters_crd.yaml
   - syn.tools_gitrepos_crd.yaml
   - syn.tools_tenants_crd.yaml
+  - syn.tools_tenanttemplates_crd.yaml
