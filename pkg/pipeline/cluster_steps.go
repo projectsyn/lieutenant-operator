@@ -126,7 +126,7 @@ func setTenantOwner(obj PipelineObject, data *ExecutionContext) ExecutionResult 
 	return ExecutionResult{}
 }
 
-func applyTenantTemplate(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+func applyClusterTemplateFromTenant(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 	nsName := types.NamespacedName{Name: obj.GetTenantRef().Name, Namespace: obj.GetObjectMeta().GetNamespace()}
 
 	tenant := &synv1alpha1.Tenant{}
