@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -170,4 +171,70 @@ func Test_updateTenantGitRepo(t *testing.T) {
 
 		})
 	}
+}
+
+func Test_applyTemplateFromTenantTemplate(t *testing.T) {
+	t.Run("no template", func(t *testing.T) {
+		data := &ExecutionContext{}
+		data.Client, _ = testSetupClient([]runtime.Object{})
+		tenantIn := &synv1alpha1.Tenant{
+			Spec: synv1alpha1.TenantSpec{
+				DisplayName: "My Tenant",
+			},
+		}
+		tenantOut := tenantIn.DeepCopy()
+
+		result := applyTemplateFromTenantTemplate(tenantIn, data)
+
+		assert.Equal(t, ExecutionResult{}, result)
+		assert.Equal(t, tenantIn, tenantOut)
+	})
+	t.Run("not a tenant", func(t *testing.T) {
+
+		data := &ExecutionContext{}
+		data.Client, _ = testSetupClient([]runtime.Object{
+			&synv1alpha1.TenantTemplate{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "default",
+				},
+			},
+		})
+
+		result := applyTemplateFromTenantTemplate(&synv1alpha1.Cluster{}, data)
+		expected := ExecutionResult{
+			Err: fmt.Errorf("object is not a tenant"),
+		}
+		assert.Equal(t, expected, result)
+	})
+	t.Run("template gets applied", func(t *testing.T) {
+
+		data := &ExecutionContext{}
+		data.Client, _ = testSetupClient([]runtime.Object{
+			&synv1alpha1.TenantTemplate{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "default",
+				},
+				Spec: synv1alpha1.TenantSpec{
+					DeletionPolicy: synv1alpha1.DeletePolicy,
+				},
+			},
+		})
+		tenantIn := &synv1alpha1.Tenant{
+			Spec: synv1alpha1.TenantSpec{
+				DisplayName: "My Tenant",
+			},
+		}
+		tenantOut := &synv1alpha1.Tenant{
+			Spec: synv1alpha1.TenantSpec{
+				DisplayName:    "My Tenant",
+				DeletionPolicy: synv1alpha1.DeletePolicy,
+			},
+		}
+
+		result := applyTemplateFromTenantTemplate(tenantIn, data)
+
+		assert.Equal(t, ExecutionResult{}, result)
+		assert.Equal(t, tenantIn, tenantOut)
+	})
+	// TODO How to test the error path of `Tenant.applyTemplate`?
 }
