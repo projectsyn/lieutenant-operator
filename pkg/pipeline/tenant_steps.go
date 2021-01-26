@@ -9,6 +9,7 @@ import (
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -81,5 +82,27 @@ func setGlobalGitRepoURL(obj PipelineObject, data *ExecutionContext) ExecutionRe
 	if len(instance.Spec.GlobalGitRepoURL) == 0 && len(defaultGlobalGitRepoURL) > 0 {
 		instance.Spec.GlobalGitRepoURL = defaultGlobalGitRepoURL
 	}
+	return ExecutionResult{}
+}
+
+func applyTemplateFromTenantTemplate(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+	key := types.NamespacedName{Name: "default", Namespace: obj.GetObjectMeta().GetNamespace()}
+	template := &synv1alpha1.TenantTemplate{}
+	if err := data.Client.Get(context.TODO(), key, template); err != nil {
+		// The absence of a template is not an error.
+		// It simply means that there is nothing to do.
+		// TODO Consider to log this case. Where to get a logger from?
+		return ExecutionResult{}
+	}
+
+	tenant, ok := obj.(*synv1alpha1.Tenant)
+	if !ok {
+		return ExecutionResult{Err: fmt.Errorf("object is not a tenant")}
+	}
+
+	if err := tenant.ApplyTemplate(template); err != nil {
+		return ExecutionResult{Err: err}
+	}
+
 	return ExecutionResult{}
 }

@@ -99,3 +99,10 @@ func (t *Tenant) GetSpec() interface{} {
 func (t *Tenant) GetStatus() interface{} {
 	return t.Status
 }
+
+// ApplyTemplate recursively merges in the values of the given template.
+// The values of the tenant takes precedence.
+func (t *Tenant) ApplyTemplate(template *TenantTemplate) error {
+	// TODO Implement functionality.
+	return nil
+}
