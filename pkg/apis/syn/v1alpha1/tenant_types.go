@@ -1,6 +1,9 @@
 package v1alpha1
 
 import (
+	"fmt"
+
+	"github.com/imdario/mergo"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -103,6 +106,13 @@ func (t *Tenant) GetStatus() interface{} {
 // ApplyTemplate recursively merges in the values of the given template.
 // The values of the tenant takes precedence.
 func (t *Tenant) ApplyTemplate(template *TenantTemplate) error {
-	// TODO Implement functionality.
+	if template == nil {
+		return nil
+	}
+
+	if err := mergo.Merge(&t.Spec, template.Spec); err != nil {
+		return fmt.Errorf("failed to merge tenant template into tenant: %w", err)
+	}
+
 	return nil
 }
