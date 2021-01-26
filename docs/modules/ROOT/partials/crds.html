@@ -1238,7 +1238,8 @@ TenantStatus
 </h3>
 <p>
 (<em>Appears on:</em>
-<a href="#syn.tools/v1alpha1.Tenant">Tenant</a>)
+<a href="#syn.tools/v1alpha1.Tenant">Tenant</a>, 
+<a href="#syn.tools/v1alpha1.TenantTemplate">TenantTemplate</a>)
 </p>
 <p>
 <p>TenantSpec defines the desired state of Tenant</p>
@@ -1393,6 +1394,190 @@ See <a href="https://syn.tools/lieutenant-operator/explanation/templating.html">
 <p>
 <p>TenantStatus defines the observed state of Tenant</p>
 </p>
+<h3 id="syn.tools/v1alpha1.TenantTemplate">TenantTemplate
+</h3>
+<p>
+<p>TenantTemplate is the Schema for the tenant templates API</p>
+</p>
+<table class="tableblock halign-left valign-top">
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>metadata</code></br>
+<em>
+<a href="https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.13/#objectmeta-v1-meta">
+Kubernetes meta/v1.ObjectMeta
+</a>
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+Refer to the Kubernetes API documentation for the fields of the
+<code>metadata</code> field.
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>spec</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.TenantSpec">
+TenantSpec
+</a>
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<br/>
+<br/>
+<table class="tableblock frame-all grid-all stretch">
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>displayName</code></br>
+<em>
+string
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>DisplayName is the display name of the tenant.</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>gitRepoURL</code></br>
+<em>
+string
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>GitRepoURL git repository storing the tenant configuration. If this is set, no gitRepoTemplate is needed.</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>gitRepoRevision</code></br>
+<em>
+string
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>GitRepoRevision allows to configure the revision of the tenant configuration to use. It can be any git tree-ish reference. Defaults to HEAD if left empty.</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>globalGitRepoURL</code></br>
+<em>
+string
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>GlobalGitRepoURL git repository storing the global configuration.</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>globalGitRepoRevision</code></br>
+<em>
+string
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>GlobalGitRepoRevision allows to configure the revision of the global configuration to use. It can be any git tree-ish reference. Defaults to HEAD if left empty.</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>gitRepoTemplate</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.GitRepoTemplate">
+GitRepoTemplate
+</a>
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>GitRepoTemplate Template for managing the GitRepo object. If not set, no GitRepo object will be created.</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>deletionPolicy</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.DeletionPolicy">
+DeletionPolicy
+</a>
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>DeletionPolicy defines how the external resources should be treated upon CR deletion.
+Retain: will not delete any external resources
+Delete: will delete the external resources
+Archive: will archive the external resources, if it supports that</p>
+<p class="tableblock">
+</td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<code>clusterTemplate</code></br>
+<em>
+<a href="#syn.tools/v1alpha1.ClusterSpec">
+ClusterSpec
+</a>
+</em>
+</p>
+</td>
+<td class="tableblock halign-left valign-top">
+<p class="tableblock">
+<p>ClusterTemplate defines a template which will be used to set defaults for the clusters of this tenant.
+The fields whitin this can use Go templating.
+See <a href="https://syn.tools/lieutenant-operator/explanation/templating.html">the docs</a> for details.</p>
+<p class="tableblock">
+</td>
+</tr>
+</table>
+<p class="tableblock">
+</td>
+</tr>
+</tbody>
+</table>
 <hr/>
 <p><em>
 Generated with <code>gen-crd-api-reference-docs</code>
