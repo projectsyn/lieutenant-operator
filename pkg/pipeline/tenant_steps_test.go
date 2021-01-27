@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 var addDefaultClassFileCases = genericCases{
@@ -175,8 +176,7 @@ func Test_updateTenantGitRepo(t *testing.T) {
 
 func Test_applyTemplateFromTenantTemplate(t *testing.T) {
 	t.Run("no template", func(t *testing.T) {
-		data := &ExecutionContext{}
-		data.Client, _ = testSetupClient([]runtime.Object{})
+		data := newTestExecutionContext([]runtime.Object{})
 		tenantIn := &synv1alpha1.Tenant{
 			Spec: synv1alpha1.TenantSpec{
 				DisplayName: "My Tenant",
@@ -190,9 +190,7 @@ func Test_applyTemplateFromTenantTemplate(t *testing.T) {
 		assert.Equal(t, tenantIn, tenantOut)
 	})
 	t.Run("not a tenant", func(t *testing.T) {
-
-		data := &ExecutionContext{}
-		data.Client, _ = testSetupClient([]runtime.Object{
+		data := newTestExecutionContext([]runtime.Object{
 			&synv1alpha1.TenantTemplate{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "default",
@@ -207,9 +205,7 @@ func Test_applyTemplateFromTenantTemplate(t *testing.T) {
 		assert.Equal(t, expected, result)
 	})
 	t.Run("template gets applied", func(t *testing.T) {
-
-		data := &ExecutionContext{}
-		data.Client, _ = testSetupClient([]runtime.Object{
+		data := newTestExecutionContext([]runtime.Object{
 			&synv1alpha1.TenantTemplate{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "default",
@@ -241,5 +237,12 @@ func Test_applyTemplateFromTenantTemplate(t *testing.T) {
 		assert.Equal(t, ExecutionResult{}, result)
 		assert.Equal(t, tenantIn, tenantOut)
 	})
-	// TODO How to test the error path of `Tenant.applyTemplate`?
+}
+
+func newTestExecutionContext(objects []runtime.Object) *ExecutionContext {
+	client, _ := testSetupClient(objects)
+	return &ExecutionContext{
+		Client: client,
+		Log:    logf.Log,
+	}
 }
