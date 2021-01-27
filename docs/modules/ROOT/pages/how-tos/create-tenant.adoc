@@ -27,6 +27,16 @@ spec:
 
 Please be aware that you first need to have a valid secret containing the endpoint information, see xref:how-tos/gitlab-connection.adoc[Connection to GitLab].
 
+== Tenant Templating
+
+Values common to all new tenants, can be put into a template.
+When a new tenant gets created, the operator looks for a
+`TenantTemplate` object named `default`.
+A `TenantTemplate` has the same spec data structure as a `Tenant`.
+If present, the templates values from the template will be merged into the tenant.
+The values set on the tenant will take precedence.
+In addition, a reference to the template will be added as an annotation.
+The annotation is named `lieutenant.syn.tools/tenant-template`, and the value will be the name of the tenant.
 
 == Cluster Templating
 
