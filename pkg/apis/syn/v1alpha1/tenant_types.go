@@ -114,5 +114,11 @@ func (t *Tenant) ApplyTemplate(template *TenantTemplate) error {
 		return fmt.Errorf("failed to merge tenant template into tenant: %w", err)
 	}
 
+	if t.ObjectMeta.Annotations == nil {
+		t.ObjectMeta.Annotations = map[string]string{}
+	}
+
+	t.ObjectMeta.Annotations["lieutenant.syn.tools/tenant-template"] = template.ObjectMeta.Name
+
 	return nil
 }

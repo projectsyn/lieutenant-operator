@@ -225,6 +225,11 @@ func Test_applyTemplateFromTenantTemplate(t *testing.T) {
 			},
 		}
 		tenantOut := &synv1alpha1.Tenant{
+			ObjectMeta: metav1.ObjectMeta{
+				Annotations: map[string]string{
+					"lieutenant.syn.tools/tenant-template": "default",
+				},
+			},
 			Spec: synv1alpha1.TenantSpec{
 				DisplayName:    "My Tenant",
 				DeletionPolicy: synv1alpha1.DeletePolicy,

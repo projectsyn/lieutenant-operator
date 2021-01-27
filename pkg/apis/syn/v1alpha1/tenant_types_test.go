@@ -5,6 +5,7 @@ import (
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var testTenantTemplateSpec = synv1alpha1.TenantSpec{
@@ -27,15 +28,26 @@ var tenantTemplateCases = map[string]struct {
 }{
 	"template gets applied": {
 		template: &synv1alpha1.TenantTemplate{
+			ObjectMeta: v1.ObjectMeta{
+				Name: "my-template",
+			},
 			Spec: testTenantTemplateSpec,
 		},
 		tenant: &synv1alpha1.Tenant{},
 		expected: &synv1alpha1.Tenant{
+			ObjectMeta: v1.ObjectMeta{
+				Annotations: map[string]string{
+					"lieutenant.syn.tools/tenant-template": "my-template",
+				},
+			},
 			Spec: testTenantTemplateSpec,
 		},
 	},
 	"tenant values take precedence": {
 		template: &synv1alpha1.TenantTemplate{
+			ObjectMeta: v1.ObjectMeta{
+				Name: "my-template",
+			},
 			Spec: synv1alpha1.TenantSpec{
 				DeletionPolicy: synv1alpha1.DeletePolicy,
 			},
@@ -47,6 +59,11 @@ var tenantTemplateCases = map[string]struct {
 			},
 		},
 		expected: &synv1alpha1.Tenant{
+			ObjectMeta: v1.ObjectMeta{
+				Annotations: map[string]string{
+					"lieutenant.syn.tools/tenant-template": "my-template",
+				},
+			},
 			Spec: synv1alpha1.TenantSpec{
 				DisplayName:    "Tenant Name",
 				DeletionPolicy: synv1alpha1.ArchivePolicy,
