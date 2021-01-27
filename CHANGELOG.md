@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Template for templates ([#138])
+- Template for tenants ([#138])
 
 ## [v0.4.2] - 2020-11-11
 ### Fixed
