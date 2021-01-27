@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Template for templates ([#138])
+
 ## [v0.4.2] - 2020-11-11
 ### Fixed
 - Update loop for newly created GitRepos ([#130])
@@ -137,3 +141,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#127]: https://github.com/projectsyn/lieutenant-operator/pull/127
 [#130]: https://github.com/projectsyn/lieutenant-operator/pull/130
 [#133]: https://github.com/projectsyn/lieutenant-operator/pull/133
+[#138]: https://github.com/projectsyn/lieutenant-operator/pull/138
