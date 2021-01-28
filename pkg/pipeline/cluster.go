@@ -14,7 +14,7 @@ func clusterSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionR
 		{Name: "create or update vault", F: createOrUpdateVault},
 		{Name: "delete vault entries", F: handleVaultDeletion},
 		{Name: "set tenant owner", F: setTenantOwner},
-		{Name: "apply tenant template", F: applyTenantTemplate},
+		{Name: "apply cluster template from tenant", F: applyClusterTemplateFromTenant},
 	}
 
 	return RunPipeline(obj, data, steps)

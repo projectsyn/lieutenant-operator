@@ -8,6 +8,7 @@ const (
 
 func tenantSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 	steps := []Step{
+		{Name: "apply template from TenantTemplate", F: applyTemplateFromTenantTemplate},
 		{Name: "add default class file", F: addDefaultClassFile},
 		{Name: "uptade tenant git repo", F: updateTenantGitRepo},
 		{Name: "set global git repo url", F: setGlobalGitRepoURL},

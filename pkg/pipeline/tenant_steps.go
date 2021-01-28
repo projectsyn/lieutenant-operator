@@ -8,7 +8,10 @@ import (
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -81,5 +84,33 @@ func setGlobalGitRepoURL(obj PipelineObject, data *ExecutionContext) ExecutionRe
 	if len(instance.Spec.GlobalGitRepoURL) == 0 && len(defaultGlobalGitRepoURL) > 0 {
 		instance.Spec.GlobalGitRepoURL = defaultGlobalGitRepoURL
 	}
+	return ExecutionResult{}
+}
+
+func applyTemplateFromTenantTemplate(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+	tenant, ok := obj.(*synv1alpha1.Tenant)
+	if !ok {
+		return ExecutionResult{Err: fmt.Errorf("object is not a tenant")}
+	}
+
+	key := types.NamespacedName{Name: "default", Namespace: obj.GetObjectMeta().GetNamespace()}
+	template := &synv1alpha1.TenantTemplate{}
+	if err := data.Client.Get(context.TODO(), key, template); err != nil {
+		if errors.IsNotFound(err) || runtime.IsNotRegisteredError(err) {
+			// The absence of a template is not an error.
+			// It simply means that there is nothing to do.
+			data.Log.Info("No template found to apply to tenant.")
+			return ExecutionResult{}
+		}
+		return ExecutionResult{
+			Err:     err,
+			Requeue: true,
+		}
+	}
+
+	if err := tenant.ApplyTemplate(template); err != nil {
+		return ExecutionResult{Err: err}
+	}
+
 	return ExecutionResult{}
 }

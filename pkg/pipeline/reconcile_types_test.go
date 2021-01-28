@@ -10,6 +10,7 @@ type genericCases map[string]struct {
 type args struct {
 	cluster       *synv1alpha1.Cluster
 	tenant        *synv1alpha1.Tenant
+	template      *synv1alpha1.TenantTemplate
 	data          *ExecutionContext
 	finalizerName string
 }

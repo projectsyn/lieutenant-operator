@@ -205,8 +205,8 @@ func Test_applyTenantTemplate(t *testing.T) {
 		})
 
 		t.Run(name, func(t *testing.T) {
-			if got := applyTenantTemplate(tt.args.cluster, tt.args.data); (got.Err != nil) != tt.wantErr {
-				t.Errorf("applyTenantTemplate() = had error: %v", got.Err)
+			if got := applyClusterTemplateFromTenant(tt.args.cluster, tt.args.data); (got.Err != nil) != tt.wantErr {
+				t.Errorf("applyClusterTemplateFromTenant() = had error: %v", got.Err)
 			}
 
 			if !tt.wantErr {
