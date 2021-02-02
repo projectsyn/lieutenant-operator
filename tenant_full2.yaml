@@ -1,0 +1,17 @@
+apiVersion: syn.tools/v1alpha1
+kind: Tenant
+metadata:
+  name: my-tenant
+  namespace: syn-lieutenant
+spec:
+  clusterTemplate:
+    facts:
+      test: foo {{ index .Spec.Facts "distribution" }}
+    gitRepoTemplate:
+      repoType: unmanaged
+  displayName: My Cluster
+  gitRepoTemplate:
+    repoType: unmanaged
+  gitRepoURL: ssh://git@example.com/my-tenant.git
+  globalGitRepoURL: ssh://git@example.com/my-config.git
+status: {}

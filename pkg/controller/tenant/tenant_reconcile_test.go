@@ -93,6 +93,7 @@ func TestCreateGitRepo(t *testing.T) {
 			objs := []runtime.Object{
 				tenant,
 				&synv1alpha1.GitRepo{},
+				&synv1alpha1.ClusterList{},
 			}
 
 			cl, s := testSetupClient(objs)
