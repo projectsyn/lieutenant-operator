@@ -1,9 +1,0 @@
-apiVersion: syn.tools/v1alpha1
-kind: Tenant
-metadata:
-  name: my-tenant
-  namespace: syn-lieutenant
-spec:
-  displayName: My Cluster
-  gitRepoURL: ssh://git@example.com/my-tenant.git
-  globalGitRepoURL: ssh://git@example.com/my-config.git

@@ -4,7 +4,6 @@ import (
 	"context"
 	"os"
 	"path"
-	"reflect"
 	"strconv"
 	"testing"
 	"time"
@@ -134,48 +133,37 @@ func TestReconcileCluster_NoGitRepoTemplate(t *testing.T) {
 	assert.Nil(t, updatedCluster.Spec.GitRepoTemplate)
 }
 
-var reconcileCluster_ReconcileTests = map[string]struct {
-	want         reconcile.Result
-	wantErr      bool
-	skipVault    bool
-	tenantName   string
-	objName      string
-	objNamespace string
-}{
-	"Check cluster state after creation": {
-		want:         reconcile.Result{},
-		wantErr:      false,
-		tenantName:   "test-tenant",
-		objName:      "test-object",
-		objNamespace: "tenant",
-	},
-	"Check skip Vault": {
-		want:         reconcile.Result{},
-		skipVault:    true,
-		wantErr:      false,
-		tenantName:   "test-tenant",
-		objName:      "test-object",
-		objNamespace: "tenant",
-	},
+var reconcileClusterReconcileTests = map[string]bool{
+	"When Vault setup is skipped, then the reconcile succeeds": true,
+	"When Vault setup is active, then the reconcile succeeds":  false,
 }
 
 func TestReconcileCluster_Reconcile(t *testing.T) {
-	for name, tt := range reconcileCluster_ReconcileTests {
+	for name, skipVault := range reconcileClusterReconcileTests {
 		t.Run(name, func(t *testing.T) {
-
+			tenant := &synv1alpha1.Tenant{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "my-tenant",
+					Namespace: "my-namespace",
+				},
+				Spec: synv1alpha1.TenantSpec{
+					DisplayName:     "My Tenant",
+					GitRepoTemplate: &synv1alpha1.GitRepoTemplate{},
+				},
+			}
 			cluster := &synv1alpha1.Cluster{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:      tt.objName,
-					Namespace: tt.objNamespace,
+					Name:      "my-cluster",
+					Namespace: "my-namespace",
 				},
 				Spec: synv1alpha1.ClusterSpec{
-					DisplayName: "desc",
+					DisplayName: "My Cluster",
 					GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
 						RepoName: "test",
 						Path:     "test",
 					},
 					TenantRef: corev1.LocalObjectReference{
-						Name: tt.tenantName,
+						Name: tenant.Name,
 					},
 				},
 			}
@@ -183,41 +171,34 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			objs := map[schema.GroupVersion][]runtime.Object{
 				synv1alpha1.SchemeGroupVersion: {
 					cluster,
+					tenant,
 					&synv1alpha1.GitRepo{},
-					&synv1alpha1.Tenant{
-						ObjectMeta: metav1.ObjectMeta{
-							Name:      tt.tenantName,
-							Namespace: tt.objNamespace,
-						},
-						Spec: synv1alpha1.TenantSpec{
-							DisplayName:     tt.tenantName,
-							GitRepoTemplate: &synv1alpha1.GitRepoTemplate{},
-						},
-					},
+				},
+				corev1.SchemeGroupVersion: {
 					&corev1.Secret{
 						ObjectMeta: metav1.ObjectMeta{
-							Name: "somesecret",
+							Name: "some-secret1",
 							Annotations: map[string]string{
-								corev1.ServiceAccountNameKey: tt.objName,
+								corev1.ServiceAccountNameKey: cluster.Name,
 							},
 							CreationTimestamp: metav1.Time{Time: time.Now().Add(15 * time.Second)},
 						},
 						Type: corev1.SecretTypeServiceAccountToken,
 						Data: map[string][]byte{
-							"token": []byte("mysecret"),
+							"token": []byte("my-secret"),
 						},
 					},
 					&corev1.Secret{
 						ObjectMeta: metav1.ObjectMeta{
-							Name: "somesecret1",
+							Name: "some-secret2",
 							Annotations: map[string]string{
-								corev1.ServiceAccountNameKey: tt.objName,
+								corev1.ServiceAccountNameKey: cluster.Name,
 							},
 							CreationTimestamp: metav1.Time{Time: time.Now()},
 						},
 						Type: corev1.SecretTypeServiceAccountToken,
 						Data: map[string][]byte{
-							"token": []byte("mysecret1"),
+							"token": []byte("my-secret"),
 						},
 					},
 				},
@@ -228,33 +209,21 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			testMockClient := &TestMockClient{}
 			vault.SetCustomClient(testMockClient)
 
-			os.Setenv("SKIP_VAULT_SETUP", strconv.FormatBool(tt.skipVault))
+			os.Setenv("SKIP_VAULT_SETUP", strconv.FormatBool(skipVault))
 
 			name := types.NamespacedName{
-				Name:      tt.objName,
-				Namespace: tt.objNamespace,
+				Name:      cluster.Name,
+				Namespace: cluster.Namespace,
 			}
-			got, err := reconcileCluster(cl, s, name)
-
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Reconcile() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Reconcile() got = %v, want %v", got, tt.want)
-			}
+			_, err := reconcileCluster(cl, s, name)
+			assert.NoError(t, err)
 
 			// BootstrapToken is now only populated after the second reconcile.
 			_, err = reconcileCluster(cl, s, name)
 			assert.NoError(t, err)
 
-			gitRepoNamespacedName := types.NamespacedName{
-				Name:      tt.objName,
-				Namespace: tt.objNamespace,
-			}
-
 			gitRepo := &synv1alpha1.GitRepo{}
-			err = cl.Get(context.TODO(), gitRepoNamespacedName, gitRepo)
+			err = cl.Get(context.TODO(), name, gitRepo)
 			assert.NoError(t, err)
 			assert.Equal(t, cluster.Spec.DisplayName, gitRepo.Spec.GitRepoTemplate.DisplayName)
 
@@ -262,7 +231,7 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			err = cl.Get(context.TODO(), name, newCluster)
 			assert.NoError(t, err)
 
-			assert.Equal(t, tt.tenantName, newCluster.Labels[apis.LabelNameTenant])
+			assert.Equal(t, tenant.Name, newCluster.Labels[apis.LabelNameTenant])
 
 			assert.NotNil(t, newCluster.Status.BootstrapToken)
 			assert.NotEmpty(t, newCluster.Status.BootstrapToken.Token)
@@ -271,25 +240,24 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			err = cl.Get(context.TODO(), name, sa)
 			assert.NoError(t, err)
 
-			if tt.skipVault {
+			if skipVault {
 				assert.Empty(t, testMockClient.secrets)
 			} else {
 				saToken, err := pipeline.GetServiceAccountToken(newCluster, &pipeline.ExecutionContext{Client: cl})
-				saSecrets := []vault.VaultSecret{{Value: saToken, Path: path.Join(tt.tenantName, tt.objName, "steward")}}
+				saSecrets := []vault.VaultSecret{{Value: saToken, Path: path.Join(tenant.Name, cluster.Name, "steward")}}
 				assert.NoError(t, err)
 				assert.Equal(t, testMockClient.secrets, saSecrets)
 			}
 			role := &rbacv1.Role{}
-			err = cl.Get(context.TODO(), name, role)
-			assert.NoError(t, err)
+			readObject(t, cl, name, role)
+			require.Len(t, role.Rules, 1)
 			assert.Contains(t, role.Rules[0].ResourceNames, name.Name)
 
 			roleBinding := &rbacv1.RoleBinding{}
-			err = cl.Get(context.TODO(), name, roleBinding)
-			assert.NoError(t, err)
+			readObject(t, cl, name, roleBinding)
 			assert.Equal(t, roleBinding.RoleRef.Name, role.Name)
+			require.Len(t, roleBinding.Subjects, 1)
 			assert.Equal(t, roleBinding.Subjects[0].Name, sa.Name)
-
 		})
 	}
 }
