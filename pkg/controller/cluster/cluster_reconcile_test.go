@@ -37,7 +37,7 @@ func testSetupClient(objs map[schema.GroupVersion][]runtime.Object) (client.Clie
 	return fake.NewFakeClientWithScheme(s, initObjs...), s
 }
 
-func readObject(t *testing.T, c client.Client, ns types.NamespacedName, obj runtime.Object) {
+func fetchObject(t *testing.T, c client.Client, ns types.NamespacedName, obj runtime.Object) {
 	err := c.Get(context.Background(), ns, obj)
 	require.NoError(t, err)
 }
@@ -249,12 +249,12 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 				assert.Equal(t, testMockClient.secrets, saSecrets)
 			}
 			role := &rbacv1.Role{}
-			readObject(t, cl, name, role)
+			fetchObject(t, cl, name, role)
 			require.Len(t, role.Rules, 1)
 			assert.Contains(t, role.Rules[0].ResourceNames, name.Name)
 
 			roleBinding := &rbacv1.RoleBinding{}
-			readObject(t, cl, name, roleBinding)
+			fetchObject(t, cl, name, roleBinding)
 			assert.Equal(t, roleBinding.RoleRef.Name, role.Name)
 			require.Len(t, roleBinding.Subjects, 1)
 			assert.Equal(t, roleBinding.Subjects[0].Name, sa.Name)

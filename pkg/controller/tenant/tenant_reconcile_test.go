@@ -24,7 +24,7 @@ func testSetupClient(objs []runtime.Object) (client.Client, *runtime.Scheme) {
 	return fake.NewFakeClientWithScheme(s, objs...), s
 }
 
-func readObject(t *testing.T, c client.Client, ns types.NamespacedName, obj runtime.Object) {
+func fetchObject(t *testing.T, c client.Client, ns types.NamespacedName, obj runtime.Object) {
 	err := c.Get(context.Background(), ns, obj)
 	require.NoError(t, err)
 }
@@ -69,7 +69,7 @@ func TestHandleNilGitRepoTemplate(t *testing.T) {
 	_, err := r.Reconcile(req)
 	assert.NoError(t, err)
 	updatedTenant := &synv1alpha1.Tenant{}
-	readObject(t, cl, req.NamespacedName, updatedTenant)
+	fetchObject(t, cl, req.NamespacedName, updatedTenant)
 	assert.Contains(t, updatedTenant.Spec.GitRepoTemplate.TemplateFiles, "common.yml")
 }
 
@@ -103,7 +103,7 @@ func TestCreateGitRepo(t *testing.T) {
 	reconcileTenant(t, cl, s, name)
 
 	gitRepo := &synv1alpha1.GitRepo{}
-	readObject(t, cl, name, gitRepo)
+	fetchObject(t, cl, name, gitRepo)
 
 	assert.Equal(t, tenant.Spec.DisplayName, gitRepo.Spec.GitRepoTemplate.DisplayName)
 	fileContent, found := gitRepo.Spec.GitRepoTemplate.TemplateFiles[pipeline.CommonClassName+".yml"]
@@ -159,7 +159,7 @@ func TestCreateClusterClass(t *testing.T) {
 	reconcileTenant(t, cl, s, name)
 
 	updatedTenant := &synv1alpha1.Tenant{}
-	readObject(t, cl, name, updatedTenant)
+	fetchObject(t, cl, name, updatedTenant)
 
 	assert.Contains(t, updatedTenant.Spec.GitRepoTemplate.TemplateFiles[clusterA.Name+".yml"], tenant.Name)
 	assert.Contains(t, updatedTenant.Spec.GitRepoTemplate.TemplateFiles[clusterB.Name+".yml"], tenant.Name)
