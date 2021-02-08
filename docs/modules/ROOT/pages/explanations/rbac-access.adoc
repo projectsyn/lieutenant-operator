@@ -1,0 +1,26 @@
+= RBAC Access for Tenants
+
+When creating a new `Tenant`, Lieutenant will automatically create a `ServiceAccount`, `Role` and `RoleBinding`.
+This allows use cases where tenant users can view their resources.
+
+A role might look like this:
+[source,yaml]
+----
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: t-tenant-001
+rules:
+- apiGroups:
+  - syn.tools
+  resources:
+  - clusters
+  - tenants
+  verbs:
+  - get
+  resourceNames:
+  - t-tenant-001
+  - c-cluster-001
+----
+
+Through the mechanics of `OwnerReferences`, these RBAC resources get automatically cleaned up when a `Tenant` gets deleted.
