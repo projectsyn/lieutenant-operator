@@ -1,0 +1,38 @@
+= Multi tenant access to `Tenants` and `Clusters`
+
+At its core, Lieutenant is a multi tenant system.
+This doesn't only apply to its data model but also the access control that data.
+
+For that reason, Lieutenant creates a set of `Role`, `ServiceAccount` and `RoleBinding` for each `Tenant`.
+
+That role grants read access to all `Clusters` owned by that `Tenant` and the `Tenant` itself.
+
+.Example Role for tenant `t-tenant-001`
+[source,yaml]
+----
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: t-tenant-001
+rules:
+- apiGroups:
+  - syn.tools
+  resources:
+  - clusters
+  - tenants
+  verbs:
+  - get
+  resourceNames:
+  - t-tenant-001
+  - c-cluster-001
+----
+
+The `Role` gets updated whenever a new cluster gets created or deleted.
+
+The `ServiceAccount` is meant to be used for automation/system integration purposes.
+
+The `RoleBinding` links the `Role` the `ServiceAccount`, users and other subjects.
+
+Once created, Lieutenant does no longer touch the `RoleBinding`.
+This grants the freedom to add and or remove subjects as needed.
+Lieutenant won't get in the way.
