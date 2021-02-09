@@ -3,6 +3,7 @@ package tenant
 import (
 	"context"
 
+	"github.com/projectsyn/lieutenant-operator/pkg/controller/gitrepo"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
@@ -26,13 +27,31 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 		return reconcile.Result{}, err
 	}
 
-	data := &pipeline.ExecutionContext{
+	data := &pipeline.Context{
 		Client:        r.client,
 		Log:           reqLogger,
 		FinalizerName: "",
 	}
 
-	res := pipeline.ReconcileTenant(instance, data)
+	steps := []pipeline.Step{
+		{Name: "copy original object", F: pipeline.DeepCopyOriginal},
+		{Name: "tenant specific steps", F: tenantSpecificSteps},
+		{Name: "create git repo", F: gitrepo.CreateGitRepo},
+		{Name: "set gitrepo url and hostkeys", F: gitrepo.SetGitRepoURLAndHostKeys},
+		{Name: "common", F: pipeline.Common},
+	}
+	res := pipeline.RunPipeline(instance, data, steps)
 
 	return reconcile.Result{Requeue: res.Requeue}, res.Err
+}
+
+func tenantSpecificSteps(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
+	steps := []pipeline.Step{
+		{Name: "apply template from TenantTemplate", F: applyTemplateFromTenantTemplate},
+		{Name: "add default class file", F: addDefaultClassFile},
+		{Name: "uptade tenant git repo", F: updateTenantGitRepo},
+		{Name: "set global git repo url", F: setGlobalGitRepoURL},
+	}
+
+	return pipeline.RunPipeline(obj, data, steps)
 }

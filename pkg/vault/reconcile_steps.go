@@ -1,4 +1,4 @@
-package pipeline
+package vault
 
 import (
 	"context"
@@ -9,47 +9,47 @@ import (
 	"strings"
 
 	"github.com/projectsyn/lieutenant-operator/pkg/collection"
-	"github.com/projectsyn/lieutenant-operator/pkg/vault"
+	"github.com/projectsyn/lieutenant-operator/pkg/pipeline"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func getVaultClient(obj PipelineObject, data *ExecutionContext) (vault.VaultClient, error) {
+func getVaultClient(obj pipeline.Object, data *pipeline.Context) (VaultClient, error) {
 	deletionPolicy := obj.GetDeletionPolicy()
 	if deletionPolicy == "" {
-		deletionPolicy = getDefaultDeletionPolicy()
+		deletionPolicy = pipeline.GetDefaultDeletionPolicy()
 	}
 
-	return vault.NewClient(deletionPolicy, data.Log)
+	return NewClient(deletionPolicy, data.Log)
 }
 
-func createOrUpdateVault(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+func CreateOrUpdateVault(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	if strings.ToLower(os.Getenv("SKIP_VAULT_SETUP")) == "true" {
-		return ExecutionResult{}
+		return pipeline.Result{}
 	}
 
 	secretPath := path.Join(obj.GetTenantRef().Name, obj.GetObjectMeta().GetName(), "steward")
 
 	token, err := GetServiceAccountToken(obj.GetObjectMeta(), data)
 	if err != nil {
-		return ExecutionResult{Err: err}
+		return pipeline.Result{Err: err}
 	}
 
 	vaultClient, err := getVaultClient(obj, data)
 	if err != nil {
-		return ExecutionResult{Err: err}
+		return pipeline.Result{Err: err}
 	}
 
-	err = vaultClient.AddSecrets([]vault.VaultSecret{{Path: secretPath, Value: token}})
+	err = vaultClient.AddSecrets([]VaultSecret{{Path: secretPath, Value: token}})
 	if err != nil {
-		return ExecutionResult{Err: err}
+		return pipeline.Result{Err: err}
 	}
 
-	return ExecutionResult{}
+	return pipeline.Result{}
 }
 
-func GetServiceAccountToken(instance metav1.Object, data *ExecutionContext) (string, error) {
+func GetServiceAccountToken(instance metav1.Object, data *pipeline.Context) (string, error) {
 	secrets := &corev1.SecretList{}
 
 	err := data.Client.List(context.TODO(), secrets)
@@ -79,9 +79,9 @@ func GetServiceAccountToken(instance metav1.Object, data *ExecutionContext) (str
 	return "", fmt.Errorf("no matching secrets found")
 }
 
-func handleVaultDeletion(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+func HandleVaultDeletion(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	if strings.ToLower(os.Getenv("SKIP_VAULT_SETUP")) == "true" {
-		return ExecutionResult{}
+		return pipeline.Result{}
 	}
 
 	repoName := types.NamespacedName{
@@ -94,12 +94,12 @@ func handleVaultDeletion(obj PipelineObject, data *ExecutionContext) ExecutionRe
 	if data.Deleted {
 		vaultClient, err := getVaultClient(obj, data)
 		if err != nil {
-			return ExecutionResult{Err: err}
+			return pipeline.Result{Err: err}
 		}
-		err = vaultClient.RemoveSecrets([]vault.VaultSecret{{Path: path.Dir(secretPath), Value: ""}})
+		err = vaultClient.RemoveSecrets([]VaultSecret{{Path: path.Dir(secretPath), Value: ""}})
 		if err != nil {
-			return ExecutionResult{Err: err}
+			return pipeline.Result{Err: err}
 		}
 	}
-	return ExecutionResult{}
+	return pipeline.Result{}
 }

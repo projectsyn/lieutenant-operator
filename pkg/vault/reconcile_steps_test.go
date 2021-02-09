@@ -1,13 +1,15 @@
-package pipeline
+package vault
 
 import (
 	"os"
 	"testing"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
-	"github.com/projectsyn/lieutenant-operator/pkg/vault"
+	"github.com/projectsyn/lieutenant-operator/pkg/pipeline"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 )
 
@@ -15,12 +17,20 @@ type testMockClient struct {
 	deletionPolicy synv1alpha1.DeletionPolicy
 }
 
-func (m *testMockClient) AddSecrets(secrets []vault.VaultSecret) error { return nil }
+func (m *testMockClient) AddSecrets(secrets []VaultSecret) error { return nil }
 
-func (m *testMockClient) RemoveSecrets(secrets []vault.VaultSecret) error { return nil }
+func (m *testMockClient) RemoveSecrets(secrets []VaultSecret) error { return nil }
 
 func (m *testMockClient) SetDeletionPolicy(deletionPolicy synv1alpha1.DeletionPolicy) {
 	m.deletionPolicy = deletionPolicy
+}
+
+type args struct {
+	cluster       *synv1alpha1.Cluster
+	tenant        *synv1alpha1.Tenant
+	template      *synv1alpha1.TenantTemplate
+	data          *pipeline.Context
+	finalizerName string
 }
 
 var getVaultCases = map[string]struct {
@@ -28,10 +38,10 @@ var getVaultCases = map[string]struct {
 	args args
 }{
 	"without specific deletion policy": {
-		want: getDefaultDeletionPolicy(),
+		want: pipeline.GetDefaultDeletionPolicy(),
 		args: args{
 			cluster: &synv1alpha1.Cluster{},
-			data: &ExecutionContext{
+			data: &pipeline.Context{
 				Log: zap.New(),
 			},
 		},
@@ -44,7 +54,7 @@ var getVaultCases = map[string]struct {
 					DeletionPolicy: synv1alpha1.DeletePolicy,
 				},
 			},
-			data: &ExecutionContext{
+			data: &pipeline.Context{
 				Log: zap.New(),
 			},
 		},
@@ -57,7 +67,7 @@ func Test_getVaultClient(t *testing.T) {
 
 	mockClient := &testMockClient{}
 
-	vault.SetCustomClient(mockClient)
+	SetCustomClient(mockClient)
 
 	for name, tt := range getVaultCases {
 
@@ -83,7 +93,7 @@ var handleVaultDeletionCases = map[string]struct {
 					DeletionPolicy: synv1alpha1.ArchivePolicy,
 				},
 			},
-			data: &ExecutionContext{
+			data: &pipeline.Context{
 				Deleted: true,
 			},
 		},
@@ -96,7 +106,7 @@ var handleVaultDeletionCases = map[string]struct {
 					DeletionPolicy: synv1alpha1.DeletePolicy,
 				},
 			},
-			data: &ExecutionContext{
+			data: &pipeline.Context{
 				Deleted: true,
 			},
 		},
@@ -108,19 +118,23 @@ func Test_handleVaultDeletion(t *testing.T) {
 	os.Unsetenv("DEFAULT_DELETION_POLICY")
 
 	mockClient := &testMockClient{
-		deletionPolicy: getDefaultDeletionPolicy(),
+		deletionPolicy: pipeline.GetDefaultDeletionPolicy(),
 	}
 
-	vault.SetCustomClient(mockClient)
+	SetCustomClient(mockClient)
 
 	for name, tt := range handleVaultDeletionCases {
 		t.Run(name, func(t *testing.T) {
 
-			tt.args.data.Client, _ = testSetupClient([]runtime.Object{
+			s := scheme.Scheme
+			objs := []runtime.Object{
 				tt.args.cluster,
-			})
+			}
 
-			got := handleVaultDeletion(tt.args.cluster, tt.args.data)
+			s.AddKnownTypes(synv1alpha1.SchemeGroupVersion, objs...)
+			tt.args.data.Client = fake.NewFakeClientWithScheme(s, objs...)
+
+			got := HandleVaultDeletion(tt.args.cluster, tt.args.data)
 			assert.NoError(t, got.Err)
 			assert.Equal(t, tt.want, mockClient.deletionPolicy)
 		})

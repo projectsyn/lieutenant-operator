@@ -6,7 +6,6 @@ import (
 
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
-	"github.com/projectsyn/lieutenant-operator/pkg/pipeline"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -106,7 +105,7 @@ func TestCreateGitRepo(t *testing.T) {
 	fetchObject(t, cl, name, gitRepo)
 
 	assert.Equal(t, tenant.Spec.DisplayName, gitRepo.Spec.GitRepoTemplate.DisplayName)
-	fileContent, found := gitRepo.Spec.GitRepoTemplate.TemplateFiles[pipeline.CommonClassName+".yml"]
+	fileContent, found := gitRepo.Spec.GitRepoTemplate.TemplateFiles[CommonClassName+".yml"]
 	assert.True(t, found)
 	assert.Equal(t, "", fileContent)
 }

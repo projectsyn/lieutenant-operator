@@ -1,4 +1,4 @@
-package pipeline
+package tenant
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
+	"github.com/projectsyn/lieutenant-operator/pkg/pipeline"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,7 +16,16 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func addDefaultClassFile(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+const (
+	// CommonClassName is the name of the tenant's common class
+	CommonClassName         = "common"
+	DefaultGlobalGitRepoURL = "DEFAULT_GLOBAL_GIT_REPO_URL"
+	ClusterClassContent     = `classes:
+- %s.%s
+`
+)
+
+func addDefaultClassFile(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	commonClassFile := CommonClassName + ".yml"
 	if obj.GetGitTemplate().TemplateFiles == nil {
 		obj.GetGitTemplate().TemplateFiles = map[string]string{}
@@ -23,13 +33,13 @@ func addDefaultClassFile(obj PipelineObject, data *ExecutionContext) ExecutionRe
 	if _, ok := obj.GetGitTemplate().TemplateFiles[commonClassFile]; !ok {
 		obj.GetGitTemplate().TemplateFiles[commonClassFile] = ""
 	}
-	return ExecutionResult{}
+	return pipeline.Result{}
 }
 
-func updateTenantGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+func updateTenantGitRepo(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	tenantCR, ok := obj.(*synv1alpha1.Tenant)
 	if !ok {
-		return ExecutionResult{Err: fmt.Errorf("object is not a tenant")}
+		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
 	}
 
 	var oldFiles map[string]string
@@ -52,12 +62,12 @@ func updateTenantGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionRe
 
 	err := data.Client.List(context.TODO(), clusterList, listOptions)
 	if err != nil {
-		return ExecutionResult{Err: err}
+		return pipeline.Result{Err: err}
 	}
 
 	for _, cluster := range clusterList.Items {
 		fileName := cluster.GetName() + ".yml"
-		fileContent := fmt.Sprintf(clusterClassContent, tenantCR.Name, CommonClassName)
+		fileContent := fmt.Sprintf(ClusterClassContent, tenantCR.Name, CommonClassName)
 		tenantCR.Spec.GitRepoTemplate.TemplateFiles[fileName] = fileContent
 		delete(oldFiles, fileName)
 	}
@@ -71,26 +81,26 @@ func updateTenantGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionRe
 		}
 	}
 
-	return ExecutionResult{}
+	return pipeline.Result{}
 }
 
-func setGlobalGitRepoURL(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+func setGlobalGitRepoURL(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	instance, ok := obj.(*synv1alpha1.Tenant)
 	if !ok {
-		return ExecutionResult{Err: fmt.Errorf("object is not a tenant")}
+		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
 	}
 
 	defaultGlobalGitRepoURL := os.Getenv(DefaultGlobalGitRepoURL)
 	if len(instance.Spec.GlobalGitRepoURL) == 0 && len(defaultGlobalGitRepoURL) > 0 {
 		instance.Spec.GlobalGitRepoURL = defaultGlobalGitRepoURL
 	}
-	return ExecutionResult{}
+	return pipeline.Result{}
 }
 
-func applyTemplateFromTenantTemplate(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+func applyTemplateFromTenantTemplate(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	tenant, ok := obj.(*synv1alpha1.Tenant)
 	if !ok {
-		return ExecutionResult{Err: fmt.Errorf("object is not a tenant")}
+		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
 	}
 
 	key := types.NamespacedName{Name: "default", Namespace: obj.GetObjectMeta().GetNamespace()}
@@ -100,17 +110,17 @@ func applyTemplateFromTenantTemplate(obj PipelineObject, data *ExecutionContext)
 			// The absence of a template is not an error.
 			// It simply means that there is nothing to do.
 			data.Log.Info("No template found to apply to tenant.")
-			return ExecutionResult{}
+			return pipeline.Result{}
 		}
-		return ExecutionResult{
+		return pipeline.Result{
 			Err:     err,
 			Requeue: true,
 		}
 	}
 
 	if err := tenant.ApplyTemplate(template); err != nil {
-		return ExecutionResult{Err: err}
+		return pipeline.Result{Err: err}
 	}
 
-	return ExecutionResult{}
+	return pipeline.Result{}
 }

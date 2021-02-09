@@ -243,7 +243,7 @@ func TestReconcileCluster_Reconcile(t *testing.T) {
 			if skipVault {
 				assert.Empty(t, testMockClient.secrets)
 			} else {
-				saToken, err := pipeline.GetServiceAccountToken(newCluster, &pipeline.ExecutionContext{Client: cl})
+				saToken, err := vault.GetServiceAccountToken(newCluster, &pipeline.Context{Client: cl})
 				saSecrets := []vault.VaultSecret{{Value: saToken, Path: path.Join(tenant.Name, cluster.Name, "steward")}}
 				assert.NoError(t, err)
 				assert.Equal(t, testMockClient.secrets, saSecrets)
@@ -410,7 +410,7 @@ func TestReconcileCluster_getServiceAccountToken(t *testing.T) {
 				synv1alpha1.SchemeGroupVersion: tt.args.objs,
 			})
 
-			got, err := pipeline.GetServiceAccountToken(tt.args.instance, &pipeline.ExecutionContext{Client: cl})
+			got, err := vault.GetServiceAccountToken(tt.args.instance, &pipeline.Context{Client: cl})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ReconcileCluster.getServiceAccountToken() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -1,4 +1,4 @@
-package pipeline
+package tenant
 
 import (
 	"fmt"
@@ -7,17 +7,31 @@ import (
 
 	"github.com/projectsyn/lieutenant-operator/pkg/apis"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
+	"github.com/projectsyn/lieutenant-operator/pkg/pipeline"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-var addDefaultClassFileCases = genericCases{
+type StepTestCases map[string]struct {
+	args    StepTestArgs
+	wantErr bool
+}
+
+type StepTestArgs struct {
+	cluster       *synv1alpha1.Cluster
+	tenant        *synv1alpha1.Tenant
+	template      *synv1alpha1.TenantTemplate
+	data          *pipeline.Context
+	finalizerName string
+}
+
+var addDefaultClassFileCases = StepTestCases{
 	"add default class": {
-		args: args{
+		args: StepTestArgs{
 			tenant: &synv1alpha1.Tenant{},
-			data:   &ExecutionContext{},
+			data:   &pipeline.Context{},
 		},
 	},
 }
@@ -39,7 +53,7 @@ func Test_addDefaultClassFile(t *testing.T) {
 type setGlobalGitRepoURLArgs struct {
 	tenant      *synv1alpha1.Tenant
 	defaultRepo string
-	data        *ExecutionContext
+	data        *pipeline.Context
 }
 
 var setGlobalGitRepoURLCases = map[string]struct {
@@ -83,7 +97,7 @@ func Test_setGlobalGitRepoURL(t *testing.T) {
 
 var updateTenantGitRepoCases = map[string]struct {
 	want *synv1alpha1.GitRepoTemplate
-	args args
+	args StepTestArgs
 }{
 	"fetch git repos": {
 		want: &synv1alpha1.GitRepoTemplate{
@@ -91,8 +105,8 @@ var updateTenantGitRepoCases = map[string]struct {
 				"testCluster.yml": "classes:\n- testTenant.common\n",
 			},
 		},
-		args: args{
-			data: &ExecutionContext{},
+		args: StepTestArgs{
+			data: &pipeline.Context{},
 			tenant: &synv1alpha1.Tenant{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "testTenant",
@@ -122,8 +136,8 @@ var updateTenantGitRepoCases = map[string]struct {
 				"oldFile.yml":     "{delete}",
 			},
 		},
-		args: args{
-			data: &ExecutionContext{},
+		args: StepTestArgs{
+			data: &pipeline.Context{},
 			tenant: &synv1alpha1.Tenant{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "testTenant",
@@ -186,7 +200,7 @@ func Test_applyTemplateFromTenantTemplate(t *testing.T) {
 
 		result := applyTemplateFromTenantTemplate(tenantIn, data)
 
-		assert.Equal(t, ExecutionResult{}, result)
+		assert.Equal(t, pipeline.Result{}, result)
 		assert.Equal(t, tenantIn, tenantOut)
 	})
 	t.Run("not a tenant", func(t *testing.T) {
@@ -199,7 +213,7 @@ func Test_applyTemplateFromTenantTemplate(t *testing.T) {
 		})
 
 		result := applyTemplateFromTenantTemplate(&synv1alpha1.Cluster{}, data)
-		expected := ExecutionResult{
+		expected := pipeline.Result{
 			Err: fmt.Errorf("object is not a tenant"),
 		}
 		assert.Equal(t, expected, result)
@@ -234,14 +248,14 @@ func Test_applyTemplateFromTenantTemplate(t *testing.T) {
 
 		result := applyTemplateFromTenantTemplate(tenantIn, data)
 
-		assert.Equal(t, ExecutionResult{}, result)
+		assert.Equal(t, pipeline.Result{}, result)
 		assert.Equal(t, tenantIn, tenantOut)
 	})
 }
 
-func newTestExecutionContext(objects []runtime.Object) *ExecutionContext {
+func newTestExecutionContext(objects []runtime.Object) *pipeline.Context {
 	client, _ := testSetupClient(objects)
-	return &ExecutionContext{
+	return &pipeline.Context{
 		Client: client,
 		Log:    logf.Log,
 	}

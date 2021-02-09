@@ -1,4 +1,4 @@
-package pipeline
+package gitrepo
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
+	"github.com/projectsyn/lieutenant-operator/pkg/pipeline"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,8 +22,8 @@ type gitRepoArgs struct {
 	cluster     *synv1alpha1.Cluster
 	template    *synv1alpha1.GitRepoTemplate
 	tenantRef   corev1.LocalObjectReference
-	templateObj PipelineObject
-	data        *ExecutionContext
+	templateObj pipeline.Object
+	data        *pipeline.Context
 }
 
 var createOrUpdateGitRepoCases = map[string]struct {
@@ -76,7 +77,7 @@ func TestCreateOrUpdateGitRepo(t *testing.T) {
 		tt.args.cluster.Spec.TenantRef = tt.args.tenantRef
 
 		t.Run(name, func(t *testing.T) {
-			if res := createGitRepo(tt.args.cluster, &ExecutionContext{Client: cl}); (res.Err != nil) != tt.wantErr {
+			if res := CreateGitRepo(tt.args.cluster, &pipeline.Context{Client: cl}); (res.Err != nil) != tt.wantErr {
 				t.Errorf("CreateGitRepo() error = %v, wantErr %v", res.Err, tt.wantErr)
 			}
 
@@ -100,7 +101,7 @@ var fetchGitRepoTemplateCases = map[string]struct {
 }{
 	"fetch tenant changes": {
 		args: gitRepoArgs{
-			data: &ExecutionContext{},
+			data: &pipeline.Context{},
 			repo: &synv1alpha1.GitRepo{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",
@@ -122,7 +123,7 @@ var fetchGitRepoTemplateCases = map[string]struct {
 	},
 	"fetch cluster changes": {
 		args: gitRepoArgs{
-			data: &ExecutionContext{},
+			data: &pipeline.Context{},
 			repo: &synv1alpha1.GitRepo{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",
@@ -277,7 +278,7 @@ var setGitRepoURLAndHostKeysCases = map[string]struct {
 					Name: "test",
 				},
 			},
-			data: &ExecutionContext{},
+			data: &pipeline.Context{},
 			repo: &synv1alpha1.GitRepo{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",
@@ -297,7 +298,7 @@ var setGitRepoURLAndHostKeysCases = map[string]struct {
 					Name: "invalid",
 				},
 			},
-			data: &ExecutionContext{},
+			data: &pipeline.Context{},
 			repo: &synv1alpha1.GitRepo{},
 		},
 	},
@@ -311,8 +312,8 @@ func Test_setGitRepoURLAndHostKeys(t *testing.T) {
 				tt.args.repo,
 			})
 
-			if got := setGitRepoURLAndHostKeys(tt.args.cluster, tt.args.data); (got.Err != nil) != tt.wantErr {
-				t.Errorf("setGitRepoURLAndHostKeys() = had error: %v", got.Err)
+			if got := SetGitRepoURLAndHostKeys(tt.args.cluster, tt.args.data); (got.Err != nil) != tt.wantErr {
+				t.Errorf("SetGitRepoURLAndHostKeys() = had error: %v", got.Err)
 			}
 
 			assert.Equal(t, tt.args.repo.Status.URL, tt.args.cluster.Spec.GitRepoURL)

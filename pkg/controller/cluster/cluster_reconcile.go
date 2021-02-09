@@ -4,7 +4,9 @@ import (
 	"context"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
+	"github.com/projectsyn/lieutenant-operator/pkg/controller/gitrepo"
 	"github.com/projectsyn/lieutenant-operator/pkg/pipeline"
+	"github.com/projectsyn/lieutenant-operator/pkg/vault"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -31,14 +33,37 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
-	data := &pipeline.ExecutionContext{
+	data := &pipeline.Context{
 		Client:        r.client,
 		Log:           reqLogger,
 		FinalizerName: finalizerName,
 	}
 
-	res := pipeline.ReconcileCluster(instance, data)
+	steps := []pipeline.Step{
+		{Name: "copy original object", F: pipeline.DeepCopyOriginal},
+		{Name: "cluster specific steps", F: clusterSpecificSteps},
+		{Name: "create git repo", F: gitrepo.CreateGitRepo},
+		{Name: "set gitrepo url and hostkeys", F: gitrepo.SetGitRepoURLAndHostKeys},
+		{Name: "add tenant label", F: pipeline.AddTenantLabel},
+		{Name: "Common", F: pipeline.Common},
+	}
+
+	res := pipeline.RunPipeline(instance, data, steps)
 
 	return reconcile.Result{Requeue: res.Requeue}, res.Err
 
+}
+
+func clusterSpecificSteps(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
+	steps := []pipeline.Step{
+		{Name: "create cluster RBAC", F: createClusterRBAC},
+		{Name: "deletion check", F: pipeline.CheckIfDeleted},
+		{Name: "set bootstrap token", F: setBootstrapToken},
+		{Name: "create or update vault", F: vault.CreateOrUpdateVault},
+		{Name: "delete vault entries", F: vault.HandleVaultDeletion},
+		{Name: "set tenant owner", F: setTenantOwner},
+		{Name: "apply cluster template from tenant", F: applyClusterTemplateFromTenant},
+	}
+
+	return pipeline.RunPipeline(obj, data, steps)
 }

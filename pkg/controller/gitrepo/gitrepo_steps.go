@@ -1,4 +1,4 @@
-package pipeline
+package gitrepo
 
 import (
 	"context"
@@ -6,31 +6,32 @@ import (
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
+	"github.com/projectsyn/lieutenant-operator/pkg/pipeline"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func gitRepoSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+func gitRepoSpecificSteps(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	instance, ok := obj.(*synv1alpha1.GitRepo)
 	if !ok {
-		return ExecutionResult{Err: fmt.Errorf("object is not a GitRepository")}
+		return pipeline.Result{Err: fmt.Errorf("object is not a GitRepository")}
 	}
 
 	err := fetchGitRepoTemplate(instance, data)
 	if err != nil {
-		return ExecutionResult{Err: err}
+		return pipeline.Result{Err: err}
 	}
 
 	if instance.Spec.RepoType == synv1alpha1.UnmanagedRepoType {
 		data.Log.Info("Skipping GitRepo because it is unmanaged")
-		return ExecutionResult{}
+		return pipeline.Result{}
 	}
 
 	repo, hostKeys, err := manager.GetGitClient(&instance.Spec.GitRepoTemplate, instance.GetNamespace(), data.Log, data.Client)
 	if err != nil {
-		return ExecutionResult{Err: err}
+		return pipeline.Result{Err: err}
 	}
 
 	instance.Status.HostKeys = hostKeys
@@ -39,7 +40,7 @@ func gitRepoSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionR
 		data.Log.Info("creating git repo", manager.SecretEndpointName, repo.FullURL())
 		err := repo.Create()
 		if err != nil {
-			return ExecutionResult{Err: handleRepoError(err, instance, repo, data.Client)}
+			return pipeline.Result{Err: handleRepoError(err, instance, repo, data.Client)}
 
 		}
 		data.Log.Info("successfully created the repository")
@@ -48,19 +49,19 @@ func gitRepoSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionR
 	if data.Deleted {
 		err := repo.Remove()
 		if err != nil {
-			return ExecutionResult{Err: err}
+			return pipeline.Result{Err: err}
 		}
-		return ExecutionResult{}
+		return pipeline.Result{}
 	}
 
 	err = repo.CommitTemplateFiles()
 	if err != nil {
-		return ExecutionResult{Err: handleRepoError(err, instance, repo, data.Client)}
+		return pipeline.Result{Err: handleRepoError(err, instance, repo, data.Client)}
 	}
 
 	changed, err := repo.Update()
 	if err != nil {
-		return ExecutionResult{Err: err}
+		return pipeline.Result{Err: err}
 	}
 
 	if changed {
@@ -72,15 +73,15 @@ func gitRepoSpecificSteps(obj PipelineObject, data *ExecutionContext) ExecutionR
 	instance.Status.URL = repo.FullURL().String()
 	instance.Status.Type = synv1alpha1.GitType(repo.Type())
 
-	return ExecutionResult{}
+	return pipeline.Result{}
 }
 
-// createGitRepo will create the gitRepo object if it doesn't already exist.
-func createGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+// CreateGitRepo will create the gitRepo object if it doesn't already exist.
+func CreateGitRepo(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	template := obj.GetGitTemplate()
 
 	if template == nil {
-		return ExecutionResult{}
+		return pipeline.Result{}
 	}
 
 	if template.DisplayName == "" {
@@ -88,7 +89,7 @@ func createGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 	}
 
 	if obj.GetTenantRef().Name == "" {
-		return ExecutionResult{
+		return pipeline.Result{
 			Abort: true,
 			Err:   fmt.Errorf("the tenant name is empty"),
 		}
@@ -96,7 +97,7 @@ func createGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 
 	if template.DeletionPolicy == "" {
 		if obj.GetDeletionPolicy() == "" {
-			template.DeletionPolicy = getDefaultDeletionPolicy()
+			template.DeletionPolicy = pipeline.GetDefaultDeletionPolicy()
 		} else {
 			template.DeletionPolicy = obj.GetDeletionPolicy()
 		}
@@ -123,15 +124,15 @@ func createGitRepo(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 	err := data.Client.Create(context.TODO(), repo)
 	if err != nil {
 		if errors.IsAlreadyExists(err) {
-			return ExecutionResult{}
+			return pipeline.Result{}
 		}
 	}
 
-	return ExecutionResult{Err: err}
+	return pipeline.Result{Err: err}
 
 }
 
-func setGitRepoURLAndHostKeys(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+func SetGitRepoURLAndHostKeys(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	gitRepo := &synv1alpha1.GitRepo{}
 	repoNamespacedName := types.NamespacedName{
 		Namespace: obj.GetObjectMeta().GetNamespace(),
@@ -140,15 +141,15 @@ func setGitRepoURLAndHostKeys(obj PipelineObject, data *ExecutionContext) Execut
 	err := data.Client.Get(context.TODO(), repoNamespacedName, gitRepo)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return ExecutionResult{}
+			return pipeline.Result{}
 		}
-		return ExecutionResult{Abort: true, Err: err}
+		return pipeline.Result{Abort: true, Err: err}
 	}
 
 	if gitRepo.Spec.RepoType != synv1alpha1.UnmanagedRepoType {
 		obj.SetGitRepoURLAndHostKeys(gitRepo.Status.URL, gitRepo.Status.HostKeys)
 	}
-	return ExecutionResult{}
+	return pipeline.Result{}
 }
 
 func repoExists(repo manager.Repo) bool {
@@ -168,7 +169,7 @@ func handleRepoError(err error, instance *synv1alpha1.GitRepo, repo manager.Repo
 	return err
 }
 
-func fetchGitRepoTemplate(obj *synv1alpha1.GitRepo, data *ExecutionContext) error {
+func fetchGitRepoTemplate(obj *synv1alpha1.GitRepo, data *pipeline.Context) error {
 	tenant := &synv1alpha1.Tenant{}
 
 	tenantName := types.NamespacedName{Name: obj.GetObjectMeta().GetName(), Namespace: obj.GetObjectMeta().GetNamespace()}

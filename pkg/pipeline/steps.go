@@ -16,7 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func getDefaultDeletionPolicy() synv1alpha1.DeletionPolicy {
+func GetDefaultDeletionPolicy() synv1alpha1.DeletionPolicy {
 	policy := synv1alpha1.DeletionPolicy(os.Getenv("DEFAULT_DELETION_POLICY"))
 	switch policy {
 	case synv1alpha1.ArchivePolicy, synv1alpha1.DeletePolicy, synv1alpha1.RetainPolicy:
@@ -26,9 +26,9 @@ func getDefaultDeletionPolicy() synv1alpha1.DeletionPolicy {
 	}
 }
 
-func addDeletionProtection(instance PipelineObject, data *ExecutionContext) ExecutionResult {
+func addDeletionProtection(instance Object, data *Context) Result {
 	if data.Deleted {
-		return ExecutionResult{}
+		return Result{}
 	}
 
 	config := os.Getenv(protectionSettingEnvVar)
@@ -52,12 +52,12 @@ func addDeletionProtection(instance PipelineObject, data *ExecutionContext) Exec
 		instance.GetObjectMeta().SetAnnotations(annotations)
 	}
 
-	return ExecutionResult{}
+	return Result{}
 
 }
 
-// addTenantLabel adds the tenant label to an object.
-func addTenantLabel(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+// AddTenantLabel adds the tenant label to an object.
+func AddTenantLabel(obj Object, data *Context) Result {
 	labels := obj.GetObjectMeta().GetLabels()
 	if labels == nil {
 		labels = make(map[string]string)
@@ -68,23 +68,23 @@ func addTenantLabel(obj PipelineObject, data *ExecutionContext) ExecutionResult 
 
 	obj.GetObjectMeta().SetLabels(labels)
 
-	return ExecutionResult{}
+	return Result{}
 }
 
-func updateObject(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+func updateObject(obj Object, data *Context) Result {
 
 	rtObj, ok := obj.(runtime.Object)
 	if !ok {
-		return ExecutionResult{Err: errors.New("object is not a runtime object")}
+		return Result{Err: errors.New("object is not a runtime object")}
 	}
 
 	if !specAndMetaEqual(obj, data.originalObject) {
 		err := data.Client.Update(context.TODO(), rtObj)
 		if err != nil {
 			if k8serrors.IsConflict(err) {
-				return ExecutionResult{Requeue: true}
+				return Result{Requeue: true}
 			}
-			return ExecutionResult{Err: err}
+			return Result{Err: err}
 		}
 	}
 
@@ -93,16 +93,16 @@ func updateObject(obj PipelineObject, data *ExecutionContext) ExecutionResult {
 		err := data.Client.Status().Update(context.TODO(), rtObj)
 		if err != nil {
 			if k8serrors.IsConflict(err) {
-				return ExecutionResult{Requeue: true}
+				return Result{Requeue: true}
 			}
-			return ExecutionResult{Err: err}
+			return Result{Err: err}
 		}
 	}
 
-	return ExecutionResult{Abort: true}
+	return Result{Abort: true}
 }
 
-func specAndMetaEqual(a, b PipelineObject) bool {
+func specAndMetaEqual(a, b Object) bool {
 
 	if !equality.Semantic.DeepEqual(a.GetObjectMeta(), b.GetObjectMeta()) {
 		return false
@@ -118,9 +118,9 @@ func specAndMetaEqual(a, b PipelineObject) bool {
 
 // handleDeletion will handle the finalizers if the object was deleted.
 // It will only trigger if data.Deleted is true.
-func handleDeletion(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+func handleDeletion(obj Object, data *Context) Result {
 	if !data.Deleted {
-		return ExecutionResult{}
+		return Result{}
 	}
 
 	instance := obj.GetObjectMeta()
@@ -140,10 +140,10 @@ func handleDeletion(obj PipelineObject, data *ExecutionContext) ExecutionResult 
 	}
 
 	if sliceContainsString(instance.GetFinalizers(), data.FinalizerName) && !protected {
-		return ExecutionResult{}
+		return Result{}
 	}
 
-	return ExecutionResult{Err: fmt.Errorf("finalzier was not removed")}
+	return Result{Err: fmt.Errorf("finalzier was not removed")}
 }
 
 // Checks if the slice of strings contains a specific string
@@ -156,33 +156,33 @@ func sliceContainsString(list []string, s string) bool {
 	return false
 }
 
-func checkIfDeleted(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+func CheckIfDeleted(obj Object, data *Context) Result {
 	if !obj.GetObjectMeta().GetDeletionTimestamp().IsZero() {
 		data.Deleted = true
 
 	}
-	return ExecutionResult{}
+	return Result{}
 
 }
 
-func handleFinalizer(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+func handleFinalizer(obj Object, data *Context) Result {
 	if data.FinalizerName != "" && !data.Deleted {
 		controllerutil.AddFinalizer(obj.GetObjectMeta(), data.FinalizerName)
 	} else {
 		controllerutil.RemoveFinalizer(obj.GetObjectMeta(), data.FinalizerName)
 	}
-	return ExecutionResult{}
+	return Result{}
 }
 
-func deepCopyOriginal(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+func DeepCopyOriginal(obj Object, data *Context) Result {
 	rtObj, ok := obj.(runtime.Object)
 	if !ok {
-		return ExecutionResult{Err: errors.New("object is not a runtime.Object")}
+		return Result{Err: errors.New("object is not a runtime.Object")}
 	}
 
 	copy := rtObj.DeepCopyObject()
 
-	data.originalObject = copy.(PipelineObject)
+	data.originalObject = copy.(Object)
 
-	return ExecutionResult{}
+	return Result{}
 }
