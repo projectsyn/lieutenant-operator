@@ -124,3 +124,75 @@ func applyTemplateFromTenantTemplate(obj pipeline.Object, data *pipeline.Context
 
 	return pipeline.Result{}
 }
+
+func createServiceAccount(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
+	tenant, ok := obj.(*synv1alpha1.Tenant)
+	if !ok {
+		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
+	}
+
+	r, ok := data.Reconciler.(*ReconcileTenant)
+	if !ok {
+		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
+	}
+
+	sa, err := r.NewServiceAccount(tenant)
+	if err != nil {
+		return pipeline.Result{Err: fmt.Errorf("failed to create ServiceAccount for tenant: %w", err)}
+	}
+
+	err = data.Client.Create(context.TODO(), sa)
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return pipeline.Result{Err: err}
+	}
+
+	return pipeline.Result{}
+}
+
+func createRole(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
+	tenant, ok := obj.(*synv1alpha1.Tenant)
+	if !ok {
+		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
+	}
+
+	r, ok := data.Reconciler.(*ReconcileTenant)
+	if !ok {
+		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
+	}
+
+	role, err := r.NewRole(tenant)
+	if err != nil {
+		return pipeline.Result{Err: fmt.Errorf("failed to create Role for tenant: %w", err)}
+	}
+
+	err = data.Client.Create(context.TODO(), role)
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return pipeline.Result{Err: err}
+	}
+
+	return pipeline.Result{}
+}
+
+func createRoleBinding(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
+	tenant, ok := obj.(*synv1alpha1.Tenant)
+	if !ok {
+		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
+	}
+
+	r, ok := data.Reconciler.(*ReconcileTenant)
+	if !ok {
+		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
+	}
+
+	binding, err := r.NewRoleBinding(tenant)
+	if err != nil {
+		return pipeline.Result{Err: fmt.Errorf("failed to create RoleBinding for tenant: %w", err)}
+	}
+
+	err = data.Client.Create(context.TODO(), binding)
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return pipeline.Result{Err: err}
+	}
+
+	return pipeline.Result{}
+}
