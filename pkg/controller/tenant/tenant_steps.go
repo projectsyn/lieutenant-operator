@@ -9,6 +9,8 @@ import (
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
 	"github.com/projectsyn/lieutenant-operator/pkg/pipeline"
+	roleUtil "github.com/projectsyn/lieutenant-operator/pkg/role"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -168,6 +170,29 @@ func createRole(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	err = data.Client.Create(context.TODO(), role)
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return pipeline.Result{Err: err}
+	}
+
+	return pipeline.Result{}
+}
+
+func tenantUpdateRole(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
+	tenant, ok := obj.(*synv1alpha1.Tenant)
+	if !ok {
+		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
+	}
+
+	name := types.NamespacedName{Name: tenant.Name, Namespace: tenant.Namespace}
+	role := &rbacv1.Role{}
+	if err := data.Client.Get(context.TODO(), name, role); err != nil {
+		return pipeline.Result{Err: fmt.Errorf("failed to get role for tenant: %v", err)}
+	}
+
+	if !roleUtil.SynchronizeResourceNames(role, tenant.Name) {
+		return pipeline.Result{}
+	}
+
+	if err := data.Client.Update(context.TODO(), role); err != nil {
+		return pipeline.Result{Err: fmt.Errorf("failed to update role for tenant: %v", err)}
 	}
 
 	return pipeline.Result{}

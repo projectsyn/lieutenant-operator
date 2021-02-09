@@ -55,6 +55,7 @@ func tenantSpecificSteps(obj pipeline.Object, data *pipeline.Context) pipeline.R
 		{Name: "create ServiceAccount", F: createServiceAccount},
 		{Name: "create Role", F: createRole},
 		{Name: "create RoleBinding", F: createRoleBinding},
+		{Name: "update Role", F: tenantUpdateRole},
 	}
 
 	return pipeline.RunPipeline(obj, data, steps)

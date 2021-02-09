@@ -468,3 +468,61 @@ func TestReconcileCluster_unmanagedGitRepo(t *testing.T) {
 	assert.Equal(t, "someURL", updatedCluster.Spec.GitRepoURL)
 
 }
+
+func TestReconcileCluster_updateRole(t *testing.T) {
+	cluster := &synv1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-cluster",
+			Namespace: "my-namespace",
+		},
+		Spec: synv1alpha1.ClusterSpec{
+			DisplayName: "My Cluster",
+			TenantRef: corev1.LocalObjectReference{
+				Name: "my-tenant",
+			},
+			GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
+				RepoType: synv1alpha1.UnmanagedRepoType,
+			},
+		},
+	}
+	tenant := &synv1alpha1.Tenant{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "my-tenant",
+			Namespace: "my-namespace",
+		},
+	}
+
+	cl, s := testSetupClient(map[schema.GroupVersion][]runtime.Object{
+		synv1alpha1.SchemeGroupVersion: {
+			cluster,
+			tenant,
+			&synv1alpha1.GitRepo{},
+			&synv1alpha1.ClusterList{},
+		},
+		rbacv1.SchemeGroupVersion: {
+			&rbacv1.Role{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      tenant.Name,
+					Namespace: tenant.Namespace,
+				},
+			},
+		},
+	})
+
+	vault.SetCustomClient(&TestMockClient{})
+	os.Setenv("SKIP_VAULT_SETUP", "true")
+
+	_, err := reconcileCluster(cl, s, types.NamespacedName{
+		Name:      cluster.Name,
+		Namespace: cluster.Namespace,
+	})
+	assert.NoError(t, err)
+
+	role := &rbacv1.Role{}
+	fetchObject(t, cl, types.NamespacedName{
+		Name:      tenant.Name,
+		Namespace: tenant.Namespace,
+	}, role)
+	require.Len(t, role.Rules, 1)
+	assert.Contains(t, role.Rules[0].ResourceNames, cluster.Name)
+}

@@ -8,6 +8,18 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 )
 
+func SynchronizeResourceNames(role *rbacv1.Role, name string) bool {
+	i := EnsureRules(role)
+
+	if contains(role.Rules[i].ResourceNames, name) {
+		return false
+	}
+
+	role.Rules[i].ResourceNames = append(role.Rules[i].ResourceNames, name)
+
+	return true
+}
+
 func EnsureRules(role *rbacv1.Role) int {
 	if role.Rules == nil {
 		role.Rules = []rbacv1.PolicyRule{}
