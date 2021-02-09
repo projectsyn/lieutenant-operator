@@ -38,6 +38,7 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 		Client:        r.client,
 		Log:           reqLogger,
 		FinalizerName: finalizerName,
+		Reconciler:    r,
 	}
 
 	steps := []pipeline.Step{

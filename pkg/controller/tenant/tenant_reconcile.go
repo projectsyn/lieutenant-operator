@@ -31,6 +31,7 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 		Client:        r.client,
 		Log:           reqLogger,
 		FinalizerName: "",
+		Reconciler:    r,
 	}
 
 	steps := []pipeline.Step{

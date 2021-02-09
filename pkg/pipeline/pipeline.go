@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
 const (
@@ -36,6 +37,7 @@ type Context struct {
 	Log            logr.Logger
 	Deleted        bool
 	originalObject Object
+	Reconciler     reconcile.Reconciler
 }
 
 // Result indicates whether the current execution should be aborted and
