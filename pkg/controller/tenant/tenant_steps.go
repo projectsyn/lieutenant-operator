@@ -187,7 +187,7 @@ func tenantUpdateRole(obj pipeline.Object, data *pipeline.Context) pipeline.Resu
 		return pipeline.Result{Err: fmt.Errorf("failed to get role for tenant: %v", err)}
 	}
 
-	if !roleUtil.SynchronizeResourceNames(role, tenant.Name) {
+	if !roleUtil.AddResourceNames(role, tenant.Name) {
 		return pipeline.Result{}
 	}
 

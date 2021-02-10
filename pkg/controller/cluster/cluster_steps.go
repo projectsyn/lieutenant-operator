@@ -170,7 +170,15 @@ func clusterUpdateRole(obj pipeline.Object, data *pipeline.Context) pipeline.Res
 		return pipeline.Result{Err: fmt.Errorf("failed to get role for cluster: %v", err)}
 	}
 
-	if !roleUtil.SynchronizeResourceNames(role, cluster.Name) {
+	updated := false
+
+	if data.Deleted {
+		updated = roleUtil.RemoveResourceNames(role, cluster.Name)
+	} else {
+		updated = roleUtil.AddResourceNames(role, cluster.Name)
+	}
+
+	if !updated {
 		return pipeline.Result{}
 	}
 
