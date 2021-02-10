@@ -34,13 +34,21 @@ func (r *ReconcileGitRepo) Reconcile(request reconcile.Request) (reconcile.Resul
 		return reconcile.Result{}, err
 	}
 
-	data := &pipeline.ExecutionContext{
+	data := &pipeline.Context{
 		Client:        r.client,
 		Log:           reqLogger,
 		FinalizerName: finalizerName,
 	}
 
-	res := pipeline.ReconcileGitRep(instance, data)
+	steps := []pipeline.Step{
+		{Name: "copy original object", F: pipeline.DeepCopyOriginal},
+		{Name: "deletion check", F: pipeline.CheckIfDeleted},
+		{Name: "git repo specific steps", F: gitRepoSpecificSteps},
+		{Name: "add tenant label", F: pipeline.AddTenantLabel},
+		{Name: "Common", F: pipeline.Common},
+	}
+
+	res := pipeline.RunPipeline(instance, data, steps)
 
 	return reconcile.Result{Requeue: res.Requeue}, res.Err
 

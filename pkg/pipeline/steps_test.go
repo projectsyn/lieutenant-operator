@@ -19,6 +19,19 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
+type genericCases map[string]struct {
+	args    args
+	wantErr bool
+}
+
+type args struct {
+	cluster       *synv1alpha1.Cluster
+	tenant        *synv1alpha1.Tenant
+	template      *synv1alpha1.TenantTemplate
+	data          *Context
+	finalizerName string
+}
+
 // testSetupClient returns a client containing all objects in objs
 func testSetupClient(objs []runtime.Object) (client.Client, *runtime.Scheme) {
 	s := scheme.Scheme
@@ -27,13 +40,13 @@ func testSetupClient(objs []runtime.Object) (client.Client, *runtime.Scheme) {
 }
 
 func TestGetDeletionPolicyDefault(t *testing.T) {
-	policy := getDefaultDeletionPolicy()
+	policy := GetDefaultDeletionPolicy()
 	assert.Equal(t, synv1alpha1.ArchivePolicy, policy)
 }
 
 func TestGetDeletionPolicyNonDefault(t *testing.T) {
 	os.Setenv("DEFAULT_DELETION_POLICY", "Retain")
-	policy := getDefaultDeletionPolicy()
+	policy := GetDefaultDeletionPolicy()
 	assert.Equal(t, synv1alpha1.RetainPolicy, policy)
 }
 
@@ -52,7 +65,7 @@ var addTenantLabelCases = genericCases{
 func TestAddTenantLabel(t *testing.T) {
 	for name, tt := range addTenantLabelCases {
 		t.Run(name, func(t *testing.T) {
-			addTenantLabel(tt.args.cluster, &ExecutionContext{})
+			AddTenantLabel(tt.args.cluster, &Context{})
 
 			if tt.args.cluster.GetLabels()[apis.LabelNameTenant] != tt.args.cluster.Spec.TenantRef.Name {
 				t.Error("labels do not match")
@@ -116,7 +129,7 @@ func TestHandleDeletion(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			client, _ := testSetupClient([]runtime.Object{&synv1alpha1.Cluster{}})
 
-			data := &ExecutionContext{
+			data := &Context{
 				Client:        client,
 				Deleted:       true,
 				FinalizerName: tt.args.finalizerName,
@@ -172,7 +185,7 @@ func TestAddDeletionProtection(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			os.Setenv(protectionSettingEnvVar, tt.args.enable)
 
-			addDeletionProtection(tt.args.instance, &ExecutionContext{})
+			addDeletionProtection(tt.args.instance, &Context{})
 
 			result := tt.args.instance.GetAnnotations()[DeleteProtectionAnnotation]
 			if result != tt.args.result {
@@ -190,7 +203,7 @@ var checkIfDeletedCases = map[string]struct {
 	"object deleted": {
 		want: true,
 		args: args{
-			data: &ExecutionContext{},
+			data: &Context{},
 			tenant: &synv1alpha1.Tenant{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "test",
@@ -202,7 +215,7 @@ var checkIfDeletedCases = map[string]struct {
 	"object not deleted": {
 		want: false,
 		args: args{
-			data: &ExecutionContext{},
+			data: &Context{},
 			tenant: &synv1alpha1.Tenant{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",
@@ -215,8 +228,8 @@ var checkIfDeletedCases = map[string]struct {
 func Test_checkIfDeleted(t *testing.T) {
 	for name, tt := range checkIfDeletedCases {
 		t.Run(name, func(t *testing.T) {
-			if got := checkIfDeleted(tt.args.tenant, tt.args.data); (got.Err != nil) != tt.wantErr {
-				t.Errorf("checkIfDeleted() = had error %v", got.Err)
+			if got := CheckIfDeleted(tt.args.tenant, tt.args.data); (got.Err != nil) != tt.wantErr {
+				t.Errorf("CheckIfDeleted() = had error %v", got.Err)
 			}
 
 			assert.Equal(t, tt.want, tt.args.data.Deleted)
@@ -227,7 +240,7 @@ func Test_checkIfDeleted(t *testing.T) {
 var handleFinalizerCases = genericCases{
 	"add finalizers": {
 		args: args{
-			data: &ExecutionContext{
+			data: &Context{
 				FinalizerName: "test",
 			},
 			cluster: &synv1alpha1.Cluster{
@@ -239,7 +252,7 @@ var handleFinalizerCases = genericCases{
 	},
 	"remove finalizers": {
 		args: args{
-			data: &ExecutionContext{
+			data: &Context{
 				Deleted:       true,
 				FinalizerName: "test",
 			},
@@ -271,7 +284,7 @@ func Test_handleFinalizer(t *testing.T) {
 var updateObjectCases = genericCases{
 	"update objects": {
 		args: args{
-			data: &ExecutionContext{
+			data: &Context{
 				originalObject: &synv1alpha1.Tenant{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test",
@@ -287,7 +300,7 @@ var updateObjectCases = genericCases{
 	},
 	"update fail": {
 		args: args{
-			data: &ExecutionContext{
+			data: &Context{
 				originalObject: &synv1alpha1.Tenant{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test",
@@ -314,7 +327,7 @@ func Test_updateObject(t *testing.T) {
 }
 
 func Test_updateObjectStatus(t *testing.T) {
-	ex := &ExecutionContext{
+	ex := &Context{
 		originalObject: &synv1alpha1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            "cluster-a",

@@ -1,4 +1,4 @@
-package pipeline
+package cluster
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"time"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
-	"github.com/projectsyn/lieutenant-operator/pkg/pipeline/cluster"
+	"github.com/projectsyn/lieutenant-operator/pkg/pipeline"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -17,7 +17,13 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-func createClusterRBAC(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+const (
+	clusterClassContent = `classes:
+- %s.%s
+`
+)
+
+func createClusterRBAC(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	objMeta := metav1.ObjectMeta{
 		Name:            obj.GetObjectMeta().GetName(),
 		Namespace:       obj.GetObjectMeta().GetNamespace(),
@@ -47,23 +53,23 @@ func createClusterRBAC(obj PipelineObject, data *ExecutionContext) ExecutionResu
 	}
 	for _, item := range []runtime.Object{serviceAccount, role, roleBinding} {
 		if err := data.Client.Create(context.TODO(), item); err != nil && !errors.IsAlreadyExists(err) {
-			return ExecutionResult{Err: err}
+			return pipeline.Result{Err: err}
 		}
 	}
-	return ExecutionResult{}
+	return pipeline.Result{}
 }
 
-func setBootstrapToken(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+func setBootstrapToken(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	instance, ok := obj.(*synv1alpha1.Cluster)
 	if !ok {
-		return ExecutionResult{Err: fmt.Errorf("%s is not a cluster object", obj.GetObjectMeta().GetName())}
+		return pipeline.Result{Err: fmt.Errorf("%s is not a cluster object", obj.GetObjectMeta().GetName())}
 	}
 
 	if instance.Status.BootstrapToken == nil {
 		data.Log.Info("Adding status to Cluster object")
 		err := newClusterStatus(instance)
 		if err != nil {
-			return ExecutionResult{Err: err}
+			return pipeline.Result{Err: err}
 		}
 	}
 
@@ -71,7 +77,7 @@ func setBootstrapToken(obj PipelineObject, data *ExecutionContext) ExecutionResu
 		instance.Status.BootstrapToken.TokenValid = false
 	}
 
-	return ExecutionResult{}
+	return pipeline.Result{}
 }
 
 //newClusterStatus will create a default lifetime of 30 minutes if it wasn't set in the object.
@@ -110,37 +116,37 @@ func generateToken() (string, error) {
 	return base64.URLEncoding.EncodeToString(b), err
 }
 
-func setTenantOwner(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+func setTenantOwner(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	tenant := &synv1alpha1.Tenant{}
 	tenantName := types.NamespacedName{Name: obj.GetTenantRef().Name, Namespace: obj.GetObjectMeta().GetNamespace()}
 
 	err := data.Client.Get(context.TODO(), tenantName, tenant)
 	if err != nil {
-		return ExecutionResult{Err: err}
+		return pipeline.Result{Err: err}
 	}
 
 	obj.GetObjectMeta().SetOwnerReferences([]metav1.OwnerReference{
 		*metav1.NewControllerRef(tenant.GetObjectMeta(), tenant.GroupVersionKind()),
 	})
 
-	return ExecutionResult{}
+	return pipeline.Result{}
 }
 
-func applyClusterTemplateFromTenant(obj PipelineObject, data *ExecutionContext) ExecutionResult {
+func applyClusterTemplateFromTenant(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	nsName := types.NamespacedName{Name: obj.GetTenantRef().Name, Namespace: obj.GetObjectMeta().GetNamespace()}
 
 	tenant := &synv1alpha1.Tenant{}
 	if err := data.Client.Get(context.TODO(), nsName, tenant); err != nil {
-		return ExecutionResult{Err: fmt.Errorf("Couldn't find tenant: %w", err)}
+		return pipeline.Result{Err: fmt.Errorf("Couldn't find tenant: %w", err)}
 	}
 
 	instance, ok := obj.(*synv1alpha1.Cluster)
 	if !ok {
-		return ExecutionResult{Err: fmt.Errorf("object is not a cluster")}
+		return pipeline.Result{Err: fmt.Errorf("object is not a cluster")}
 	}
 
-	if err := cluster.ApplyClusterTemplate(instance, tenant); err != nil {
-		return ExecutionResult{Err: err}
+	if err := ApplyClusterTemplate(instance, tenant); err != nil {
+		return pipeline.Result{Err: err}
 	}
-	return ExecutionResult{}
+	return pipeline.Result{}
 }
