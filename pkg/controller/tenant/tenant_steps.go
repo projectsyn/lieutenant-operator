@@ -9,6 +9,8 @@ import (
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
 	"github.com/projectsyn/lieutenant-operator/pkg/pipeline"
+	roleUtil "github.com/projectsyn/lieutenant-operator/pkg/role"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -119,6 +121,101 @@ func applyTemplateFromTenantTemplate(obj pipeline.Object, data *pipeline.Context
 	}
 
 	if err := tenant.ApplyTemplate(template); err != nil {
+		return pipeline.Result{Err: err}
+	}
+
+	return pipeline.Result{}
+}
+
+func createServiceAccount(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
+	tenant, ok := obj.(*synv1alpha1.Tenant)
+	if !ok {
+		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
+	}
+
+	r, ok := data.Reconciler.(*ReconcileTenant)
+	if !ok {
+		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
+	}
+
+	sa, err := r.NewServiceAccount(tenant)
+	if err != nil {
+		return pipeline.Result{Err: fmt.Errorf("failed to create ServiceAccount for tenant: %w", err)}
+	}
+
+	err = data.Client.Create(context.TODO(), sa)
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return pipeline.Result{Err: err}
+	}
+
+	return pipeline.Result{}
+}
+
+func createRole(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
+	tenant, ok := obj.(*synv1alpha1.Tenant)
+	if !ok {
+		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
+	}
+
+	r, ok := data.Reconciler.(*ReconcileTenant)
+	if !ok {
+		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
+	}
+
+	role, err := r.NewRole(tenant)
+	if err != nil {
+		return pipeline.Result{Err: fmt.Errorf("failed to create Role for tenant: %w", err)}
+	}
+
+	err = data.Client.Create(context.TODO(), role)
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return pipeline.Result{Err: err}
+	}
+
+	return pipeline.Result{}
+}
+
+func tenantUpdateRole(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
+	tenant, ok := obj.(*synv1alpha1.Tenant)
+	if !ok {
+		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
+	}
+
+	name := types.NamespacedName{Name: tenant.Name, Namespace: tenant.Namespace}
+	role := &rbacv1.Role{}
+	if err := data.Client.Get(context.TODO(), name, role); err != nil {
+		return pipeline.Result{Err: fmt.Errorf("failed to get role for tenant: %v", err)}
+	}
+
+	if !roleUtil.AddResourceNames(role, tenant.Name) {
+		return pipeline.Result{}
+	}
+
+	if err := data.Client.Update(context.TODO(), role); err != nil {
+		return pipeline.Result{Err: fmt.Errorf("failed to update role for tenant: %v", err)}
+	}
+
+	return pipeline.Result{}
+}
+
+func createRoleBinding(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
+	tenant, ok := obj.(*synv1alpha1.Tenant)
+	if !ok {
+		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
+	}
+
+	r, ok := data.Reconciler.(*ReconcileTenant)
+	if !ok {
+		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
+	}
+
+	binding, err := r.NewRoleBinding(tenant)
+	if err != nil {
+		return pipeline.Result{Err: fmt.Errorf("failed to create RoleBinding for tenant: %w", err)}
+	}
+
+	err = data.Client.Create(context.TODO(), binding)
+	if err != nil && !errors.IsAlreadyExists(err) {
 		return pipeline.Result{Err: err}
 	}
 

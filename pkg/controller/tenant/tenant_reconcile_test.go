@@ -8,6 +8,8 @@ import (
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -162,4 +164,55 @@ func TestCreateClusterClass(t *testing.T) {
 
 	assert.Contains(t, updatedTenant.Spec.GitRepoTemplate.TemplateFiles[clusterA.Name+".yml"], tenant.Name)
 	assert.Contains(t, updatedTenant.Spec.GitRepoTemplate.TemplateFiles[clusterB.Name+".yml"], tenant.Name)
+}
+
+func TestCreateRBACObjects(t *testing.T) {
+	tenant := &synv1alpha1.Tenant{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "tenant-a",
+			Namespace: "my-namespace",
+		},
+		Spec: synv1alpha1.TenantSpec{
+			DisplayName: "Display Name",
+			GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
+				RepoType: synv1alpha1.UnmanagedRepoType,
+			},
+		},
+	}
+
+	cl, s := testSetupClient([]runtime.Object{
+		tenant,
+		&synv1alpha1.GitRepo{},
+		&synv1alpha1.ClusterList{},
+	})
+
+	name := types.NamespacedName{
+		Name:      tenant.Name,
+		Namespace: tenant.Namespace,
+	}
+
+	reconcileTenant(t, cl, s, name)
+
+	sa := &corev1.ServiceAccount{}
+	fetchObject(t, cl, name, sa)
+	assert.Equal(t, tenant.Name, sa.Name)
+
+	role := &rbacv1.Role{}
+	fetchObject(t, cl, name, role)
+	assert.Equal(t, tenant.Name, role.Name)
+	require.Len(t, role.Rules, 1)
+	assert.Equal(t, []string{"syn.tools"}, role.Rules[0].APIGroups)
+	assert.Equal(t, []string{"tenants", "clusters"}, role.Rules[0].Resources)
+	assert.Equal(t, []string{"get"}, role.Rules[0].Verbs)
+	assert.Equal(t, []string{tenant.Name}, role.Rules[0].ResourceNames)
+
+	binding := &rbacv1.RoleBinding{}
+	fetchObject(t, cl, name, binding)
+	assert.Equal(t, tenant.Name, binding.Name)
+	assert.Equal(t, tenant.Namespace, binding.Namespace)
+	assert.Equal(t, "Role", binding.RoleRef.Kind)
+	assert.Equal(t, tenant.Name, binding.RoleRef.Name)
+	require.Len(t, binding.Subjects, 1)
+	assert.Equal(t, "ServiceAccount", binding.Subjects[0].Kind)
+	assert.Equal(t, tenant.Name, binding.Subjects[0].Name)
 }

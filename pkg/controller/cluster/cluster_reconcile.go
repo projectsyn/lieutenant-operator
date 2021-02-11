@@ -37,6 +37,7 @@ func (r *ReconcileCluster) Reconcile(request reconcile.Request) (reconcile.Resul
 		Client:        r.client,
 		Log:           reqLogger,
 		FinalizerName: finalizerName,
+		Reconciler:    r,
 	}
 
 	steps := []pipeline.Step{
@@ -63,6 +64,7 @@ func clusterSpecificSteps(obj pipeline.Object, data *pipeline.Context) pipeline.
 		{Name: "delete vault entries", F: vault.HandleVaultDeletion},
 		{Name: "set tenant owner", F: setTenantOwner},
 		{Name: "apply cluster template from tenant", F: applyClusterTemplateFromTenant},
+		{Name: "update Role", F: clusterUpdateRole},
 	}
 
 	return pipeline.RunPipeline(obj, data, steps)

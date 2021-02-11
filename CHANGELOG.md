@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Template for tenants ([#138])
+- Per tenant access to tenant and cluster objects [(#140)]
 
 ## [v0.4.2] - 2020-11-11
 ### Fixed
@@ -142,3 +143,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [#130]: https://github.com/projectsyn/lieutenant-operator/pull/130
 [#133]: https://github.com/projectsyn/lieutenant-operator/pull/133
 [#138]: https://github.com/projectsyn/lieutenant-operator/pull/138
+[#140]: https://github.com/projectsyn/lieutenant-operator/pull/140

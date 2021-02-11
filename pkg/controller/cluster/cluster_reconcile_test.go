@@ -468,3 +468,128 @@ func TestReconcileCluster_unmanagedGitRepo(t *testing.T) {
 	assert.Equal(t, "someURL", updatedCluster.Spec.GitRepoURL)
 
 }
+
+var now = metav1.Now()
+
+var updateRoleTests = map[string]struct {
+	cluster *synv1alpha1.Cluster
+	tenant  *synv1alpha1.Tenant
+	role    *rbacv1.Role
+	assert  func(*testing.T, *rbacv1.Role)
+}{
+	"cluster name gets added to resource names": {
+		cluster: &synv1alpha1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-cluster",
+				Namespace: "my-namespace",
+			},
+			Spec: synv1alpha1.ClusterSpec{
+				DisplayName: "My Cluster",
+				TenantRef: corev1.LocalObjectReference{
+					Name: "my-tenant",
+				},
+				GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
+					RepoType: synv1alpha1.UnmanagedRepoType,
+				},
+			},
+		},
+		tenant: &synv1alpha1.Tenant{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-tenant",
+				Namespace: "my-namespace",
+			},
+		},
+		assert: func(t *testing.T, role *rbacv1.Role) {
+			require.Len(t, role.Rules, 1)
+			assert.Contains(t, role.Rules[0].ResourceNames, "my-cluster")
+		},
+	},
+	"cluster name gets remove from resource names": {
+		cluster: &synv1alpha1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              "my-cluster",
+				Namespace:         "my-namespace",
+				Finalizers:        []string{finalizerName},
+				DeletionTimestamp: &now,
+			},
+			Spec: synv1alpha1.ClusterSpec{
+				DisplayName: "My Cluster",
+				TenantRef: corev1.LocalObjectReference{
+					Name: "my-tenant",
+				},
+				GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
+					RepoType: synv1alpha1.UnmanagedRepoType,
+				},
+			},
+		},
+		tenant: &synv1alpha1.Tenant{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-tenant",
+				Namespace: "my-namespace",
+			},
+		},
+		role: &rbacv1.Role{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "my-tenant",
+				Namespace: "my-namespace",
+			},
+			Rules: []rbacv1.PolicyRule{
+				{
+					APIGroups: []string{synv1alpha1.SchemeGroupVersion.Group},
+					Verbs:     []string{"get"},
+					Resources: []string{"tenants", "clusters"},
+					ResourceNames: []string{"some-cluster", "my-cluster"},
+				},
+			},
+		},
+		assert: func(t *testing.T, role *rbacv1.Role) {
+			require.Len(t, role.Rules, 1)
+			assert.NotContains(t, role.Rules[0].ResourceNames, "my-cluster")
+		},
+	},
+}
+
+func TestReconcileCluster_updateRole(t *testing.T) {
+	for name, tt := range updateRoleTests {
+		t.Run(name, func(t *testing.T) {
+
+			testRole := tt.role
+			if testRole == nil {
+				testRole = &rbacv1.Role{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      tt.tenant.Name,
+						Namespace: tt.tenant.Namespace,
+					},
+				}
+			}
+
+			cl, s := testSetupClient(map[schema.GroupVersion][]runtime.Object{
+				synv1alpha1.SchemeGroupVersion: {
+					tt.cluster,
+					tt.tenant,
+					&synv1alpha1.GitRepo{},
+					&synv1alpha1.ClusterList{},
+				},
+				rbacv1.SchemeGroupVersion: {
+					testRole,
+				},
+			})
+
+			vault.SetCustomClient(&TestMockClient{})
+			os.Setenv("SKIP_VAULT_SETUP", "true")
+
+			_, err := reconcileCluster(cl, s, types.NamespacedName{
+				Name:      tt.cluster.Name,
+				Namespace: tt.cluster.Namespace,
+			})
+			assert.NoError(t, err)
+
+			role := &rbacv1.Role{}
+			fetchObject(t, cl, types.NamespacedName{
+				Name:      tt.tenant.Name,
+				Namespace: tt.tenant.Namespace,
+			}, role)
+			tt.assert(t, role)
+		})
+	}
+}

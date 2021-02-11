@@ -31,6 +31,7 @@ func (r *ReconcileTenant) Reconcile(request reconcile.Request) (reconcile.Result
 		Client:        r.client,
 		Log:           reqLogger,
 		FinalizerName: "",
+		Reconciler:    r,
 	}
 
 	steps := []pipeline.Step{
@@ -51,6 +52,10 @@ func tenantSpecificSteps(obj pipeline.Object, data *pipeline.Context) pipeline.R
 		{Name: "add default class file", F: addDefaultClassFile},
 		{Name: "uptade tenant git repo", F: updateTenantGitRepo},
 		{Name: "set global git repo url", F: setGlobalGitRepoURL},
+		{Name: "create ServiceAccount", F: createServiceAccount},
+		{Name: "create Role", F: createRole},
+		{Name: "create RoleBinding", F: createRoleBinding},
+		{Name: "update Role", F: tenantUpdateRole},
 	}
 
 	return pipeline.RunPipeline(obj, data, steps)
