@@ -11,7 +11,7 @@ import (
 )
 
 // NewServiceAccount returns a new ServiceAccount object.
-// The ServiceAccount has its meta data set in a way, that it is clear this ServiceAccount is related to the tenant.
+// The ServiceAccount has its metadata set in a way, that it is clear this ServiceAccount is related to the tenant.
 func (r *ReconcileTenant) NewServiceAccount(tenant *synv1alpha1.Tenant) (*corev1.ServiceAccount, error) {
 	sa := &corev1.ServiceAccount{
 		ObjectMeta: metav1.ObjectMeta{
