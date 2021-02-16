@@ -51,8 +51,12 @@ rules:
       - roles
       - rolebindings
     verbs:
-      - get
       - create
+      - delete
+      - get
+      - list
+      - update
+      - watch
   - apiGroups:
       - apps
     resourceNames:
