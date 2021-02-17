@@ -19,6 +19,10 @@ func init() {
 	manager.Register(&Gitlab{})
 }
 
+var (
+	ListItemsPerPage = 100
+)
+
 // Gitlab holds the necessary information to communincate with a Gitlab server.
 // Each Gitlab instance will handle exactly one project.
 type Gitlab struct {
