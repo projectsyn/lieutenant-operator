@@ -5,11 +5,13 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/projectsyn/lieutenant-operator/pkg/git/helpers"
-	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
 	"k8s.io/utils/pointer"
 
+	"github.com/projectsyn/lieutenant-operator/pkg/git/helpers"
+	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
+
 	"github.com/go-logr/logr"
+
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/pkg/apis/syn/v1alpha1"
 
 	"github.com/xanzy/go-gitlab"
@@ -376,28 +378,38 @@ func (g *Gitlab) CommitTemplateFiles() error {
 func (g *Gitlab) compareFiles() ([]manager.CommitFile, error) {
 
 	files := []manager.CommitFile{}
-
-	trees, _, err := g.client.Repositories.ListTree(g.project.ID, nil, nil)
-	if err != nil {
-		// if the tree is not found it's probably just because there are no files at all currently...
-		// So we have to apply all pending ones.
-		if strings.Contains(err.Error(), "Tree Not Found") {
-
-			for name, content := range g.ops.TemplateFiles {
-				files = append(files, manager.CommitFile{
-					FileName: name,
-					Content:  content,
-				})
-			}
-
-			return files, nil
-		}
-		return files, fmt.Errorf("cannot list files in repository: %s", err)
-	}
-
+	resp := &gitlab.Response{NextPage: 1}
+	var trees []*gitlab.TreeNode
+	var err error
 	compareMap := map[string]bool{}
-	for _, tree := range trees {
-		compareMap[tree.Path] = true
+
+	// The NextPage header is empty/zero in the last page.
+	for resp.NextPage > 0 {
+		trees, resp, err = g.client.Repositories.ListTree(g.project.ID, &gitlab.ListTreeOptions{
+			ListOptions: gitlab.ListOptions{
+				PerPage: ListItemsPerPage,
+				Page:    resp.NextPage,
+			},
+		}, nil)
+		if err != nil {
+			// if the tree is not found it's probably just because there are no files at all currently...
+			// So we have to apply all pending ones.
+			if strings.Contains(err.Error(), "Tree Not Found") {
+
+				for name, content := range g.ops.TemplateFiles {
+					files = append(files, manager.CommitFile{
+						FileName: name,
+						Content:  content,
+					})
+				}
+
+				return files, nil
+			}
+			return files, fmt.Errorf("cannot list files in repository: %s", err)
+		}
+		for _, tree := range trees {
+			compareMap[tree.Path] = true
+		}
 	}
 
 	for name, content := range g.ops.TemplateFiles {
