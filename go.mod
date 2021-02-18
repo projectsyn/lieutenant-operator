@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/vault/api v1.0.4
 	github.com/imdario/mergo v0.3.11
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200321030439-57b580e57e88
-	github.com/operator-framework/operator-sdk v0.17.1
+	github.com/operator-framework/operator-sdk v1.4.2
 	github.com/ryankurte/go-structparse v1.2.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.6.1
