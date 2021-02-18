@@ -9,9 +9,10 @@ import (
 	"testing"
 
 	"github.com/operator-framework/operator-sdk/pkg/log/zap"
-	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
 	"github.com/stretchr/testify/assert"
 	"github.com/xanzy/go-gitlab"
+
+	"github.com/projectsyn/lieutenant-operator/pkg/git/manager"
 )
 
 func testGetHTTPServer(statusCode int, body []byte) *httptest.Server {
@@ -100,8 +101,25 @@ func testGetCreateServer() *httptest.Server {
 	})
 
 	mux.HandleFunc("/api/v4/projects/3/repository/tree", func(res http.ResponseWriter, req *http.Request) {
+		items := []string{
+			`{"id":"a1e8f8d745cc87e3a9248358d9352bb7f9a0aeba","name":"dir1","type":"tree","path":"files/html","mode":"040000"}`,
+			`{"id":"7d70e02340bac451f281cecf0a980907974bd8be","name":"file1","type":"blob","path":"file1","mode":"100644"}`,
+		}
+		index := 0
+		if req.URL.Query().Get("page") == "2" {
+			res.Header().Add("x-page", "2")
+			res.Header().Add("x-next-page", "")
+			index = 1
+		} else {
+			res.Header().Add("x-page", "1")
+			res.Header().Add("x-next-page", "2")
+		}
+		res.Header().Add("x-per-page", "1")
+		res.Header().Add("x-total", "2")
+		res.Header().Add("x-total-pages", "2")
+
 		res.WriteHeader(http.StatusOK)
-		_, _ = res.Write([]byte(`[{"id":"a1e8f8d745cc87e3a9248358d9352bb7f9a0aeba","name":"dir1","type":"tree","path":"files/html","mode":"040000"},{"id":"7d70e02340bac451f281cecf0a980907974bd8be","name":"file1","type":"blob","path":"file1","mode":"100644"}]`))
+		_, _ = res.Write([]byte("[" + items[index] + "]"))
 	})
 
 	mux.HandleFunc("/api/v4/projects/3/repository/commits", func(res http.ResponseWriter, req *http.Request) {
@@ -360,14 +378,12 @@ func TestGitlab_CommitTemplateFiles(t *testing.T) {
 		project *gitlab.Project
 		ops     manager.RepoOptions
 	}
-	tests := []struct {
-		name       string
+	tests := map[string]struct {
 		fields     fields
 		wantErr    bool
 		httpServer *httptest.Server
 	}{
-		{
-			name:       "set template files",
+		"set template files": {
 			wantErr:    false,
 			httpServer: testGetCreateServer(),
 			fields: fields{
@@ -381,8 +397,7 @@ func TestGitlab_CommitTemplateFiles(t *testing.T) {
 				},
 			},
 		},
-		{
-			name:       "set existing file",
+		"set existing file": {
 			wantErr:    false,
 			httpServer: testGetCreateServer(),
 			fields: fields{
@@ -397,8 +412,9 @@ func TestGitlab_CommitTemplateFiles(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	ListItemsPerPage = 1 // simulate pagination
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
 
 			tt.fields.ops.URL, _ = url.Parse(tt.httpServer.URL)
 
@@ -410,9 +426,12 @@ func TestGitlab_CommitTemplateFiles(t *testing.T) {
 
 			_ = g.Connect()
 
-			if err := g.CommitTemplateFiles(); (err != nil) != tt.wantErr {
-				t.Errorf("Gitlab.CommitTemplateFiles() error = %v, wantErr %v", err, tt.wantErr)
+			err := g.CommitTemplateFiles()
+			if tt.wantErr {
+				assert.Errorf(t, err, "Gitlab.CommitTemplateFiles() error = %v", err)
+				return
 			}
+			assert.NoError(t, err)
 		})
 	}
 }
