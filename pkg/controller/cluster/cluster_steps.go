@@ -75,7 +75,7 @@ func setBootstrapToken(obj pipeline.Object, data *pipeline.Context) pipeline.Res
 	return pipeline.Result{}
 }
 
-// newClusterStatus will create a default lifetime of 30 minutes if it wasn't set in the object.
+// newClusterStatus will create a default lifetime of 24h if it wasn't set in the object.
 func newClusterStatus(cluster *synv1alpha1.Cluster) error {
 	parseTime := "24h"
 	if cluster.Spec.TokenLifeTime != "" {
