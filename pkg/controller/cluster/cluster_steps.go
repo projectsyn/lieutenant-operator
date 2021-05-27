@@ -18,12 +18,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 )
 
-const (
-	clusterClassContent = `classes:
-- %s.%s
-`
-)
-
 func createClusterRBAC(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	objMeta := metav1.ObjectMeta{
 		Name:            obj.GetObjectMeta().GetName(),
@@ -81,9 +75,9 @@ func setBootstrapToken(obj pipeline.Object, data *pipeline.Context) pipeline.Res
 	return pipeline.Result{}
 }
 
-//newClusterStatus will create a default lifetime of 30 minutes if it wasn't set in the object.
+// newClusterStatus will create a default lifetime of 24h if it wasn't set in the object.
 func newClusterStatus(cluster *synv1alpha1.Cluster) error {
-	parseTime := "30m"
+	parseTime := "24h"
 	if cluster.Spec.TokenLifeTime != "" {
 		parseTime = cluster.Spec.TokenLifeTime
 	}
@@ -138,7 +132,7 @@ func applyClusterTemplateFromTenant(obj pipeline.Object, data *pipeline.Context)
 
 	tenant := &synv1alpha1.Tenant{}
 	if err := data.Client.Get(context.TODO(), nsName, tenant); err != nil {
-		return pipeline.Result{Err: fmt.Errorf("Couldn't find tenant: %w", err)}
+		return pipeline.Result{Err: fmt.Errorf("couldn't find tenant: %w", err)}
 	}
 
 	instance, ok := obj.(*synv1alpha1.Cluster)
