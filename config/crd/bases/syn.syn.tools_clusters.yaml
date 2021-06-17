@@ -1,0 +1,199 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: clusters.syn.syn.tools
+spec:
+  group: syn.syn.tools
+  names:
+    kind: Cluster
+    listKind: ClusterList
+    plural: clusters
+    singular: cluster
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.displayName
+      name: Display Name
+      type: string
+    - jsonPath: .spec.tenantRef.name
+      name: Tenant
+      type: string
+    - jsonPath: .metadata.creationTimestamp
+      name: Age
+      type: date
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: Cluster is the Schema for the clusters API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: ClusterSpec defines the desired state of Cluster
+            properties:
+              deletionPolicy:
+                description: 'DeletionPolicy defines how the external resources should
+                  be treated upon CR deletion. Retain: will not delete any external
+                  resources Delete: will delete the external resources Archive: will
+                  archive the external resources, if it supports that'
+                enum:
+                - Delete
+                - Retain
+                - Archive
+                type: string
+              displayName:
+                description: DisplayName of cluster which could be different from
+                  metadata.name. Allows cluster renaming should it be needed.
+                type: string
+              facts:
+                additionalProperties:
+                  type: string
+                description: Facts are key/value pairs for statically configured facts
+                type: object
+              gitHostKeys:
+                description: SSH GitHostKeys of the git server
+                type: string
+              gitRepoTemplate:
+                description: GitRepoTemplate template for managing the GitRepo object.
+                properties:
+                  apiSecretRef:
+                    description: APISecretRef reference to secret containing connection
+                      information
+                    properties:
+                      name:
+                        description: Name is unique within a namespace to reference
+                          a secret resource.
+                        type: string
+                      namespace:
+                        description: Namespace defines the space within which the
+                          secret name must be unique.
+                        type: string
+                    type: object
+                  deletionPolicy:
+                    description: 'DeletionPolicy defines how the external resources
+                      should be treated upon CR deletion. Retain: will not delete
+                      any external resources Delete: will delete the external resources
+                      Archive: will archive the external resources, if it supports
+                      that'
+                    enum:
+                    - Delete
+                    - Retain
+                    - Archive
+                    type: string
+                  deployKeys:
+                    additionalProperties:
+                      description: DeployKey defines an SSH key to be used for git
+                        operations.
+                      properties:
+                        key:
+                          description: Key is the actual key
+                          type: string
+                        type:
+                          description: Type defines what type the key is (rsa, ed25519,
+                            etc...)
+                          type: string
+                        writeAccess:
+                          description: WriteAccess if the key has RW access or not
+                          type: boolean
+                      type: object
+                    description: DeployKeys optional list of SSH deploy keys. If not
+                      set, not deploy keys will be configured
+                    type: object
+                  displayName:
+                    description: DisplayName of Git repository
+                    type: string
+                  path:
+                    description: Path to Git repository
+                    type: string
+                  repoName:
+                    description: RepoName name of Git repository
+                    type: string
+                  repoType:
+                    description: RepoType specifies if a repo should be managed by
+                      the git controller. A value of 'unmanaged' means it's not manged
+                      by the controller
+                    enum:
+                    - auto
+                    - unmanaged
+                    type: string
+                  templateFiles:
+                    additionalProperties:
+                      type: string
+                    description: TemplateFiles is a list of files that should be pushed
+                      to the repository after its creation.
+                    type: object
+                type: object
+              gitRepoURL:
+                description: GitRepoURL git repository storing the cluster configuration
+                  catalog. If this is set, no gitRepoTemplate is needed.
+                type: string
+              globalGitRepoRevision:
+                description: GlobalGitRepoRevision allows to configure the revision
+                  of the global configuration to use. It can be any git tree-ish reference.
+                  The revision from the tenant will be inherited if left empty.
+                type: string
+              tenantGitRepoRevision:
+                description: TenantGitRepoRevision allows to configure the revision
+                  of the tenant configuration to use. It can be any git tree-ish reference.
+                  The revision from the tenant will be inherited if left empty.
+                type: string
+              tenantRef:
+                description: TenantRef reference to Tenant object the cluster belongs
+                  to.
+                properties:
+                  name:
+                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Add other useful fields. apiVersion, kind, uid?'
+                    type: string
+                type: object
+              tokenLifeTime:
+                description: TokenLifetime set the token lifetime
+                type: string
+            type: object
+          status:
+            description: ClusterStatus defines the observed state of Cluster
+            properties:
+              bootstrapToken:
+                description: BootstrapTokenValid validity of the bootstrap token,
+                  set by the Lieutenant API.
+                properties:
+                  token:
+                    description: Token is the actual token to register the cluster
+                    type: string
+                  tokenValid:
+                    description: TokenValid indicates if the token is still valid
+                      or was already used.
+                    type: boolean
+                  validUntil:
+                    description: ValidUntil timespan how long the token is valid.
+                      If the token is used after this timestamp it will be rejected.
+                    format: date-time
+                    type: string
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []

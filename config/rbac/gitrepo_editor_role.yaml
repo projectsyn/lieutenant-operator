@@ -1,0 +1,24 @@
+# permissions for end users to edit gitrepos.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: gitrepo-editor-role
+rules:
+  - apiGroups:
+      - syn.tools
+    resources:
+      - gitrepos
+    verbs:
+      - create
+      - delete
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
+      - syn.tools
+    resources:
+      - gitrepos/status
+    verbs:
+      - get

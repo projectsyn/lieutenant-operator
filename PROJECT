@@ -1,0 +1,46 @@
+domain: syn.tools
+layout:
+- go.kubebuilder.io/v3
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: lieutenant-operator
+repo: github.com/projectsyn/lieutenant-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: syn.tools
+  group: syn
+  kind: Cluster
+  path: github.com/projectsyn/lieutenant-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: syn.tools
+  group: syn
+  kind: GitRepo
+  path: github.com/projectsyn/lieutenant-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: syn.tools
+  group: syn
+  kind: Tenant
+  path: github.com/projectsyn/lieutenant-operator/api/v1alpha1
+  version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: syn.tools
+  group: syn
+  kind: TenantTemplate
+  path: github.com/projectsyn/lieutenant-operator/api/v1alpha1
+  version: v1alpha1
+version: "3"

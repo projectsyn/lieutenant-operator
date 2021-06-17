@@ -7,4 +7,5 @@ rules:
     level: warning
 
 ignore: |
-  /deploy/crds/*_crd.yaml
+  /config/crd/**/*
+  /config/rbac/**/*

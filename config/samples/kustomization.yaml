@@ -1,0 +1,7 @@
+## Append samples you want in your CSV to this file as resources ##
+resources:
+  - syn_v1alpha1_cluster.yaml
+  - syn_v1alpha1_gitrepo.yaml
+  - gitrepo-secret.yaml
+  - syn_v1alpha1_tenant.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples
