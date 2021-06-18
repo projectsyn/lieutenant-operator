@@ -2,7 +2,7 @@
 
 Welcome to the documentation of the Lieutenant Operator - a Project Syn tool.
 
-image::syn.png[]
+image::projectsyn.svg[]
 
 Keeping inventory about tenants and clusters. It's the "database" for the link:https://github.com/projectsyn/lieutenant-api[lieutenant-api]. It primarily holds information about the tenants and clusters.
 
