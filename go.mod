@@ -7,7 +7,7 @@ require (
 	github.com/banzaicloud/bank-vaults/pkg/sdk v0.6.0
 	github.com/go-logr/logr v0.1.0
 	github.com/hashicorp/vault/api v1.0.4
-	github.com/imdario/mergo v0.3.11
+	github.com/imdario/mergo v0.3.12
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20200321030439-57b580e57e88
 	github.com/operator-framework/operator-sdk v0.17.1
 	github.com/ryankurte/go-structparse v1.2.0
