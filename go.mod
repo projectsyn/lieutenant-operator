@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/ahmetb/gen-crd-api-reference-docs v0.2.0
-	github.com/banzaicloud/bank-vaults/pkg/sdk v0.6.0
+	github.com/banzaicloud/bank-vaults/pkg/sdk v0.7.0
 	github.com/go-logr/logr v0.1.0
 	github.com/hashicorp/vault/api v1.0.4
 	github.com/imdario/mergo v0.3.11
