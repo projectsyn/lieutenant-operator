@@ -1,0 +1,59 @@
+-- Given an existing Restic repository, When creating a Restore, Then Restore to PVC
+-- Mon Jun 28 18:28:39 CEST 2021
+
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/k8up/e2e/./test-02-restore.bats
+Given an existing Restic repository, When creating a Restore, Then Restore to PVC
+
+Client query:
+kubectl --namespace=k8up-e2e-subject get backup -o custom-columns=NAME:.metadata.name,PROP:.status.conditions[?(@.type=="Completed")].reason
+
+Result:
+
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/k8up/e2e/./test-02-restore.bats
+Given an existing Restic repository, When creating a Restore, Then Restore to PVC
+
+Client query:
+kubectl --namespace=k8up-e2e-subject get restore -o custom-columns=NAME:.metadata.name,PROP:.status.started
+
+Result:
+k8up-k8up-restore   <none>
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/k8up/e2e/./test-02-restore.bats
+Given an existing Restic repository, When creating a Restore, Then Restore to PVC
+
+Client query:
+kubectl --namespace=k8up-e2e-subject get restore -o custom-columns=NAME:.metadata.name,PROP:.status.started
+
+Result:
+k8up-k8up-restore   true
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/k8up/e2e/./test-02-restore.bats
+Given an existing Restic repository, When creating a Restore, Then Restore to PVC
+
+Client query:
+kubectl --namespace=k8up-e2e-subject get job -o custom-columns=NAME:.metadata.name,PROP:.status.active
+
+Result:
+k8up-k8up-restore   1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/k8up/e2e/./test-02-restore.bats
+Given an existing Restic repository, When creating a Restore, Then Restore to PVC
+
+Client query:
+kubectl --namespace=k8up-e2e-subject get restore -o custom-columns=NAME:.metadata.name,PROP:.status.conditions[?(@.type=="Completed")].reason
+
+Result:
+
+-----DETIK:end-----
+

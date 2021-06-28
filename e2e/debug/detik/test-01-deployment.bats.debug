@@ -1,0 +1,225 @@
+-- Given Operator config, When applying manifests, Then expect running pod
+-- Mon Jun 28 18:46:16 CEST 2021
+
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/lieutenant-operator/e2e/./test-01-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=lieutenant-system get pod -o custom-columns=NAME:.metadata.name,PROP:.spec.containers[*].image
+
+Result:
+lieutenant-controller-manager-687c5df597-l6ks2   local.dev/lieutenant/e2e:e2e_d05ed2e4
+
+Expected count: 1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/lieutenant-operator/e2e/./test-01-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=lieutenant-system get pod -o custom-columns=NAME:.metadata.name,PROP:.status.phase
+
+Result:
+lieutenant-controller-manager-687c5df597-l6ks2   Pending
+
+Expected count: 1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/lieutenant-operator/e2e/./test-01-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=lieutenant-system get pod -o custom-columns=NAME:.metadata.name,PROP:.status.phase
+
+Result:
+lieutenant-controller-manager-687c5df597-l6ks2   Pending
+
+Expected count: 1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/lieutenant-operator/e2e/./test-01-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=lieutenant-system get pod -o custom-columns=NAME:.metadata.name,PROP:.status.phase
+
+Result:
+lieutenant-controller-manager-687c5df597-l6ks2   Pending
+
+Expected count: 1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/lieutenant-operator/e2e/./test-01-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=lieutenant-system get pod -o custom-columns=NAME:.metadata.name,PROP:.status.phase
+
+Result:
+lieutenant-controller-manager-687c5df597-l6ks2   Pending
+
+Expected count: 1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/lieutenant-operator/e2e/./test-01-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=lieutenant-system get pod -o custom-columns=NAME:.metadata.name,PROP:.status.phase
+
+Result:
+lieutenant-controller-manager-687c5df597-l6ks2   Pending
+
+Expected count: 1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/lieutenant-operator/e2e/./test-01-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=lieutenant-system get pod -o custom-columns=NAME:.metadata.name,PROP:.status.phase
+
+Result:
+lieutenant-controller-manager-687c5df597-l6ks2   Pending
+
+Expected count: 1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/lieutenant-operator/e2e/./test-01-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=lieutenant-system get pod -o custom-columns=NAME:.metadata.name,PROP:.status.phase
+
+Result:
+lieutenant-controller-manager-687c5df597-l6ks2   Pending
+
+Expected count: 1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/lieutenant-operator/e2e/./test-01-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=lieutenant-system get pod -o custom-columns=NAME:.metadata.name,PROP:.status.phase
+
+Result:
+lieutenant-controller-manager-687c5df597-l6ks2   Pending
+
+Expected count: 1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/lieutenant-operator/e2e/./test-01-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=lieutenant-system get pod -o custom-columns=NAME:.metadata.name,PROP:.status.phase
+
+Result:
+lieutenant-controller-manager-687c5df597-l6ks2   Pending
+
+Expected count: 1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/lieutenant-operator/e2e/./test-01-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=lieutenant-system get pod -o custom-columns=NAME:.metadata.name,PROP:.status.phase
+
+Result:
+lieutenant-controller-manager-687c5df597-l6ks2   Pending
+
+Expected count: 1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/lieutenant-operator/e2e/./test-01-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=lieutenant-system get pod -o custom-columns=NAME:.metadata.name,PROP:.status.phase
+
+Result:
+lieutenant-controller-manager-687c5df597-l6ks2   Pending
+
+Expected count: 1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/lieutenant-operator/e2e/./test-01-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=lieutenant-system get pod -o custom-columns=NAME:.metadata.name,PROP:.status.phase
+
+Result:
+lieutenant-controller-manager-687c5df597-l6ks2   Pending
+
+Expected count: 1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/lieutenant-operator/e2e/./test-01-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=lieutenant-system get pod -o custom-columns=NAME:.metadata.name,PROP:.status.phase
+
+Result:
+lieutenant-controller-manager-687c5df597-l6ks2   Pending
+
+Expected count: 1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/lieutenant-operator/e2e/./test-01-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=lieutenant-system get pod -o custom-columns=NAME:.metadata.name,PROP:.status.phase
+
+Result:
+lieutenant-controller-manager-687c5df597-l6ks2   Pending
+
+Expected count: 1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/lieutenant-operator/e2e/./test-01-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=lieutenant-system get pod -o custom-columns=NAME:.metadata.name,PROP:.status.phase
+
+Result:
+lieutenant-controller-manager-687c5df597-l6ks2   Pending
+
+Expected count: 1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/lieutenant-operator/e2e/./test-01-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=lieutenant-system get pod -o custom-columns=NAME:.metadata.name,PROP:.status.phase
+
+Result:
+lieutenant-controller-manager-687c5df597-l6ks2   Running
+
+Expected count: 1
+-----DETIK:end-----
+

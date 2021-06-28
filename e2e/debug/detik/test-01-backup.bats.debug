@@ -1,0 +1,48 @@
+-- Given a PVC, When creating a Backup of an app, Then expect Restic repository
+-- Mon Jun 28 18:27:23 CEST 2021
+
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/k8up/e2e/./test-01-backup.bats
+Given a PVC, When creating a Backup of an app, Then expect Restic repository
+
+Client query:
+kubectl --namespace=k8up-e2e-subject get backup -o custom-columns=NAME:.metadata.name,PROP:.status.started
+
+Result:
+k8up-k8up-backup   <none>
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/k8up/e2e/./test-01-backup.bats
+Given a PVC, When creating a Backup of an app, Then expect Restic repository
+
+Client query:
+kubectl --namespace=k8up-e2e-subject get backup -o custom-columns=NAME:.metadata.name,PROP:.status.started
+
+Result:
+k8up-k8up-backup   <none>
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/k8up/e2e/./test-01-backup.bats
+Given a PVC, When creating a Backup of an app, Then expect Restic repository
+
+Client query:
+kubectl --namespace=k8up-e2e-subject get backup -o custom-columns=NAME:.metadata.name,PROP:.status.started
+
+Result:
+k8up-k8up-backup   true
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/k8up/e2e/./test-01-backup.bats
+Given a PVC, When creating a Backup of an app, Then expect Restic repository
+
+Client query:
+kubectl --namespace=k8up-e2e-subject get job -o custom-columns=NAME:.metadata.name,PROP:.status.active
+
+Result:
+k8up-k8up-backup   1
+-----DETIK:end-----
+

@@ -1,0 +1,41 @@
+before:
+  hooks:
+    - make crd
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goarch:
+      - amd64
+    goos:
+      - linux
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ .Tag }}-snapshot"
+
+dockers:
+  - image_templates:
+      - docker.io/projectsyn/lieutenant-operator:{{ .Version }}
+      - quay.io/projectsyn/lieutenant-operator:{{ .Version }}
+
+      # For prereleases, updating `latest` and the floating tags of the major
+      # version does not make sense. Only the image for the exact version should
+      # be pushed.
+      - "{{ if not .Prerelease }}docker.io/projectsyn/lieutenant-operator:v{{ .Major }}{{ end }}"
+      - "{{ if not .Prerelease }}quay.io/projectsyn/lieutenant-operator:v{{ .Major }}{{ end }}"
+
+      - "{{ if not .Prerelease }}docker.io/projectsyn/lieutenant-operator:latest{{ end }}"
+      - "{{ if not .Prerelease }}quay.io/projectsyn/lieutenant-operator:latest{{ end }}"
+    use: buildx
+    extra_files:
+      - LICENSE
+release:
+  prerelease: auto
+  github:
+    owner: projectsyn
+    name: lieutenant-operator
+  extra_files:
+    - glob: lieutenant-crd.yaml

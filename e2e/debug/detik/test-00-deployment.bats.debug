@@ -1,0 +1,43 @@
+-- Given Operator config, When applying manifests, Then expect running pod
+-- Mon Jun 28 18:26:49 CEST 2021
+
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/k8up/e2e/./test-00-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=k8up-system get pod -o custom-columns=NAME:.metadata.name,PROP:.spec.containers[*].image
+
+Result:
+k8up-operator-7457fcf8b9-pnl5l   local.dev/k8up/e2e:e2e_4cce953c
+
+Expected count: 1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/k8up/e2e/./test-00-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=k8up-system get pod -o custom-columns=NAME:.metadata.name,PROP:.status.phase
+
+Result:
+k8up-operator-7457fcf8b9-pnl5l   Pending
+
+Expected count: 1
+-----DETIK:end-----
+
+-----DETIK:begin-----
+/Users/cimnine/src/vshn/k8up/e2e/./test-00-deployment.bats
+Given Operator config, When applying manifests, Then expect running pod
+
+Client query:
+kubectl --namespace=k8up-system get pod -o custom-columns=NAME:.metadata.name,PROP:.status.phase
+
+Result:
+k8up-operator-7457fcf8b9-pnl5l   Running
+
+Expected count: 1
+-----DETIK:end-----
+

@@ -23,14 +23,10 @@ spec:
         control-plane: controller-manager
     spec:
       securityContext:
-        runAsNonRoot: true
+        runAsUser: 65532
       containers:
-        - command:
-            - /manager
-          args:
-            - --leader-elect
-          image: controller:latest
-          name: manager
+        - name: lieutenent-operator
+          image: quay.io/projectsyn/lieutenant-operator:latest
           securityContext:
             allowPrivilegeEscalation: false
           livenessProbe:
