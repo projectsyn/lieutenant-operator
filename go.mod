@@ -9,9 +9,6 @@ require (
 	github.com/go-logr/zapr v0.4.0
 	github.com/hashicorp/vault/api v1.1.0
 	github.com/imdario/mergo v0.3.12
-	github.com/onsi/ginkgo v1.16.4
-	github.com/onsi/gomega v1.13.0
-	github.com/operator-framework/operator-lifecycle-manager v0.18.2
 	github.com/ryankurte/go-structparse v1.2.0
 	github.com/stretchr/testify v1.7.0
 	github.com/xanzy/go-gitlab v0.50.0

@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	v1 "github.com/operator-framework/operator-lifecycle-manager/pkg/lib/kubernetes/pkg/apis/rbac/v1"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pipeline"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
@@ -35,10 +35,21 @@ func createRoleBinding(obj pipeline.Object, data *pipeline.Context) pipeline.Res
 // NewRoleBinding returns a new RoleBinding object.
 // Its intention is to link subjects to the role created with `Tenant.NewRole()`.
 func NewRoleBinding(scheme *runtime.Scheme, tenant *synv1alpha1.Tenant) (*rbacv1.RoleBinding, error) {
-	builder := v1.NewRoleBinding(tenant.Name, tenant.Namespace)
-	builder.SAs(tenant.Namespace, tenant.Name)
+	ns := tenant.Namespace
+	name := tenant.Name
+	binding := rbacv1.RoleBinding{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: ns,
+		},
+		RoleRef: rbacv1.RoleRef{
+			APIGroup: "rbac.authorization.k8s.io",
+			Kind:     "Role",
+			Name:     name,
+		},
+		Subjects: []rbacv1.Subject{{Kind: rbacv1.ServiceAccountKind, Namespace: ns, Name: name}},
+	}
 
-	binding := builder.BindingOrDie()
 	setManagedByLabel(&binding)
 	if err := controllerutil.SetOwnerReference(tenant, &binding, scheme); err != nil {
 		return nil, err
