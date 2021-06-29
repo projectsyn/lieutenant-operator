@@ -25,6 +25,7 @@ type ClusterReconciler struct {
 //+kubebuilder:rbac:groups=syn.tools,resources=clusters,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=syn.tools,resources=clusters/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=syn.tools,resources=clusters/finalizers,verbs=update
+
 func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	reqLogger := log.FromContext(ctx)
 	reqLogger.Info("Reconciling Cluster")

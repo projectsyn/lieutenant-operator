@@ -11,7 +11,7 @@ resources:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: syn.tools
+  domain: tools
   group: syn
   kind: Cluster
   path: github.com/projectsyn/lieutenant-operator/api/v1alpha1
@@ -20,7 +20,7 @@ resources:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: syn.tools
+  domain: tools
   group: syn
   kind: GitRepo
   path: github.com/projectsyn/lieutenant-operator/api/v1alpha1
@@ -29,7 +29,7 @@ resources:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: syn.tools
+  domain: tools
   group: syn
   kind: Tenant
   path: github.com/projectsyn/lieutenant-operator/api/v1alpha1
@@ -38,7 +38,7 @@ resources:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: syn.tools
+  domain: tools
   group: syn
   kind: TenantTemplate
   path: github.com/projectsyn/lieutenant-operator/api/v1alpha1

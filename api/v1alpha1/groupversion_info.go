@@ -1,6 +1,11 @@
 // Package v1alpha1 contains API Schema definitions for the syn v1alpha1 API group
 //+kubebuilder:object:generate=true
-//+groupName=syn.syn.tools
+//+groupName=syn.tools
+
+//+kubebuilder:rbac:groups=coordination.k8s.io,resources=leases,verbs=get;list;create;update
+//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=roles;rolebindings,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=serviceaccounts;secrets;configmaps,verbs=get;list;watch;create;update;patch;delete
+
 package v1alpha1
 
 import (

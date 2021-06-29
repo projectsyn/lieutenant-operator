@@ -5,8 +5,8 @@ go 1.16
 require (
 	github.com/Azure/go-autorest/autorest v0.11.19 // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.9.14 // indirect
-	github.com/ahmetb/gen-crd-api-reference-docs v0.3.0
 	github.com/banzaicloud/bank-vaults/pkg/sdk v0.7.0
+	github.com/elastic/crd-ref-docs v0.0.7
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible // indirect
 	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.4.0
@@ -26,7 +26,6 @@ require (
 	github.com/operator-framework/operator-lifecycle-manager v0.18.2
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/prometheus/common v0.29.0 // indirect
-	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/ryankurte/go-structparse v1.2.0
 	github.com/stretchr/testify v1.7.0
 	github.com/xanzy/go-gitlab v0.50.0
@@ -42,12 +41,12 @@ require (
 	k8s.io/api v0.21.2
 	k8s.io/apimachinery v0.21.2
 	k8s.io/client-go v0.21.2
-	k8s.io/gengo v0.0.0-20210203185629-de9496dff47b // indirect
 	k8s.io/klog/v2 v2.9.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20210527164424-3c818078ee3d // indirect
 	k8s.io/utils v0.0.0-20210527160623-6fdb442a123b
 	sigs.k8s.io/controller-runtime v0.9.1
-	sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20210623192810-985e819db7af // indirect
-	sigs.k8s.io/kustomize/kustomize/v3 v3.10.0 // indirect
+	sigs.k8s.io/controller-runtime/tools/setup-envtest v0.0.0-20210623192810-985e819db7af
+	sigs.k8s.io/controller-tools v0.4.1
+	sigs.k8s.io/kustomize/kustomize/v3 v3.10.0
 	sigs.k8s.io/structured-merge-diff/v4 v4.1.1 // indirect
 )
