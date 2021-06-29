@@ -5,8 +5,6 @@
 *.dll
 *.so
 *.dylib
-bin
-testbin/*
 
 # Test binary, build with `go test -c`
 *.test
@@ -23,7 +21,22 @@ testbin/*
 *.swp
 *.swo
 *~
-dist/
+.vscode
+
+# Antora related
+.asciidoctor
+.cache
+_public/
+_archive/
 
 lieutenant-crd.yaml
 lieutenant-operator
+
+bin/
+dist/
+.github/release-notes.md
+testbin/
+node_modules/
+e2e/debug
+__debug_bin
+coverage/
