@@ -17,6 +17,10 @@ bases:
   - ../rbac
   - ../manager
 
+commonLabels:
+  app.kubernetes.io/name: lieutenant-operator
+  app.kubernetes.io/part-of: project-syn
+
 patchesStrategicMerge: []
 
 # the following config is for teaching kustomize how to do var substitution
