@@ -28,7 +28,7 @@ $(KIND_KUBECONFIG): $(KIND)
 	@mkdir -p debug/data/pvc-subject
 	$(KIND) create cluster \
 		--name $(KIND_CLUSTER) \
-		--image kindest/node:$(KIND_NODE_VERSION) \
+		--image kindest/node:$(KIND_NODE_VERSION)
 	@kubectl version
 	@kubectl cluster-info
 
