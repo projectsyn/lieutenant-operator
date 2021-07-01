@@ -15,8 +15,6 @@ spec:
       labels:
         control-plane: controller-manager
     spec:
-      securityContext:
-        runAsUser: 65532
       serviceAccountName: lieutenant-operator
       containers:
         - name: lieutenent-operator

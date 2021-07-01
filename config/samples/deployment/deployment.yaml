@@ -11,8 +11,9 @@ spec:
         - name: lieutenant-operator
           image: docker.io/projectsyn/lieutenant-operator:latest
           imagePullPolicy: Always
-          command:
-            - lieutenant-operator
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
           env:
             - name: WATCH_NAMESPACE
               valueFrom:
@@ -24,8 +25,6 @@ spec:
                   fieldPath: metadata.name
             - name: OPERATOR_NAME
               value: lieutenant-operator
-          securityContext:
-            runAsNonRoot: true
           resources:
             requests:
               cpu: 200m
