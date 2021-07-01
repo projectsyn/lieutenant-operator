@@ -16,5 +16,5 @@ DEBUG_DETIK="true"
 	apply definitions/operator
 
 	try "at most 10 times every 2s to find 1 pod named 'lieutenant-controller-manager-*' with '.spec.containers[*].image' being '${E2E_IMAGE}'"
-	try "at most 20 times every 2s to find 1 pod named 'lieutenant-controller-manager-*' with 'status' being 'running'"
+	try "at most 40 times every 2s to find 1 pod named 'lieutenant-controller-manager-*' with 'status' being 'running'"
 }
