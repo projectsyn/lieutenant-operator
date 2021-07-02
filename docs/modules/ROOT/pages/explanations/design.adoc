@@ -49,7 +49,7 @@ Value
 |API version |`v1alpha1`
 |===
 
-The API documentation of these CRDs can be found under xref:references/crds-html.adoc[References/CRDs].
+For more information about the CRDs have a look at xref:lieutenant-operator:ROOT:references/api-reference.adoc[our API documentation].
 
 == CRD Description
 

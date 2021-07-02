@@ -6,7 +6,7 @@ You can find some explanations on how to use them in here.
 
 == Cluster Template
 
-The tenant field `.spec.clusterTemplate` <<references/crds-html.adoc#syn.tools/v1alpha1.TenantSpec,defines>> a template which is used to set default values for clusters of this tenant.
+The tenant field `.spec.clusterTemplate` <<references/api-reference.adoc#k8s-api-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenantspec,defines>> a template which is used to set default values for clusters of this tenant.
 
 [NOTE]
 The template will only be applied to fields of the cluster which aren't already set (empty or `nil`).
