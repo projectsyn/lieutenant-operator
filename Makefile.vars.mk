@@ -31,7 +31,7 @@ INTEGRATION_TEST_DEBUG_OUTPUT ?= false
 KUSTOMIZE ?= go run sigs.k8s.io/kustomize/kustomize/v3
 
 # Image URL to use all building/pushing image targets
-DOCKER_IMG ?= docker.io/projectsyn/lieutenant:$(IMG_TAG)
-QUAY_IMG ?= quay.io/projectsyn/lieutenant:$(IMG_TAG)
+DOCKER_IMG ?= docker.io/projectsyn/lieutenant-operator:$(IMG_TAG)
+QUAY_IMG ?= quay.io/projectsyn/lieutenant-operator:$(IMG_TAG)
 
 testbin_created = $(TESTBIN_DIR)/.created
