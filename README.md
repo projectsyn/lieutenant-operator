@@ -4,10 +4,9 @@ Kubernetes Operator which implements the backend for [Lieutenant API](https://gi
 
 The operator keeps inventory about all the tenants and clusters in a SYN managed k8s cluster.
 
-It also handles the management of some requirements like Git repositories and secret management. It can automatically populate Git repositories with template files when a new cluster is added. It will also generate a token to be used by Steward.
-
-
-**Please note that this project is in it's early stages and under active development**.
+It also handles the management of some requirements like Git repositories and secret management.
+It can automatically populate Git repositories with template files when a new cluster is added.
+It will also generate a token to be used by Steward.
 
 This repository is part of Project Syn.
 For documentation on Project Syn and this component, see https://syn.tools.
@@ -22,23 +21,24 @@ You can use the `make docs-serve` command and then browse to http://localhost:20
 
 ## Deployment
 
-A Kustomize setup is available under `deploy/`.
+A Kustomize setup is available under `config/samples/deployment`.
 
 Example:
 
 ```
 kubectl create ns syn-lieutenant
-kubectl -n syn-lieutenant apply -k deploy/crds/
-kubectl -n syn-lieutenant apply -k deploy/
+kubectl -n syn-lieutenant apply -k config/crd/
+kubectl -n syn-lieutenant apply -k config/samples/deployment
 ```
 
-Some example data to test the operator is available under `examples/`.
+Some example data to test the operator is available under `config/samples/`.
 
 ## Development
 
-to be written
-
 The Operator is implemented using the [Operator SDK](https://github.com/operator-framework/operator-sdk).
+
+There are many `make` targets available.
+Run `make help` to get a list of relevant targets.
 
 ## Contributing and license
 

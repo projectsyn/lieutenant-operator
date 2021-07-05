@@ -1,0 +1,20 @@
+# permissions for end users to view tenanttemplates.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: tenanttemplate-viewer-role
+rules:
+  - apiGroups:
+      - syn.tools
+    resources:
+      - tenanttemplates
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - syn.tools
+    resources:
+      - tenanttemplates/status
+    verbs:
+      - get

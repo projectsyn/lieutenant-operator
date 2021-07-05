@@ -1,0 +1,294 @@
+// Generated documentation. Please do not edit.
+:anchor_prefix: k8s-api
+
+[id="api-reference"]
+= API Reference
+
+This is a https://github.com/elastic/crd-ref-docs[generated] API documentation.
+
+TIP: A more sophisticated documentation is available under https://doc.crds.dev/github.com/projectsyn/lieutenant-operator.
+
+.Packages
+- xref:{anchor_prefix}-syn-tools-v1alpha1[$$syn.tools/v1alpha1$$]
+
+
+[id="{anchor_prefix}-syn-tools-v1alpha1"]
+== syn.tools/v1alpha1
+
+
+.Resource Types
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenanttemplate[$$TenantTemplate$$]
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenanttemplatelist[$$TenantTemplateList$$]
+
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-bootstraptoken"]
+=== BootstrapToken 
+
+BootstrapToken this key is used only once for Steward to register.
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterstatus[$$ClusterStatus$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`token`* __string__ | Token is the actual token to register the cluster
+| *`validUntil`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#time-v1-meta[$$Time$$]__ | ValidUntil timespan how long the token is valid. If the token is used after this timestamp it will be rejected.
+| *`tokenValid`* __boolean__ | TokenValid indicates if the token is still valid or was already used.
+|===
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-cluster"]
+=== Cluster 
+
+Cluster is the Schema for the clusters API
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterlist[$$ClusterList$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`metadata`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#objectmeta-v1-meta[$$ObjectMeta$$]__ | Refer to Kubernetes API documentation for fields of `metadata`.
+
+| *`spec`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterspec[$$ClusterSpec$$]__ | 
+|===
+
+
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterspec"]
+=== ClusterSpec 
+
+ClusterSpec defines the desired state of Cluster
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-cluster[$$Cluster$$]
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenantspec[$$TenantSpec$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`displayName`* __string__ | DisplayName of cluster which could be different from metadata.name. Allows cluster renaming should it be needed.
+| *`gitRepoURL`* __string__ | GitRepoURL git repository storing the cluster configuration catalog. If this is set, no gitRepoTemplate is needed.
+| *`gitHostKeys`* __string__ | SSH GitHostKeys of the git server
+| *`gitRepoTemplate`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]__ | GitRepoTemplate template for managing the GitRepo object.
+| *`tenantRef`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#localobjectreference-v1-core[$$LocalObjectReference$$]__ | TenantRef reference to Tenant object the cluster belongs to.
+| *`tenantGitRepoRevision`* __string__ | TenantGitRepoRevision allows to configure the revision of the tenant configuration to use. It can be any git tree-ish reference. The revision from the tenant will be inherited if left empty.
+| *`globalGitRepoRevision`* __string__ | GlobalGitRepoRevision allows to configure the revision of the global configuration to use. It can be any git tree-ish reference. The revision from the tenant will be inherited if left empty.
+| *`tokenLifeTime`* __string__ | TokenLifetime set the token lifetime
+| *`facts`* __object (keys:string, values:string)__ | Facts are key/value pairs for statically configured facts
+| *`deletionPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deletionpolicy[$$DeletionPolicy$$]__ | DeletionPolicy defines how the external resources should be treated upon CR deletion. Retain: will not delete any external resources Delete: will delete the external resources Archive: will archive the external resources, if it supports that
+|===
+
+
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deletionpolicy"]
+=== DeletionPolicy (string) 
+
+DeletionPolicy defines the type deletion policy
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterspec[$$ClusterSpec$$]
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenantspec[$$TenantSpec$$]
+****
+
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deploykey"]
+=== DeployKey 
+
+DeployKey defines an SSH key to be used for git operations.
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`type`* __string__ | Type defines what type the key is (rsa, ed25519, etc...)
+| *`key`* __string__ | Key is the actual key
+| *`writeAccess`* __boolean__ | WriteAccess if the key has RW access or not
+|===
+
+
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepo"]
+=== GitRepo 
+
+GitRepo is the Schema for the gitrepos API
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepolist[$$GitRepoList$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`metadata`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#objectmeta-v1-meta[$$ObjectMeta$$]__ | Refer to Kubernetes API documentation for fields of `metadata`.
+
+| *`spec`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepospec[$$GitRepoSpec$$]__ | 
+|===
+
+
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepospec"]
+=== GitRepoSpec 
+
+GitRepoSpec defines the desired state of GitRepo
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepo[$$GitRepo$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`GitRepoTemplate`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]__ | 
+| *`tenantRef`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#localobjectreference-v1-core[$$LocalObjectReference$$]__ | TenantRef references the tenant this repo belongs to
+|===
+
+
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate"]
+=== GitRepoTemplate 
+
+GitRepoTemplate is used for templating git repos, it does not contain the tenantRef as it will be added by the controller creating the template instance.
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterspec[$$ClusterSpec$$]
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepospec[$$GitRepoSpec$$]
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenantspec[$$TenantSpec$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`apiSecretRef`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#secretreference-v1-core[$$SecretReference$$]__ | APISecretRef reference to secret containing connection information
+| *`deployKeys`* __object (keys:string, values:xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deploykey[$$DeployKey$$])__ | DeployKeys optional list of SSH deploy keys. If not set, not deploy keys will be configured
+| *`path`* __string__ | Path to Git repository
+| *`repoName`* __string__ | RepoName name of Git repository
+| *`repoType`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-repotype[$$RepoType$$]__ | RepoType specifies if a repo should be managed by the git controller. A value of 'unmanaged' means it's not manged by the controller
+| *`displayName`* __string__ | DisplayName of Git repository
+| *`templateFiles`* __object (keys:string, values:string)__ | TemplateFiles is a list of files that should be pushed to the repository after its creation.
+| *`deletionPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deletionpolicy[$$DeletionPolicy$$]__ | DeletionPolicy defines how the external resources should be treated upon CR deletion. Retain: will not delete any external resources Delete: will delete the external resources Archive: will archive the external resources, if it supports that
+|===
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-repotype"]
+=== RepoType (string) 
+
+RepoType specifies the type of the repo
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]
+****
+
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenant"]
+=== Tenant 
+
+Tenant is the Schema for the tenants API
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenantlist[$$TenantList$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`metadata`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#objectmeta-v1-meta[$$ObjectMeta$$]__ | Refer to Kubernetes API documentation for fields of `metadata`.
+
+| *`spec`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenantspec[$$TenantSpec$$]__ | 
+|===
+
+
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenantspec"]
+=== TenantSpec 
+
+TenantSpec defines the desired state of Tenant
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenant[$$Tenant$$]
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenanttemplate[$$TenantTemplate$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`displayName`* __string__ | DisplayName is the display name of the tenant.
+| *`gitRepoURL`* __string__ | GitRepoURL git repository storing the tenant configuration. If this is set, no gitRepoTemplate is needed.
+| *`gitRepoRevision`* __string__ | GitRepoRevision allows to configure the revision of the tenant configuration to use. It can be any git tree-ish reference. Defaults to HEAD if left empty.
+| *`globalGitRepoURL`* __string__ | GlobalGitRepoURL git repository storing the global configuration.
+| *`globalGitRepoRevision`* __string__ | GlobalGitRepoRevision allows to configure the revision of the global configuration to use. It can be any git tree-ish reference. Defaults to HEAD if left empty.
+| *`gitRepoTemplate`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]__ | GitRepoTemplate Template for managing the GitRepo object. If not set, no GitRepo object will be created.
+| *`deletionPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deletionpolicy[$$DeletionPolicy$$]__ | DeletionPolicy defines how the external resources should be treated upon CR deletion. Retain: will not delete any external resources Delete: will delete the external resources Archive: will archive the external resources, if it supports that
+| *`clusterTemplate`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterspec[$$ClusterSpec$$]__ | ClusterTemplate defines a template which will be used to set defaults for the clusters of this tenant. The fields whitin this can use Go templating. See [the docs](https://syn.tools/lieutenant-operator/explanation/templating.html) for details.
+|===
+
+
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenanttemplate"]
+=== TenantTemplate 
+
+TenantTemplate is the Schema for the tenant templates API
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenanttemplatelist[$$TenantTemplateList$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`apiVersion`* __string__ | `syn.tools/v1alpha1`
+| *`kind`* __string__ | `TenantTemplate`
+| *`metadata`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#objectmeta-v1-meta[$$ObjectMeta$$]__ | Refer to Kubernetes API documentation for fields of `metadata`.
+
+| *`spec`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenantspec[$$TenantSpec$$]__ | 
+|===
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenanttemplatelist"]
+=== TenantTemplateList 
+
+TenantTemplateList contains a list of TenantTemplate
+
+
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`apiVersion`* __string__ | `syn.tools/v1alpha1`
+| *`kind`* __string__ | `TenantTemplateList`
+| *`metadata`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#listmeta-v1-meta[$$ListMeta$$]__ | Refer to Kubernetes API documentation for fields of `metadata`.
+
+| *`items`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenanttemplate[$$TenantTemplate$$]__ | 
+|===
+
+

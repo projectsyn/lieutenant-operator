@@ -1,0 +1,122 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+  - get
+  - list
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - secrets
+  - serviceaccounts
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - rolebindings
+  - roles
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - syn.tools
+  resources:
+  - clusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - syn.tools
+  resources:
+  - clusters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - syn.tools
+  resources:
+  - clusters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - syn.tools
+  resources:
+  - gitrepos
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - syn.tools
+  resources:
+  - gitrepos/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - syn.tools
+  resources:
+  - gitrepos/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - syn.tools
+  resources:
+  - tenants
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - syn.tools
+  resources:
+  - tenants/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - syn.tools
+  resources:
+  - tenants/status
+  verbs:
+  - get
+  - patch
+  - update

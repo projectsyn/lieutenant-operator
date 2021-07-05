@@ -7,10 +7,10 @@ The Operator provides a Kustomize folder which allows for easy installation:
 kubectl create namespace lieutenant
 
 # CRDs (global scope)
-kubectl apply -k github.com/projectsyn/lieutenant-operator/deploy/crds
+kubectl apply -k github.com/projectsyn/lieutenant-operator/config/crd
 
 # Operator deployment
-kubectl -n lieutenant apply -k github.com/projectsyn/lieutenant-operator/deploy
+kubectl -n lieutenant apply -k github.com/projectsyn/lieutenant-operator/config/samples/deployment
 --
 
-The deployment artefact are to be found in the https://github.com/projectsyn/lieutenant-operator/tree/master/deploy[`/deploy`] folder.
+The deployment artefact are to be found in the folder https://github.com/projectsyn/lieutenant-operator/tree/master/config/samples/deployment[`config/samples/deployment`].

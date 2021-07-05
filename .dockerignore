@@ -1,4 +1,20 @@
-.*ignore
-*.md
-Dockerfile
-lieutenant-operator
+# Exclude all by default
+*
+
+# Folders to include
+!api
+!collection
+!controllers
+!git
+!pipeline
+!role
+!vault
+!hack
+
+# Files to include
+!main.go
+!go.mod
+!go.sum
+!LICENSE
+!Makefile
+!lieutenant-operator
