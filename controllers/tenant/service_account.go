@@ -25,7 +25,7 @@ func createServiceAccount(obj pipeline.Object, data *pipeline.Context) pipeline.
 
 	err = data.Client.Create(data.Context, sa)
 	if err != nil && !errors.IsAlreadyExists(err) {
-		return pipeline.Result{Err: err}
+		return pipeline.Result{Err: fmt.Errorf("create serviceaccount: %w", err)}
 	}
 
 	return pipeline.Result{}

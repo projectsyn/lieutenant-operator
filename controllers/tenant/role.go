@@ -27,7 +27,7 @@ func createRole(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 
 	err = data.Client.Create(data.Context, role)
 	if err != nil && !errors.IsAlreadyExists(err) {
-		return pipeline.Result{Err: err}
+		return pipeline.Result{Err: fmt.Errorf("create role: %w", err)}
 	}
 
 	return pipeline.Result{}

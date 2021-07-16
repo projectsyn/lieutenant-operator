@@ -32,7 +32,7 @@ func applyTemplateFromTenantTemplate(obj pipeline.Object, data *pipeline.Context
 	}
 
 	if err := tenant.ApplyTemplate(template); err != nil {
-		return pipeline.Result{Err: err}
+		return pipeline.Result{Err: fmt.Errorf("apply tenant template: %w", err)}
 	}
 
 	return pipeline.Result{}

@@ -25,7 +25,7 @@ func createRoleBinding(obj pipeline.Object, data *pipeline.Context) pipeline.Res
 
 	err = data.Client.Create(data.Context, binding)
 	if err != nil && !errors.IsAlreadyExists(err) {
-		return pipeline.Result{Err: err}
+		return pipeline.Result{Err: fmt.Errorf("create rolebinding: %w", err)}
 	}
 
 	return pipeline.Result{}

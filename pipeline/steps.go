@@ -89,7 +89,7 @@ func updateObject(obj Object, data *Context) Result {
 				data.Log.V(1).Error(err, "conflict while updating object; requeueing")
 				return Result{Requeue: true}
 			}
-			return Result{Err: err}
+			return Result{Err: fmt.Errorf("update %s/%s: %w", obj.GroupVersionKind().String(), obj.GetName(), err)}
 		}
 	}
 
@@ -105,7 +105,7 @@ func updateObject(obj Object, data *Context) Result {
 				data.Log.V(1).Error(err, "conflict while updating object; requeueing")
 				return Result{Requeue: true}
 			}
-			return Result{Err: err}
+			return Result{Err: fmt.Errorf("update %s/%s status: %w", obj.GroupVersionKind().String(), obj.GetName(), err)}
 		}
 	}
 

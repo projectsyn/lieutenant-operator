@@ -21,7 +21,7 @@ func Steps(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 
 	err := fetchGitRepoTemplate(instance, data)
 	if err != nil {
-		return pipeline.Result{Err: err}
+		return pipeline.Result{Err: fmt.Errorf("fetch Git repo template: %w", err)}
 	}
 
 	if instance.Spec.RepoType == synv1alpha1.UnmanagedRepoType {
@@ -31,7 +31,7 @@ func Steps(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 
 	repo, hostKeys, err := manager.GetGitClient(data.Context, &instance.Spec.GitRepoTemplate, instance.GetNamespace(), data.Log, data.Client)
 	if err != nil {
-		return pipeline.Result{Err: err}
+		return pipeline.Result{Err: fmt.Errorf("get Git client: %w", err)}
 	}
 
 	instance.Status.HostKeys = hostKeys
@@ -49,7 +49,7 @@ func Steps(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	if data.Deleted {
 		err := repo.Remove()
 		if err != nil {
-			return pipeline.Result{Err: err}
+			return pipeline.Result{Err: fmt.Errorf("remove repo: %w", err)}
 		}
 		return pipeline.Result{}
 	}
@@ -61,7 +61,7 @@ func Steps(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 
 	changed, err := repo.Update()
 	if err != nil {
-		return pipeline.Result{Err: err}
+		return pipeline.Result{Err: fmt.Errorf("update repo: %w", err)}
 	}
 
 	if changed {
