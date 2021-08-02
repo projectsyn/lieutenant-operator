@@ -5,12 +5,11 @@ BIN_FILENAME ?= $(CURDIR)/$(PROJECT_ROOT_DIR)/lieutenant-operator
 TESTBIN_DIR ?= $(CURDIR)/$(PROJECT_ROOT_DIR)/testbin/bin
 
 CRD_FILE ?= lieutenant-crd.yaml
-CRD_FILE_LEGACY ?= lieutenant-crd-legacy.yaml
 CRD_ROOT_DIR ?= config/crd/
 
 CRD_DOCS_REF_PATH ?= docs/modules/ROOT/pages/references/api-reference.adoc
 
-KIND_NODE_VERSION ?= v1.20.0
+KIND_NODE_VERSION ?= v1.21.2
 KIND ?= go run sigs.k8s.io/kind
 
 ENABLE_LEADER_ELECTION ?= false
