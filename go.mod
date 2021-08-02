@@ -7,7 +7,7 @@ require (
 	github.com/elastic/crd-ref-docs v0.0.7
 	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.4.0
-	github.com/hashicorp/vault/api v1.1.0
+	github.com/hashicorp/vault/api v1.1.1
 	github.com/imdario/mergo v0.3.12
 	github.com/ryankurte/go-structparse v1.2.0
 	github.com/stretchr/testify v1.7.0
