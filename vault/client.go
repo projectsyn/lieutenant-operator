@@ -1,6 +1,7 @@
 package vault
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -31,7 +32,7 @@ type VaultSecret struct {
 
 type VaultClient interface {
 	AddSecrets(secrets []VaultSecret) error
-	// remove specific secret
+	// RemoveSecrets removes the given secrets
 	RemoveSecrets(secret []VaultSecret) error
 	SetDeletionPolicy(synv1alpha1.DeletionPolicy)
 }
@@ -45,7 +46,7 @@ type BankVaultClient struct {
 
 // NewClient returns the default VaultClient implementation, ready to be used.
 // It automatically detects, if there was a Vault token provided or if it's
-// running withing kubernetes.
+// running within kubernetes.
 func NewClient(deletionPolicy synv1alpha1.DeletionPolicy, log logr.Logger) (VaultClient, error) {
 
 	if instanceClient != nil {
@@ -80,6 +81,9 @@ func newBankVaultClient(deletionPolicy synv1alpha1.DeletionPolicy, log logr.Logg
 		client.RawClient().SetToken(os.Getenv(api.EnvVaultToken))
 	}
 
+	if client.RawClient().Token() == "" {
+		return nil, errors.New("cannot instantiate Vault client with empty token")
+	}
 	secretEngine := os.Getenv("VAULT_SECRET_ENGINE_PATH")
 	if secretEngine == "" {
 		secretEngine = "kv"

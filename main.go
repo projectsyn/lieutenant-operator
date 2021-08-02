@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/projectsyn/lieutenant-operator/vault"
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -99,6 +100,11 @@ func main() {
 	}
 	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up ready check")
+		os.Exit(1)
+	}
+
+	if _, err := vault.NewClient("", nil); err != nil {
+		setupLog.Error(err, "")
 		os.Exit(1)
 	}
 
