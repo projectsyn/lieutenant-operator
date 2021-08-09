@@ -8,5 +8,5 @@ spec:
   template:
     spec:
       containers:
-      - name: lieutenent-operator
+      - name: lieutenant-operator
         image: $E2E_IMAGE
