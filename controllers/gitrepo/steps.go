@@ -5,6 +5,9 @@ import (
 	"fmt"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
+
+	// Register Gitrepo implementation - DONOT REMOVE
+	_ "github.com/projectsyn/lieutenant-operator/git"
 	"github.com/projectsyn/lieutenant-operator/git/manager"
 	"github.com/projectsyn/lieutenant-operator/pipeline"
 	"sigs.k8s.io/controller-runtime/pkg/client"
