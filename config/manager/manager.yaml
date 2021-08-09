@@ -17,7 +17,7 @@ spec:
     spec:
       serviceAccountName: lieutenant-operator
       containers:
-        - name: lieutenent-operator
+        - name: lieutenant-operator
           image: quay.io/projectsyn/lieutenant-operator:latest
           securityContext:
             allowPrivilegeEscalation: false
