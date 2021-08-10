@@ -70,10 +70,11 @@ func SetCustomClient(c VaultClient) {
 
 func newBankVaultClient(deletionPolicy synv1alpha1.DeletionPolicy, log logr.Logger) (*BankVaultClient, error) {
 
-	client, err := vault.NewClientFromConfig(&api.Config{
-		Address: os.Getenv(api.EnvVaultAddress),
-		Logger:  logAdapter{log},
-	}, vault.ClientRole("lieutenant-operator"))
+	client, err := vault.NewClientFromConfig(
+		&api.Config{Address: os.Getenv(api.EnvVaultAddress)},
+		vault.ClientRole("lieutenant-operator"),
+		vault.ClientLogger(logAdapter{log.WithName("vaultclient")}),
+	)
 	if err != nil {
 		return nil, err
 	}
