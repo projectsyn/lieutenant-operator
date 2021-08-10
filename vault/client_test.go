@@ -248,7 +248,27 @@ func getVersionHTTPServer() *httptest.Server {
 	mux.HandleFunc("/v1/kv/delete/kv2/test/foo", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+	mux.HandleFunc("/v1/kv/delete/kv2/test/bar", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = io.WriteString(w, `{"errors":[]}`)
+	})
+	mux.HandleFunc("/v1/kv/delete/kv2/test/bar/buzz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 
+	mux.HandleFunc("/v1/kv/metadata/kv2/test/bar", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("list") == "true" {
+			w.WriteHeader(http.StatusOK)
+			_, _ = io.WriteString(w, `{
+				"data": {
+				  "keys": ["buzz"]
+				}
+			  }`)
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = io.WriteString(w, `{"errors":[]}`)
+	})
 	mux.HandleFunc("/v1/kv/metadata/kv2/test/foo", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		versionBody := `
@@ -280,6 +300,27 @@ func getVersionHTTPServer() *httptest.Server {
 		  }`
 		_, _ = io.WriteString(w, versionBody)
 	})
+	mux.HandleFunc("/v1/kv/metadata/kv2/test/bar/buzz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		versionBody := `
+		{
+			"data": {
+			  "created_time": "2018-03-22T02:24:06.945319214Z",
+			  "current_version": 1,
+			  "max_versions": 0,
+			  "oldest_version": 0,
+			  "updated_time": "2018-03-22T02:36:43.986212308Z",
+			  "versions": {
+				"1": {
+				  "created_time": "2018-03-22T02:24:06.945319214Z",
+				  "deletion_time": "",
+				  "destroyed": false
+				}
+			  }
+			}
+		}`
+		_, _ = io.WriteString(w, versionBody)
+	})
 
 	mux.HandleFunc("/v1/kv/metadata/kv2/test", func(w http.ResponseWriter, r *http.Request) {
 
@@ -288,7 +329,7 @@ func getVersionHTTPServer() *httptest.Server {
 		if r.URL.Query().Get("list") == "true" {
 			_, _ = io.WriteString(w, `{
 				"data": {
-				  "keys": ["foo", "foo/"]
+				  "keys": ["foo", "bar/"]
 				}
 			  }`)
 			return

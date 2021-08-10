@@ -6,6 +6,7 @@ import (
 	"path"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/banzaicloud/bank-vaults/pkg/sdk/vault"
 	"github.com/go-logr/logr"
@@ -162,6 +163,10 @@ func (b *BankVaultClient) RemoveSecrets(secrets []VaultSecret) error {
 	return nil
 }
 
+func isDirectory(path string) bool {
+	return strings.HasSuffix(path, "/")
+}
+
 // removeSecret will remove the token according to the DeletetionPolicy
 func (b *BankVaultClient) removeSecret(removeSecret VaultSecret) error {
 
@@ -171,7 +176,16 @@ func (b *BankVaultClient) removeSecret(removeSecret VaultSecret) error {
 	}
 
 	for _, secret := range secrets {
-
+		if isDirectory(secret) {
+			err := b.removeSecret(VaultSecret{
+				Path:  path.Join(removeSecret.Path, secret),
+				Value: "",
+			})
+			if err != nil {
+				return err
+			}
+			continue
+		}
 		sPath := path.Join(b.secretEngine, "metadata", removeSecret.Path, secret)
 
 		s, err := b.client.RawClient().Logical().Read(sPath)
