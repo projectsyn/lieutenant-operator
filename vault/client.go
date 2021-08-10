@@ -53,11 +53,13 @@ func NewClient(deletionPolicy synv1alpha1.DeletionPolicy, log logr.Logger) (Vaul
 		return instanceClient, nil
 	}
 
-	var err error
-	instanceClient, err = newBankVaultClient(deletionPolicy, log)
+	c, err := newBankVaultClient(deletionPolicy, log)
+	if err != nil {
+		return nil, err
+	}
+	instanceClient = c
 
-	return instanceClient, err
-
+	return instanceClient, nil
 }
 
 // SetCustomClient is used if a custom client needs to be used. Currently only
