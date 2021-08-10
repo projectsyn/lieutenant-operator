@@ -72,6 +72,7 @@ func newBankVaultClient(deletionPolicy synv1alpha1.DeletionPolicy, log logr.Logg
 
 	client, err := vault.NewClientFromConfig(&api.Config{
 		Address: os.Getenv(api.EnvVaultAddress),
+		Logger:  logAdapter{log},
 	}, vault.ClientRole("lieutenant-operator"))
 	if err != nil {
 		return nil, err
