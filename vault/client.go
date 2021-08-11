@@ -178,8 +178,7 @@ func (b *BankVaultClient) removeSecret(removeSecret VaultSecret) error {
 	for _, secret := range secrets {
 		if isDirectory(secret) {
 			err := b.removeSecret(VaultSecret{
-				Path:  path.Join(removeSecret.Path, secret),
-				Value: "",
+				Path: path.Join(removeSecret.Path, secret),
 			})
 			if err != nil {
 				return err
