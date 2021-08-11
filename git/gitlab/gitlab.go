@@ -350,6 +350,7 @@ func (g *Gitlab) CommitTemplateFiles() error {
 	co := g.getCommitOptions()
 
 	for _, file := range filesToCommit {
+		file := file // Make a copy so we can savely reference the file
 		var fileAction gitlab.FileActionValue
 		if file.Delete {
 			g.log.Info("deleting file from repository", "file", file.FileName, "repository", g.project.Name)
@@ -398,10 +399,12 @@ func (g *Gitlab) compareFiles() ([]manager.CommitFile, error) {
 			if strings.Contains(err.Error(), "Tree Not Found") {
 
 				for name, content := range g.ops.TemplateFiles {
-					files = append(files, manager.CommitFile{
-						FileName: name,
-						Content:  content,
-					})
+					if content != manager.DeletionMagicString {
+						files = append(files, manager.CommitFile{
+							FileName: name,
+							Content:  content,
+						})
+					}
 				}
 
 				return files, nil
