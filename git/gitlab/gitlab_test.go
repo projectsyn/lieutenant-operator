@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"testing"
 
 	"github.com/go-logr/zapr"
@@ -104,33 +106,6 @@ func testGetCreateServer() *httptest.Server {
 	mux.HandleFunc("/api/v4/namespaces/group1", func(res http.ResponseWriter, req *http.Request) {
 		res.WriteHeader(http.StatusOK)
 		_, _ = res.Write([]byte(`{"id":2,"name":"group1","path":"group1","kind":"group","full_path":"group1","parent_id":null,"members_count_with_descendants":2}`))
-	})
-
-	mux.HandleFunc("/api/v4/projects/3/repository/tree", func(res http.ResponseWriter, req *http.Request) {
-		items := []string{
-			`{"id":"a1e8f8d745cc87e3a9248358d9352bb7f9a0aeba","name":"dir1","type":"tree","path":"files/html","mode":"040000"}`,
-			`{"id":"7d70e02340bac451f281cecf0a980907974bd8be","name":"file1","type":"blob","path":"file1","mode":"100644"}`,
-		}
-		index := 0
-		if req.URL.Query().Get("page") == "2" {
-			res.Header().Add("x-page", "2")
-			res.Header().Add("x-next-page", "")
-			index = 1
-		} else {
-			res.Header().Add("x-page", "1")
-			res.Header().Add("x-next-page", "2")
-		}
-		res.Header().Add("x-per-page", "1")
-		res.Header().Add("x-total", "2")
-		res.Header().Add("x-total-pages", "2")
-
-		res.WriteHeader(http.StatusOK)
-		_, _ = res.Write([]byte("[" + items[index] + "]"))
-	})
-
-	mux.HandleFunc("/api/v4/projects/3/repository/commits", func(res http.ResponseWriter, req *http.Request) {
-		res.WriteHeader(http.StatusOK)
-		_, _ = res.Write([]byte(`{"id":"ed899a2f4b50b4370feeea94676502b42383c746","short_id":"ed899a2f4b5","title":"some commit message","author_name":"Example User","author_email":"user@example.com","committer_name":"Example User","committer_email":"user@example.com","created_at":"2016-09-20T09:26:24.000-07:00","message":"some commit message","parent_ids":["ae1d9fb46aa2b07ee9836d49862ec4e2c46fbbba"],"committed_date":"2016-09-20T09:26:24.000-07:00","authored_date":"2016-09-20T09:26:24.000-07:00","stats":{"additions":2,"deletions":2,"total":4},"status":null,"web_url":"https://localhost:8080/thedude/gitlab-foss/-/commit/ed899a2f4b50b4370feeea94676502b42383c746"}`))
 	})
 
 	return httptest.NewServer(mux)
@@ -389,6 +364,86 @@ func TestGitlab_Type(t *testing.T) {
 	}
 }
 
+//goland:noinspection HttpUrlsUsage
+func testGetCommitServer(files []string) *httptest.Server {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/api/v4/projects/3/repository/tree", func(res http.ResponseWriter, req *http.Request) {
+		if len(files) == 0 {
+			res.WriteHeader(http.StatusNotFound)
+			_, _ = res.Write([]byte(`{"error":"Tree Not Found"}`))
+			return
+		}
+
+		items := []string{}
+		for _, f := range files {
+			items = append(items, fmt.Sprintf(`{"id":"a1e8f8d745cc87e3a9248358d9352bb7f9a0aeba","name":"dir1","type":"tree","path":"%s","mode":"040000"}`, f))
+		}
+		page, err := strconv.Atoi(req.URL.Query().Get("page"))
+		if err != nil && req.URL.Query().Get("page") != "" {
+			res.WriteHeader(http.StatusBadRequest)
+			_, _ = res.Write([]byte(`{"error":"page NaN"}`))
+			return
+		}
+		if req.URL.Query().Get("page") == "" {
+			page = 1
+		}
+
+		res.Header().Add("x-page", strconv.Itoa(page))
+		if page >= len(items) {
+			res.Header().Add("x-next-page", "")
+		} else {
+			res.Header().Add("x-next-page", strconv.Itoa(page+1))
+		}
+		res.Header().Add("x-per-page", "1")
+		res.Header().Add("x-total", strconv.Itoa(len(items)))
+		res.Header().Add("x-total-pages", strconv.Itoa(len(items)))
+
+		res.WriteHeader(http.StatusOK)
+		_, _ = res.Write([]byte("[" + items[page-1] + "]"))
+	})
+
+	mux.HandleFunc("/api/v4/projects/3/repository/commits", func(res http.ResponseWriter, req *http.Request) {
+		body, err := io.ReadAll(req.Body)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			_, _ = res.Write([]byte(`{"error":"body empty"}`))
+			return
+		}
+		commit := struct {
+			Actions []struct {
+				Action   string
+				Content  string
+				FilePath string `json:"file_path"`
+			}
+		}{}
+		err = json.Unmarshal(body, &commit)
+		if err != nil {
+			res.WriteHeader(http.StatusBadRequest)
+			_, _ = res.Write([]byte(`{"error":"body not json"}`))
+			return
+		}
+		touchedFiles := map[string]struct{}{}
+		for _, a := range commit.Actions {
+			if _, ok := touchedFiles[a.FilePath]; ok {
+				res.WriteHeader(http.StatusBadRequest)
+				_, _ = res.Write([]byte(`{"error":"file created twice"}`))
+				return
+			}
+			touchedFiles[a.FilePath] = struct{}{}
+			if a.Content == manager.DeletionMagicString && gitlab.FileActionValue(a.Action) != gitlab.FileDelete {
+				res.WriteHeader(http.StatusBadRequest)
+				_, _ = res.Write([]byte(`{"error":"creating a file containing { deleted } instead of deleting"}`))
+				return
+			}
+		}
+		res.WriteHeader(http.StatusOK)
+		_, _ = res.Write([]byte(`{"id":"ed899a2f4b50b4370feeea94676502b42383c746","short_id":"ed899a2f4b5","title":"some commit message","author_name":"Example User","author_email":"user@example.com","committer_name":"Example User","committer_email":"user@example.com","created_at":"2016-09-20T09:26:24.000-07:00","message":"some commit message","parent_ids":["ae1d9fb46aa2b07ee9836d49862ec4e2c46fbbba"],"committed_date":"2016-09-20T09:26:24.000-07:00","authored_date":"2016-09-20T09:26:24.000-07:00","stats":{"additions":2,"deletions":2,"total":4},"status":null,"web_url":"https://localhost:8080/thedude/gitlab-foss/-/commit/ed899a2f4b50b4370feeea94676502b42383c746"}`))
+	})
+
+	return httptest.NewServer(mux)
+}
+
 func TestGitlab_CommitTemplateFiles(t *testing.T) {
 	type fields struct {
 		project *gitlab.Project
@@ -401,7 +456,7 @@ func TestGitlab_CommitTemplateFiles(t *testing.T) {
 	}{
 		"set template files": {
 			wantErr:    false,
-			httpServer: testGetCreateServer(),
+			httpServer: testGetCommitServer([]string{"file1"}),
 			fields: fields{
 				project: &gitlab.Project{
 					ID: 3,
@@ -415,7 +470,7 @@ func TestGitlab_CommitTemplateFiles(t *testing.T) {
 		},
 		"set existing file": {
 			wantErr:    false,
-			httpServer: testGetCreateServer(),
+			httpServer: testGetCommitServer([]string{"file1"}),
 			fields: fields{
 				project: &gitlab.Project{
 					ID: 3,
@@ -423,6 +478,52 @@ func TestGitlab_CommitTemplateFiles(t *testing.T) {
 				ops: manager.RepoOptions{
 					TemplateFiles: map[string]string{
 						"file1": "testContent",
+					},
+				},
+			},
+		},
+		"set multiple template files": {
+			wantErr:    false,
+			httpServer: testGetCommitServer([]string{"file1"}),
+			fields: fields{
+				project: &gitlab.Project{
+					ID: 3,
+				},
+				ops: manager.RepoOptions{
+					TemplateFiles: map[string]string{
+						"test1": "testContent",
+						"test2": "testContent",
+						"test3": "testContent",
+					},
+				},
+			},
+		},
+		"delete  file": {
+			wantErr:    false,
+			httpServer: testGetCommitServer([]string{"file1"}),
+			fields: fields{
+				project: &gitlab.Project{
+					ID: 3,
+				},
+				ops: manager.RepoOptions{
+					TemplateFiles: map[string]string{
+						"file1": manager.DeletionMagicString,
+					},
+				},
+			},
+		},
+		"set and delete file while empty": {
+			wantErr:    false,
+			httpServer: testGetCommitServer([]string{}),
+			fields: fields{
+				project: &gitlab.Project{
+					ID: 3,
+				},
+				ops: manager.RepoOptions{
+					TemplateFiles: map[string]string{
+						"test1": "testContent",
+						"test2": manager.DeletionMagicString,
+						"test3": "testContent",
 					},
 				},
 			},
