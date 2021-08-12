@@ -57,8 +57,13 @@ type Step struct {
 }
 
 func RunPipeline(obj Object, data *Context, steps []Step) Result {
-	for _, step := range steps {
-		if r := step.F(obj, data); r.Abort || r.Err != nil {
+	l := data.Log.V(2).WithName("RunPipeline")
+	l.Info("running steps", "steps", stepNames(steps))
+
+	for i, step := range steps {
+		r := step.F(obj, data)
+		l.Info("ran step", "step", step.Name, "result", r, "step_index", i)
+		if r.Abort || r.Err != nil {
 			if r.Err == nil {
 				return Result{Requeue: r.Requeue}
 			}
@@ -78,4 +83,12 @@ func Common(obj Object, data *Context) Result {
 	}
 
 	return RunPipeline(obj, data, steps)
+}
+
+func stepNames(s []Step) []string {
+	names := make([]string, len(s))
+	for i := range s {
+		names[i] = s[i].Name
+	}
+	return names
 }
