@@ -118,6 +118,13 @@ $(BIN_FILENAME):
 kind-setup: ## Creates a kind instance if one does not exist yet.
 	@$(e2e_make) kind-setup
 
+
+kind-env: export KUBECONFIG = $(KIND_KUBECONFIG)
+kind-env: kind-setup
+kind-env: install
+kind-env:
+	kubectl create namespace lieutenant
+
 .PHONY: kind-clean
 kind-clean: ## Removes the kind instance if it exists.
 	@$(e2e_make) kind-clean

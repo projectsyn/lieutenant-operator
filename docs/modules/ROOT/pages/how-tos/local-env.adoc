@@ -7,8 +7,6 @@ This guide will run you through the necessary steps to do so.
 
 Before you start, please make sure to have these requirements available:
 
-* A local Kubernetes cluster (`k3s`), managed with https://k3d.io/[k3d] or https://docs.docker.com/docker-for-mac/[Docker Desktop for Mac]
-** Alternatively you could use any other Kubernetes cluster, as long as you have administrator access.
 * A https://gitlab.com[GitLab.com] account 
 ** Alternatively you could use your own GitLab instance (some adjustments need to be made in the guide)
 * Clone the Lieutenant Operator repository `https://github.com/projectsyn/lieutenant-operator`
@@ -19,46 +17,24 @@ Before you start, please make sure to have these requirements available:
 * `kubectl`
 * `base64`
 * `docker`
-[TIP]
-.Getting started on Linux with k3d
---
-. Download `k3d` (version >= 3.x) from https://github.com/rancher/k3d/releases[GitHub]
-. Create a new cluster
-+
-[source,shell]
-----
-k3d cluster create lieutenant
-----
-. Check that you're connected to this cluster
-+
-[source,shell]
-----
-kubectl cluster-info
-----
---
-
-[TIP]
-.Getting started on macOS with Docker Desktop for Mac
---
-. Use https://docs.docker.com/docker-for-mac/[Docker Desktop for Mac] and enable https://docs.docker.com/docker-for-mac/#kubernetes[Kubernetes]
---
-
 
 == Preparing the Cluster
 
-. Create a namespace to host the Operator
-+
+Start Kubernetes cluster in Docker and setup lieutenant namespace and CRDs
+
 [source,shell]
 ----
-kubectl create namespace lieutenant
+make kind-setup
+source e2e/env.sh
 ----
 
-. Install the CRDs 
-+
-[source,shell]
-----
-make install
-----
+You should now be able to access the created Kubernetes cluster using `kubectl`.
+
+[WARN]
+--
+When running the operator locally, it will reuse your configured cluster config.
+Always make sure that you do not run development code against production clusters.
+--
 
 === Gitlab
 
