@@ -79,6 +79,8 @@ func updateObject(obj Object, data *Context) Result {
 	}
 
 	if !specAndMetaEqual(obj, data.originalObject) {
+		data.Log.V(2).Info("updating object")
+
 		err := data.Client.Update(context.TODO(), rtObj)
 		if err != nil {
 			if k8serrors.IsConflict(err) {
@@ -90,6 +92,7 @@ func updateObject(obj Object, data *Context) Result {
 	}
 
 	if !equality.Semantic.DeepEqual(data.originalObject.GetStatus(), obj.GetStatus()) {
+		data.Log.V(2).Info("updating object status")
 
 		err := data.Client.Status().Update(context.TODO(), rtObj)
 		if err != nil {

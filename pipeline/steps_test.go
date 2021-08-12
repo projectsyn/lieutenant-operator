@@ -2,13 +2,16 @@ package pipeline
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/go-logr/zapr"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -66,7 +69,7 @@ var addTenantLabelCases = genericCases{
 func TestAddTenantLabel(t *testing.T) {
 	for name, tt := range addTenantLabelCases {
 		t.Run(name, func(t *testing.T) {
-			AddTenantLabel(tt.args.cluster, &Context{})
+			AddTenantLabel(tt.args.cluster, addLogger(&Context{}))
 
 			if tt.args.cluster.GetLabels()[synv1alpha1.LabelNameTenant] != tt.args.cluster.Spec.TenantRef.Name {
 				t.Error("labels do not match")
@@ -130,11 +133,11 @@ func TestHandleDeletion(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			testClient, _ := testSetupClient([]runtime.Object{&synv1alpha1.Cluster{}})
 
-			data := &Context{
+			data := addLogger(&Context{
 				Client:        testClient,
 				Deleted:       true,
 				FinalizerName: tt.args.finalizerName,
-			}
+			})
 
 			got := handleDeletion(tt.args.cluster, data)
 			if got.Err != nil != tt.wantErr {
@@ -187,7 +190,7 @@ func TestAddDeletionProtection(t *testing.T) {
 			err := os.Setenv(protectionSettingEnvVar, tt.args.enable)
 			require.NoError(t, err)
 
-			addDeletionProtection(tt.args.instance, &Context{})
+			addDeletionProtection(tt.args.instance, addLogger(&Context{}))
 
 			result := tt.args.instance.GetAnnotations()[DeleteProtectionAnnotation]
 			if result != tt.args.result {
@@ -205,7 +208,7 @@ var checkIfDeletedCases = map[string]struct {
 	"object deleted": {
 		want: true,
 		args: args{
-			data: &Context{},
+			data: addLogger(&Context{}),
 			tenant: &synv1alpha1.Tenant{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:              "test",
@@ -217,7 +220,7 @@ var checkIfDeletedCases = map[string]struct {
 	"object not deleted": {
 		want: false,
 		args: args{
-			data: &Context{},
+			data: addLogger(&Context{}),
 			tenant: &synv1alpha1.Tenant{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",
@@ -242,9 +245,9 @@ func Test_checkIfDeleted(t *testing.T) {
 var handleFinalizerCases = genericCases{
 	"add finalizers": {
 		args: args{
-			data: &Context{
+			data: addLogger(&Context{
 				FinalizerName: "test",
-			},
+			}),
 			cluster: &synv1alpha1.Cluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",
@@ -254,10 +257,10 @@ var handleFinalizerCases = genericCases{
 	},
 	"remove finalizers": {
 		args: args{
-			data: &Context{
+			data: addLogger(&Context{
 				Deleted:       true,
 				FinalizerName: "test",
-			},
+			}),
 			cluster: &synv1alpha1.Cluster{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",
@@ -286,13 +289,13 @@ func Test_handleFinalizer(t *testing.T) {
 var updateObjectCases = genericCases{
 	"update objects": {
 		args: args{
-			data: &Context{
+			data: addLogger(&Context{
 				originalObject: &synv1alpha1.Tenant{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test",
 					},
 				},
-			},
+			}),
 			tenant: &synv1alpha1.Tenant{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test",
@@ -302,13 +305,13 @@ var updateObjectCases = genericCases{
 	},
 	"update fail": {
 		args: args{
-			data: &Context{
+			data: addLogger(&Context{
 				originalObject: &synv1alpha1.Tenant{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "test",
 					},
 				},
-			},
+			}),
 			tenant: &synv1alpha1.Tenant{},
 		},
 		wantErr: true,
@@ -331,14 +334,14 @@ func Test_updateObject(t *testing.T) {
 }
 
 func Test_updateObjectStatus(t *testing.T) {
-	ex := &Context{
+	ex := addLogger(&Context{
 		originalObject: &synv1alpha1.Cluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            "cluster-a",
 				ResourceVersion: "1234",
 			},
 		},
-	}
+	})
 	cluster := &synv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            "cluster-a",
@@ -368,4 +371,14 @@ func Test_updateObjectStatus(t *testing.T) {
 	assert.NotNil(t, updatedCluster.Status.BootstrapToken)
 	assert.Equal(t, "token-1234", updatedCluster.Status.BootstrapToken.Token)
 	assert.NotEqual(t, updatedCluster.ResourceVersion, cluster.GetResourceVersion())
+}
+
+func addLogger(c *Context) *Context {
+	l, err := zap.NewDevelopment()
+	if err != nil {
+		panic(fmt.Errorf("unexpected error while creating zap logger: %w", err))
+	}
+
+	c.Log = zapr.NewLogger(l)
+	return c
 }
