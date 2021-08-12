@@ -82,6 +82,7 @@ func updateObject(obj Object, data *Context) Result {
 		err := data.Client.Update(context.TODO(), rtObj)
 		if err != nil {
 			if k8serrors.IsConflict(err) {
+				data.Log.V(1).Error(err, "conflict while updating object; requeueing")
 				return Result{Requeue: true}
 			}
 			return Result{Err: err}
@@ -93,6 +94,7 @@ func updateObject(obj Object, data *Context) Result {
 		err := data.Client.Status().Update(context.TODO(), rtObj)
 		if err != nil {
 			if k8serrors.IsConflict(err) {
+				data.Log.V(1).Error(err, "conflict while updating object; requeueing")
 				return Result{Requeue: true}
 			}
 			return Result{Err: err}
