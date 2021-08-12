@@ -99,6 +99,10 @@ func (t *Tenant) GetSpec() interface{} {
 	return t.Spec
 }
 
+func (t *Tenant) GetMeta() metav1.ObjectMeta {
+	return t.ObjectMeta
+}
+
 func (t *Tenant) GetStatus() interface{} {
 	return t.Status
 }

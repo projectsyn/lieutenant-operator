@@ -160,6 +160,10 @@ func (g *GitRepo) GetSpec() interface{} {
 	return g.Spec
 }
 
+func (g *GitRepo) GetMeta() metav1.ObjectMeta {
+	return g.ObjectMeta
+}
+
 func (g *GitRepo) GetStatus() interface{} {
 	return g.Status
 }
