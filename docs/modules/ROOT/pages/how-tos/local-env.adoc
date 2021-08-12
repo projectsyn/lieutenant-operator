@@ -1,0 +1,198 @@
+= Running the Lieutenant Operator locally
+
+Running the Lieutenant Operator locally can be very helpful while debugging.
+This guide will run you through the necessary steps to do so.
+
+== Requirements
+
+Before you start, please make sure to have these requirements available:
+
+* A local Kubernetes cluster (`k3s`), managed with https://k3d.io/[k3d] or https://docs.docker.com/docker-for-mac/[Docker Desktop for Mac]
+** Alternatively you could use any other Kubernetes cluster, as long as you have administrator access.
+* A https://gitlab.com[GitLab.com] account 
+** Alternatively you could use your own GitLab instance (some adjustments need to be made in the guide)
+* Clone the Lieutenant Operator repository `https://github.com/projectsyn/lieutenant-operator`
+** If not specified otherwise all steps are performed at the root of the repository
+* A recent https://golang.org/doc/install[Go version] 
+* The following commands must work on your shell: `make`, `helm`, `kubectl`, `base64`
+
+[TIP]
+.Getting started on Linux with k3d
+--
+. Download `k3d` (version >= 3.x) from https://github.com/rancher/k3d/releases[GitHub]
+. Create a new cluster
++
+[source,shell]
+----
+k3d cluster create lieutenant
+----
+. Check that you're connected to this cluster
++
+[source,shell]
+----
+kubectl cluster-info
+----
+--
+
+[TIP]
+.Getting started on macOS with Docker Desktop for Mac
+--
+. Use https://docs.docker.com/docker-for-mac/[Docker Desktop for Mac] and enable https://docs.docker.com/docker-for-mac/#kubernetes[Kubernetes]
+--
+
+
+== Preparing the Cluster
+
+. Create a namespace to host the Operator
++
+[source,shell]
+----
+kubectl create namespace lieutenant
+----
+
+. Install the CRDs 
++
+[source,shell]
+----
+make install
+----
+
+=== Gitlab
+
+Lieutenant needs API access to a GitLab server. 
+This is required to create and manage Git repositories for clusters and tenants.
+
+Create a Kubernetes secret which contains the access token for the GitLab API, which can be generated here: https://gitlab.com/profile/personal_access_tokens (needs `api` scope, amend gitlab.com with your own GitLab instance URL if needed).
+
+Replace `MYTOKEN` with the generated GitLab API token.
+If you're using your own GitLab instance, amend `GITLAB_ENDPOINT`.
+
+[source,shell]
+----
+export GITLAB_TOKEN=MYTOKEN
+export GITLAB_ENDPOINT=gitlab.com
+kubectl -n lieutenant create secret generic gitlab-com \
+  --from-literal=endpoint="https://${GITLAB_ENDPOINT}" \
+  --from-literal=hostKeys="$(ssh-keyscan ${GITLAB_ENDPOINT})" \
+  --from-literal=token=${GITLAB_TOKEN}
+----
+
+=== Vault
+
+Lieutenant uses Vault to securely store the token for Steward.
+The following steps will setup a single node Vault setup on Kubernetes.
+You can also use any other Vault instances, as long as you have a token that can access a key-value store.
+
+[TIP]
+.Lieutenant can run without Vault
+--
+As long as you do not need to access any vault specific feature, you can safely skip this section.
+To disable the Vault integration you need to set:
+
+[source,shell]
+----
+export SKIP_VAULT_SETUP=true
+----
+
+--
+
+. Create a namespace
++
+[source,shell]
+----
+kubectl create namespace vault
+----
+
+. Get helm chart
++
+[source,shell]
+----
+helm repo add hashicorp https://helm.releases.hashicorp.com
+----
+
+. Install helm chart
++
+[source,shell]
+----
+
+cat > values.yml <<EOF
+injector:
+  enabled: false
+server:
+  extraContainers:
+  - name: vault-unsealer
+    image: docker.io/banzaicloud/bank-vaults:1.4.1
+    command: ["bank-vaults", "unseal", "--init"]
+    args:
+    - --secret-shares=1
+    - --secret-threshold=1
+    - --mode=k8s
+    - --k8s-secret-namespace=vault
+    - --k8s-secret-name=vault-seal
+    - --raft
+    - --raft-leader-address
+    - http://vault:8200
+    env:
+    - name: VAULT_ADDR
+      value: http://127.0.0.1:8200
+    ports:
+    - name: vault-metrics
+      containerPort: 9200
+    - name: unseal-metrics
+      containerPort: 9091
+    resources:
+      limits:
+        memory: 64Mi
+        cpu: 100m
+EOF
+
+helm install vault hashicorp/vault --namespace vault -f values.yml
+
+# Add RBAC for unsealer
+kubectl -n vault create role vault-unsealer --verb=get --verb=update --verb=create --resource=secret
+kubectl -n vault create rolebinding vault-unsealer --role=vault-unsealer --serviceaccount=vault:vault 
+----
+
+. Check if the vault unseals itself.
+The pod should get ready.
++
+[source,shell]
+----
+kubectl get pods --selector='app.kubernetes.io/name=vault'
+----
+
+. Get the vault token
++
+[source,shell]
+----
+export VAULT_TOKEN=$(kubectl -n vault get secrets vault-seal -o jsonpath="{.data.vault-root}" | base64 -d)
+export VAULT_ADDR="http://localhost:8200"
+----
+
+. In a new terminal forward the vault port
++
+[source,shell]
+----
+kubectl -n vault port-forward svc/vault-active 8200:8200
+----
+
+=== Starting the Operator
+
+With all the prerequisites we can now run the Lieutenant Operator.
+
+[source,shell]
+----
+
+export DEFAULT_DELETION_POLICY=Delete
+export DEFAULT_GLOBAL_GIT_REPO_URL="https://github.com/projectsyn/getting-started-commodore-defaults"
+export LIEUTENANT_DELETE_PROTECTION="false"
+export WATCH_NAMESPACE=lieutenant
+
+make run
+----
+
+
+[TIP]
+--
+`make run` simply calls `go run` so feel free to run through your IDE, with a debugger or any other way you like.
+--
