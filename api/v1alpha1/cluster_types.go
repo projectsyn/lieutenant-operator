@@ -112,6 +112,10 @@ func (c *Cluster) GetSpec() interface{} {
 	return c.Spec
 }
 
+func (c *Cluster) GetMeta() metav1.ObjectMeta {
+	return c.ObjectMeta
+}
+
 func (c *Cluster) GetStatus() interface{} {
 	return c.Status
 }

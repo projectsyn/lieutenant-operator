@@ -79,9 +79,12 @@ func updateObject(obj Object, data *Context) Result {
 	}
 
 	if !specAndMetaEqual(obj, data.originalObject) {
-		data.Log.V(2).Info("updating object")
-
-		err := data.Client.Update(context.TODO(), rtObj)
+		data.Log.V(1).Info("updating object")
+		o, ok := rtObj.DeepCopyObject().(client.Object)
+		if !ok {
+			return Result{Err: errors.New("copied object is not a client object")}
+		}
+		err := data.Client.Update(context.TODO(), o)
 		if err != nil {
 			if k8serrors.IsConflict(err) {
 				data.Log.V(1).Error(err, "conflict while updating object; requeueing")
@@ -92,9 +95,12 @@ func updateObject(obj Object, data *Context) Result {
 	}
 
 	if !equality.Semantic.DeepEqual(data.originalObject.GetStatus(), obj.GetStatus()) {
-		data.Log.V(2).Info("updating object status")
-
-		err := data.Client.Status().Update(context.TODO(), rtObj)
+		data.Log.V(1).Info("updating object status")
+		o, ok := rtObj.DeepCopyObject().(client.Object)
+		if !ok {
+			return Result{Err: errors.New("copied object is not a client object")}
+		}
+		err := data.Client.Status().Update(context.TODO(), o)
 		if err != nil {
 			if k8serrors.IsConflict(err) {
 				data.Log.V(1).Error(err, "conflict while updating object; requeueing")
@@ -109,7 +115,7 @@ func updateObject(obj Object, data *Context) Result {
 
 func specAndMetaEqual(a, b Object) bool {
 
-	if !equality.Semantic.DeepEqual(a, b) {
+	if !equality.Semantic.DeepEqual(a.GetMeta(), b.GetMeta()) {
 		return false
 	}
 

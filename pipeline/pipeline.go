@@ -6,6 +6,7 @@ import (
 	"github.com/go-logr/logr"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -26,6 +27,7 @@ type Object interface {
 	GetDeletionPolicy() synv1alpha1.DeletionPolicy
 	GetDisplayName() string
 	SetGitRepoURLAndHostKeys(URL, hostKeys string)
+	GetMeta() metav1.ObjectMeta
 	GetSpec() interface{}
 	GetStatus() interface{}
 }
@@ -57,7 +59,7 @@ type Step struct {
 }
 
 func RunPipeline(obj Object, data *Context, steps []Step) Result {
-	l := data.Log.V(2).WithName("RunPipeline")
+	l := data.Log.V(7).WithName("RunPipeline")
 	l.Info("running steps", "steps", stepNames(steps))
 
 	for i, step := range steps {
