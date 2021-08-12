@@ -13,9 +13,12 @@ Before you start, please make sure to have these requirements available:
 ** Alternatively you could use your own GitLab instance (some adjustments need to be made in the guide)
 * Clone the Lieutenant Operator repository `https://github.com/projectsyn/lieutenant-operator`
 ** If not specified otherwise all steps are performed at the root of the repository
-* A recent https://golang.org/doc/install[Go version] 
-* The following commands must work on your shell: `make`, `helm`, `kubectl`, `base64`
-
+* https://golang.org/doc/install[Go] (see which required version in `go.mod`)
+* `make`
+* `helm` (version 3 or above)
+* `kubectl`
+* `base64`
+* `docker`
 [TIP]
 .Getting started on Linux with k3d
 --
@@ -146,19 +149,11 @@ server:
         cpu: 100m
 EOF
 
-helm install vault hashicorp/vault --namespace vault -f values.yml
-
 # Add RBAC for unsealer
 kubectl -n vault create role vault-unsealer --verb=get --verb=update --verb=create --resource=secret
 kubectl -n vault create rolebinding vault-unsealer --role=vault-unsealer --serviceaccount=vault:vault 
-----
 
-. Check if the vault unseals itself.
-The pod should get ready.
-+
-[source,shell]
-----
-kubectl get pods --selector='app.kubernetes.io/name=vault'
+helm install vault hashicorp/vault --namespace vault -f values.yml --wait
 ----
 
 . Get the vault token
