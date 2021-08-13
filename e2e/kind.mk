@@ -12,7 +12,7 @@ kind-setup: $(kind_marker) ## Creates the kind cluster
 kind-clean: export KUBECONFIG = $(KIND_KUBECONFIG)
 kind-clean: ## Remove the kind Cluster
 	@$(KIND) delete cluster --name $(KIND_CLUSTER) || true
-	@rm $(KIND) $(kind_marker) $(KIND_KUBECONFIG) || true
+	@rm $(KIND) $(kind_marker) $(KIND_KUBECONFIG) env.sh || true
 
 ###
 ### Artifacts
@@ -26,6 +26,7 @@ $(KIND_KUBECONFIG):
 		--image kindest/node:$(KIND_NODE_VERSION)
 	@kubectl version
 	@kubectl cluster-info
+	@echo "export KUBECONFIG=$(KIND_KUBECONFIG)" > env.sh
 
 $(kind_marker): export KUBECONFIG = $(KIND_KUBECONFIG)
 $(kind_marker): $(KIND_KUBECONFIG)
