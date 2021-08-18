@@ -51,6 +51,8 @@ type BootstrapToken struct {
 type ClusterStatus struct {
 	// BootstrapTokenValid validity of the bootstrap token, set by the Lieutenant API.
 	BootstrapToken *BootstrapToken `json:"bootstrapToken,omitempty"`
+	// Facts are key/value pairs for dynamically fetched facts
+	Facts Facts `json:"facts,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
