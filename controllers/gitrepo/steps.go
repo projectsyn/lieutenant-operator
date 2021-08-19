@@ -29,7 +29,7 @@ func Steps(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 		return pipeline.Result{}
 	}
 
-	repo, hostKeys, err := manager.GetGitClient(&instance.Spec.GitRepoTemplate, instance.GetNamespace(), data.Log, data.Client)
+	repo, hostKeys, err := manager.GetGitClient(data.Context(), &instance.Spec.GitRepoTemplate, instance.GetNamespace(), data.Log, data.Client)
 	if err != nil {
 		return pipeline.Result{Err: err}
 	}
@@ -40,7 +40,7 @@ func Steps(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 		data.Log.Info("creating git repo", manager.SecretEndpointName, repo.FullURL())
 		err := repo.Create()
 		if err != nil {
-			return pipeline.Result{Err: handleRepoError(err, instance, data.Client)}
+			return pipeline.Result{Err: handleRepoError(data.Context(), err, instance, data.Client)}
 
 		}
 		data.Log.Info("successfully created the repository")
@@ -56,7 +56,7 @@ func Steps(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 
 	err = repo.CommitTemplateFiles()
 	if err != nil {
-		return pipeline.Result{Err: handleRepoError(err, instance, data.Client)}
+		return pipeline.Result{Err: handleRepoError(data.Context(), err, instance, data.Client)}
 	}
 
 	changed, err := repo.Update()
@@ -84,10 +84,10 @@ func repoExists(repo manager.Repo) bool {
 	return false
 }
 
-func handleRepoError(err error, instance *synv1alpha1.GitRepo, client client.Client) error {
+func handleRepoError(ctx context.Context, err error, instance *synv1alpha1.GitRepo, client client.Client) error {
 	phase := synv1alpha1.Failed
 	instance.Status.Phase = &phase
-	if updateErr := client.Status().Update(context.TODO(), instance); updateErr != nil {
+	if updateErr := client.Status().Update(ctx, instance); updateErr != nil {
 		return fmt.Errorf("could not set status while handling error: %s: %s", updateErr, err)
 	}
 	return err

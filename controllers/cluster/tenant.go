@@ -1,7 +1,6 @@
 package cluster
 
 import (
-	"context"
 	"fmt"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
@@ -14,7 +13,7 @@ func setTenantOwner(obj pipeline.Object, data *pipeline.Context) pipeline.Result
 	tenant := &synv1alpha1.Tenant{}
 	tenantName := types.NamespacedName{Name: obj.GetTenantRef().Name, Namespace: obj.GetNamespace()}
 
-	err := data.Client.Get(context.TODO(), tenantName, tenant)
+	err := data.Client.Get(data.Context(), tenantName, tenant)
 	if err != nil {
 		return pipeline.Result{Err: err}
 	}
@@ -30,7 +29,7 @@ func applyClusterTemplateFromTenant(obj pipeline.Object, data *pipeline.Context)
 	nsName := types.NamespacedName{Name: obj.GetTenantRef().Name, Namespace: obj.GetNamespace()}
 
 	tenant := &synv1alpha1.Tenant{}
-	if err := data.Client.Get(context.TODO(), nsName, tenant); err != nil {
+	if err := data.Client.Get(data.Context(), nsName, tenant); err != nil {
 		return pipeline.Result{Err: fmt.Errorf("couldn't find tenant: %w", err)}
 	}
 

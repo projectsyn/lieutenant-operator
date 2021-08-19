@@ -1,8 +1,6 @@
 package gitrepo
 
 import (
-	"context"
-
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pipeline"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -14,7 +12,7 @@ func fetchGitRepoTemplate(obj *synv1alpha1.GitRepo, data *pipeline.Context) erro
 
 	tenantName := types.NamespacedName{Name: obj.GetObjectMeta().GetName(), Namespace: obj.GetObjectMeta().GetNamespace()}
 
-	err := data.Client.Get(context.TODO(), tenantName, tenant)
+	err := data.Client.Get(data.Context(), tenantName, tenant)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err
@@ -29,7 +27,7 @@ func fetchGitRepoTemplate(obj *synv1alpha1.GitRepo, data *pipeline.Context) erro
 
 	clusterName := types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}
 
-	err = data.Client.Get(context.TODO(), clusterName, cluster)
+	err = data.Client.Get(data.Context(), clusterName, cluster)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err

@@ -119,7 +119,7 @@ type CommitFile struct {
 // GetGitClient will return a git client from a provided template. This does a lot more
 // plumbing than the simple NewClient() call. If you're needing a git client from a
 // reconcile function, this is the way to go.
-func GetGitClient(instance *synv1alpha1.GitRepoTemplate, namespace string, reqLogger logr.Logger, client client.Client) (Repo, string, error) {
+func GetGitClient(ctx context.Context, instance *synv1alpha1.GitRepoTemplate, namespace string, reqLogger logr.Logger, client client.Client) (Repo, string, error) {
 	secret := &corev1.Secret{}
 	namespacedName := types.NamespacedName{
 		Name:      instance.APISecretRef.Name,
@@ -130,7 +130,7 @@ func GetGitClient(instance *synv1alpha1.GitRepoTemplate, namespace string, reqLo
 		namespacedName.Namespace = instance.APISecretRef.Namespace
 	}
 
-	err := client.Get(context.TODO(), namespacedName, secret)
+	err := client.Get(ctx, namespacedName, secret)
 	if err != nil {
 		return nil, "", fmt.Errorf("error getting git secret: %v", err)
 	}
