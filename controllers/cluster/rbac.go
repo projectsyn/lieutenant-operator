@@ -23,7 +23,7 @@ func createClusterRBAC(obj pipeline.Object, data *pipeline.Context) pipeline.Res
 		ObjectMeta: objMeta,
 		Rules: []rbacv1.PolicyRule{{
 			APIGroups:     []string{synv1alpha1.GroupVersion.Group},
-			Resources:     []string{"clusters"},
+			Resources:     []string{"clusters", "clusters/status"},
 			Verbs:         []string{"get", "update"},
 			ResourceNames: []string{obj.GetName()},
 		}},
@@ -41,7 +41,17 @@ func createClusterRBAC(obj pipeline.Object, data *pipeline.Context) pipeline.Res
 		}},
 	}
 	for _, item := range []client.Object{serviceAccount, role, roleBinding} {
-		if err := data.Client.Create(context.TODO(), item); err != nil && !errors.IsAlreadyExists(err) {
+		found := item.DeepCopyObject().(client.Object)
+		err := data.Client.Get(context.TODO(), client.ObjectKeyFromObject(item), found)
+		if err != nil {
+			if errors.IsNotFound(err) {
+				if err := data.Client.Create(context.TODO(), item); err != nil && !errors.IsAlreadyExists(err) {
+					return pipeline.Result{Err: err}
+				}
+			}
+			return pipeline.Result{Err: err}
+		}
+		if err := data.Client.Update(context.TODO(), item); err != nil {
 			return pipeline.Result{Err: err}
 		}
 	}

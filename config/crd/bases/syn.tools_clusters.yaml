@@ -185,6 +185,11 @@ spec:
                     format: date-time
                     type: string
                 type: object
+              facts:
+                additionalProperties:
+                  type: string
+                description: Facts are key/value pairs for dynamically fetched facts
+                type: object
             type: object
         type: object
     served: true
