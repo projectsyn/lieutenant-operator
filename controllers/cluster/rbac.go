@@ -43,11 +43,12 @@ func createClusterRBAC(obj pipeline.Object, data *pipeline.Context) pipeline.Res
 	for _, item := range []client.Object{serviceAccount, role, roleBinding} {
 		found := item.DeepCopyObject().(client.Object)
 		err := data.Client.Get(context.TODO(), client.ObjectKeyFromObject(item), found)
-		if errors.IsNotFound(err) {
-			if err := data.Client.Create(context.TODO(), item); err != nil && !errors.IsAlreadyExists(err) {
-				return pipeline.Result{Err: err}
+		if err != nil {
+			if errors.IsNotFound(err) {
+				if err := data.Client.Create(context.TODO(), item); err != nil && !errors.IsAlreadyExists(err) {
+					return pipeline.Result{Err: err}
+				}
 			}
-		} else if err != nil {
 			return pipeline.Result{Err: err}
 		}
 		if err := data.Client.Update(context.TODO(), item); err != nil {
