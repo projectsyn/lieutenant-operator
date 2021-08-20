@@ -53,7 +53,7 @@ func (r *TenantReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 	steps := []pipeline.Step{
 		{Name: "copy original object", F: pipeline.DeepCopyOriginal},
 		{Name: "tenant specific steps", F: tenant.Steps},
-		{Name: "create git repo", F: gitrepo.Create},
+		{Name: "create git repo", F: gitrepo.CreateOrUpdate},
 		{Name: "set gitrepo url and hostkeys", F: gitrepo.UpdateURLAndHostKeys},
 		{Name: "common", F: pipeline.Common},
 	}

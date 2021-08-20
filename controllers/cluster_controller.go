@@ -50,7 +50,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	steps := []pipeline.Step{
 		{Name: "copy original object", F: pipeline.DeepCopyOriginal},
 		{Name: "cluster specific steps", F: cluster.SpecificSteps},
-		{Name: "create git repo", F: gitrepo.Create},
+		{Name: "create git repo", F: gitrepo.CreateOrUpdate},
 		{Name: "set gitrepo url and hostkeys", F: gitrepo.UpdateURLAndHostKeys},
 		{Name: "add tenant label", F: pipeline.AddTenantLabel},
 		{Name: "Common", F: pipeline.Common},
