@@ -65,5 +65,6 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&synv1alpha1.Cluster{}).
+		Owns(&synv1alpha1.GitRepo{}).
 		Complete(r)
 }

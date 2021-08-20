@@ -66,5 +66,6 @@ func (r *TenantReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 func (r *TenantReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&synv1alpha1.Tenant{}).
+		Owns(&synv1alpha1.GitRepo{}).
 		Complete(r)
 }
