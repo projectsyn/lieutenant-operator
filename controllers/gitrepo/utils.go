@@ -6,13 +6,16 @@ import (
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/pipeline"
+	"k8s.io/apimachinery/pkg/api/equality"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-// Create will create the gitRepo object if it doesn't already exist.
-func Create(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
+// CreateOrUpdate will create the gitRepo object if it doesn't already exist.
+// If it does it will update its template if it changed.
+func CreateOrUpdate(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	template := obj.GetGitTemplate()
 
 	if template == nil {
@@ -42,6 +45,7 @@ func Create(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 		template.RepoType = synv1alpha1.AutoRepoType
 	}
 
+	found := &synv1alpha1.GitRepo{}
 	repo := &synv1alpha1.GitRepo{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      obj.GetName(),
@@ -56,14 +60,23 @@ func Create(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 		},
 	}
 
-	err := data.Client.Create(context.TODO(), repo)
+	err := data.Client.Get(context.TODO(), client.ObjectKeyFromObject(repo), found)
 	if err != nil {
-		if errors.IsAlreadyExists(err) {
-			return pipeline.Result{}
+		if errors.IsNotFound(err) {
+			err := data.Client.Create(context.TODO(), repo)
+			return pipeline.Result{Err: err}
+		}
+		return pipeline.Result{Err: err}
+	}
+
+	if !equality.Semantic.DeepEqual(found.Spec.GitRepoTemplate, repo.Spec.GitRepoTemplate) {
+		found.Spec.GitRepoTemplate = repo.Spec.GitRepoTemplate
+		if err := data.Client.Update(context.TODO(), found); err != nil {
+			return pipeline.Result{Err: err}
 		}
 	}
 
-	return pipeline.Result{Err: err}
+	return pipeline.Result{}
 }
 
 // UpdateURLAndHostKeys finds the objects and updates the URL and the Host Keys.

@@ -53,7 +53,7 @@ func (r *TenantReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 	steps := []pipeline.Step{
 		{Name: "copy original object", F: pipeline.DeepCopyOriginal},
 		{Name: "tenant specific steps", F: tenant.Steps},
-		{Name: "create git repo", F: gitrepo.Create},
+		{Name: "create git repo", F: gitrepo.CreateOrUpdate},
 		{Name: "set gitrepo url and hostkeys", F: gitrepo.UpdateURLAndHostKeys},
 		{Name: "common", F: pipeline.Common},
 	}
@@ -66,5 +66,7 @@ func (r *TenantReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 func (r *TenantReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&synv1alpha1.Tenant{}).
+		Owns(&synv1alpha1.GitRepo{}).
+		Owns(&synv1alpha1.Cluster{}).
 		Complete(r)
 }
