@@ -1,7 +1,6 @@
 package pipeline
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -84,7 +83,7 @@ func updateObject(obj Object, data *Context) Result {
 		if !ok {
 			return Result{Err: errors.New("copied object is not a client object")}
 		}
-		err := data.Client.Update(context.TODO(), o)
+		err := data.Client.Update(data.Context, o)
 		if err != nil {
 			if k8serrors.IsConflict(err) {
 				data.Log.V(1).Error(err, "conflict while updating object; requeueing")
@@ -100,7 +99,7 @@ func updateObject(obj Object, data *Context) Result {
 		if !ok {
 			return Result{Err: errors.New("copied object is not a client object")}
 		}
-		err := data.Client.Status().Update(context.TODO(), o)
+		err := data.Client.Status().Update(data.Context, o)
 		if err != nil {
 			if k8serrors.IsConflict(err) {
 				data.Log.V(1).Error(err, "conflict while updating object; requeueing")

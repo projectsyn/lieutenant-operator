@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/go-logr/logr"
@@ -34,6 +35,7 @@ type Object interface {
 
 // Context contains additional data about the CRD being processed.
 type Context struct {
+	Context        context.Context
 	FinalizerName  string
 	Client         client.Client
 	Log            logr.Logger

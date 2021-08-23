@@ -1,7 +1,6 @@
 package tenant
 
 import (
-	"context"
 	"fmt"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
@@ -19,7 +18,7 @@ func applyTemplateFromTenantTemplate(obj pipeline.Object, data *pipeline.Context
 
 	key := types.NamespacedName{Name: "default", Namespace: obj.GetNamespace()}
 	template := &synv1alpha1.TenantTemplate{}
-	if err := data.Client.Get(context.TODO(), key, template); err != nil {
+	if err := data.Client.Get(data.Context, key, template); err != nil {
 		if errors.IsNotFound(err) || runtime.IsNotRegisteredError(err) {
 			// The absence of a template is not an error.
 			// It simply means that there is nothing to do.

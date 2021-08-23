@@ -35,7 +35,7 @@ func (r *TenantReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 
 	// Fetch the Tenant instance
 	instance := &synv1alpha1.Tenant{}
-	err := r.Client.Get(context.TODO(), request.NamespacedName, instance)
+	err := r.Client.Get(ctx, request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return reconcile.Result{}, nil
@@ -44,6 +44,7 @@ func (r *TenantReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 	}
 
 	data := &pipeline.Context{
+		Context:       ctx,
 		Client:        r.Client,
 		Log:           reqLogger,
 		FinalizerName: "",

@@ -32,7 +32,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 
 	instance := &synv1alpha1.Cluster{}
 
-	err := r.Client.Get(context.TODO(), request.NamespacedName, instance)
+	err := r.Client.Get(ctx, request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return reconcile.Result{}, nil
@@ -41,6 +41,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	data := &pipeline.Context{
+		Context:       ctx,
 		Client:        r.Client,
 		Log:           reqLogger,
 		FinalizerName: synv1alpha1.FinalizerName,
