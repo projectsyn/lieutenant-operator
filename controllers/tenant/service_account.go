@@ -23,7 +23,7 @@ func createServiceAccount(obj pipeline.Object, data *pipeline.Context) pipeline.
 		return pipeline.Result{Err: fmt.Errorf("failed to create ServiceAccount for tenant: %w", err)}
 	}
 
-	err = data.Client.Create(data.Context(), sa)
+	err = data.Client.Create(data.Context, sa)
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return pipeline.Result{Err: err}
 	}

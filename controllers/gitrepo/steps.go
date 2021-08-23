@@ -29,7 +29,7 @@ func Steps(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 		return pipeline.Result{}
 	}
 
-	repo, hostKeys, err := manager.GetGitClient(data.Context(), &instance.Spec.GitRepoTemplate, instance.GetNamespace(), data.Log, data.Client)
+	repo, hostKeys, err := manager.GetGitClient(data.Context, &instance.Spec.GitRepoTemplate, instance.GetNamespace(), data.Log, data.Client)
 	if err != nil {
 		return pipeline.Result{Err: err}
 	}
@@ -40,7 +40,7 @@ func Steps(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 		data.Log.Info("creating git repo", manager.SecretEndpointName, repo.FullURL())
 		err := repo.Create()
 		if err != nil {
-			return pipeline.Result{Err: handleRepoError(data.Context(), err, instance, data.Client)}
+			return pipeline.Result{Err: handleRepoError(data.Context, err, instance, data.Client)}
 
 		}
 		data.Log.Info("successfully created the repository")
@@ -56,7 +56,7 @@ func Steps(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 
 	err = repo.CommitTemplateFiles()
 	if err != nil {
-		return pipeline.Result{Err: handleRepoError(data.Context(), err, instance, data.Client)}
+		return pipeline.Result{Err: handleRepoError(data.Context, err, instance, data.Client)}
 	}
 
 	changed, err := repo.Update()

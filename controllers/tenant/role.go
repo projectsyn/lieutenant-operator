@@ -25,7 +25,7 @@ func createRole(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 		return pipeline.Result{Err: fmt.Errorf("failed to create Role for tenant: %w", err)}
 	}
 
-	err = data.Client.Create(data.Context(), role)
+	err = data.Client.Create(data.Context, role)
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return pipeline.Result{Err: err}
 	}
@@ -59,7 +59,7 @@ func tenantUpdateRole(obj pipeline.Object, data *pipeline.Context) pipeline.Resu
 
 	name := types.NamespacedName{Name: tenant.Name, Namespace: tenant.Namespace}
 	role := &rbacv1.Role{}
-	if err := data.Client.Get(data.Context(), name, role); err != nil {
+	if err := data.Client.Get(data.Context, name, role); err != nil {
 		return pipeline.Result{Err: fmt.Errorf("failed to get role for tenant: %v", err)}
 	}
 
@@ -67,7 +67,7 @@ func tenantUpdateRole(obj pipeline.Object, data *pipeline.Context) pipeline.Resu
 		return pipeline.Result{}
 	}
 
-	if err := data.Client.Update(data.Context(), role); err != nil {
+	if err := data.Client.Update(data.Context, role); err != nil {
 		return pipeline.Result{Err: fmt.Errorf("failed to update role for tenant: %v", err)}
 	}
 

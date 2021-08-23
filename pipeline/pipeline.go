@@ -35,20 +35,13 @@ type Object interface {
 
 // Context contains additional data about the CRD being processed.
 type Context struct {
-	Ctx            context.Context
+	Context        context.Context
 	FinalizerName  string
 	Client         client.Client
 	Log            logr.Logger
 	Deleted        bool
 	originalObject Object
 	Reconciler     reconcile.Reconciler
-}
-
-func (c Context) Context() context.Context {
-	if c.Ctx != nil {
-		return context.Background()
-	}
-	return c.Ctx
 }
 
 // Result indicates whether the current execution should be aborted and

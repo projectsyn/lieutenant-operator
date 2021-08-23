@@ -59,10 +59,10 @@ func CreateOrUpdate(obj pipeline.Object, data *pipeline.Context) pipeline.Result
 		},
 	}
 
-	err := data.Client.Get(data.Context(), client.ObjectKeyFromObject(repo), found)
+	err := data.Client.Get(data.Context, client.ObjectKeyFromObject(repo), found)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			err := data.Client.Create(data.Context(), repo)
+			err := data.Client.Create(data.Context, repo)
 			return pipeline.Result{Err: err}
 		}
 		return pipeline.Result{Err: err}
@@ -70,7 +70,7 @@ func CreateOrUpdate(obj pipeline.Object, data *pipeline.Context) pipeline.Result
 
 	if !equality.Semantic.DeepEqual(found.Spec.GitRepoTemplate, repo.Spec.GitRepoTemplate) {
 		found.Spec.GitRepoTemplate = repo.Spec.GitRepoTemplate
-		if err := data.Client.Update(data.Context(), found); err != nil {
+		if err := data.Client.Update(data.Context, found); err != nil {
 			return pipeline.Result{Err: err}
 		}
 	}
@@ -85,7 +85,7 @@ func UpdateURLAndHostKeys(obj pipeline.Object, data *pipeline.Context) pipeline.
 		Namespace: obj.GetNamespace(),
 		Name:      obj.GetName(),
 	}
-	err := data.Client.Get(data.Context(), repoNamespacedName, gitRepo)
+	err := data.Client.Get(data.Context, repoNamespacedName, gitRepo)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return pipeline.Result{}

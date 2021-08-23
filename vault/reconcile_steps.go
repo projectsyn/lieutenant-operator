@@ -51,7 +51,7 @@ func CreateOrUpdateVault(obj pipeline.Object, data *pipeline.Context) pipeline.R
 func GetServiceAccountToken(instance metav1.Object, data *pipeline.Context) (string, error) {
 	secrets := &corev1.SecretList{}
 
-	err := data.Client.List(data.Context(), secrets)
+	err := data.Client.List(data.Context, secrets)
 	if err != nil {
 		return "", err
 	}

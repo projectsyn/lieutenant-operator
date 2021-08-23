@@ -35,7 +35,7 @@ func updateTenantGitRepo(obj pipeline.Object, data *pipeline.Context) pipeline.R
 		Namespace:     obj.GetNamespace(),
 	}
 
-	err := data.Client.List(data.Context(), clusterList, listOptions)
+	err := data.Client.List(data.Context, clusterList, listOptions)
 	if err != nil {
 		return pipeline.Result{Err: err}
 	}

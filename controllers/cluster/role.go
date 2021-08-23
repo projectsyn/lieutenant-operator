@@ -20,7 +20,7 @@ func clusterUpdateRole(obj pipeline.Object, data *pipeline.Context) pipeline.Res
 
 	name := types.NamespacedName{Name: cluster.Spec.TenantRef.Name, Namespace: cluster.Namespace}
 	role := &rbacv1.Role{}
-	if err := data.Client.Get(data.Context(), name, role); err != nil {
+	if err := data.Client.Get(data.Context, name, role); err != nil {
 		if errors.IsNotFound(err) || runtime.IsNotRegisteredError(err) {
 			// The absence of a role is not an error.
 			// The role might not yet be created. It gets update on a future reconciliation.
@@ -42,7 +42,7 @@ func clusterUpdateRole(obj pipeline.Object, data *pipeline.Context) pipeline.Res
 		return pipeline.Result{}
 	}
 
-	if err := data.Client.Update(data.Context(), role); err != nil {
+	if err := data.Client.Update(data.Context, role); err != nil {
 		return pipeline.Result{Err: fmt.Errorf("failed to update role for cluster: %v", err)}
 	}
 

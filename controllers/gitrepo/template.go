@@ -12,7 +12,7 @@ func fetchGitRepoTemplate(obj *synv1alpha1.GitRepo, data *pipeline.Context) erro
 
 	tenantName := types.NamespacedName{Name: obj.GetObjectMeta().GetName(), Namespace: obj.GetObjectMeta().GetNamespace()}
 
-	err := data.Client.Get(data.Context(), tenantName, tenant)
+	err := data.Client.Get(data.Context, tenantName, tenant)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err
@@ -27,7 +27,7 @@ func fetchGitRepoTemplate(obj *synv1alpha1.GitRepo, data *pipeline.Context) erro
 
 	clusterName := types.NamespacedName{Name: obj.GetName(), Namespace: obj.GetNamespace()}
 
-	err = data.Client.Get(data.Context(), clusterName, cluster)
+	err = data.Client.Get(data.Context, clusterName, cluster)
 	if err != nil {
 		if !errors.IsNotFound(err) {
 			return err

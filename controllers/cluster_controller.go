@@ -41,7 +41,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	data := &pipeline.Context{
-		Ctx:           ctx,
+		Context:       ctx,
 		Client:        r.Client,
 		Log:           reqLogger,
 		FinalizerName: synv1alpha1.FinalizerName,

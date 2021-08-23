@@ -23,7 +23,7 @@ func createRoleBinding(obj pipeline.Object, data *pipeline.Context) pipeline.Res
 		return pipeline.Result{Err: fmt.Errorf("failed to create RoleBinding for tenant: %w", err)}
 	}
 
-	err = data.Client.Create(data.Context(), binding)
+	err = data.Client.Create(data.Context, binding)
 	if err != nil && !errors.IsAlreadyExists(err) {
 		return pipeline.Result{Err: err}
 	}
