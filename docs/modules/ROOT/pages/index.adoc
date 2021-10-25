@@ -12,4 +12,4 @@ The main interaction point with the Lieutenant Operator is through the https://s
 
 The operator is written in Go using the https://github.com/operator-framework/operator-sdk/[Operator SDK].
 
-TIP: To get started fast, have a look at the tutorial https://syn.tools/syn/getting-started.html[Getting Started with Project Syn].
+TIP: To get started fast, have a look at the tutorial xref:syn::tutorials/getting-started.html[Getting Started with Project Syn].
