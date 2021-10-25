@@ -247,7 +247,7 @@ TenantSpec defines the desired state of Tenant
 | *`globalGitRepoRevision`* __string__ | GlobalGitRepoRevision allows to configure the revision of the global configuration to use. It can be any git tree-ish reference. Defaults to HEAD if left empty.
 | *`gitRepoTemplate`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]__ | GitRepoTemplate Template for managing the GitRepo object. If not set, no GitRepo object will be created.
 | *`deletionPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deletionpolicy[$$DeletionPolicy$$]__ | DeletionPolicy defines how the external resources should be treated upon CR deletion. Retain: will not delete any external resources Delete: will delete the external resources Archive: will archive the external resources, if it supports that
-| *`clusterTemplate`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterspec[$$ClusterSpec$$]__ | ClusterTemplate defines a template which will be used to set defaults for the clusters of this tenant. The fields whithin this can use Go templating. See https://syn.tools/lieutenant-operator/explanations/templating.html for details.
+| *`clusterTemplate`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterspec[$$ClusterSpec$$]__ | ClusterTemplate defines a template which will be used to set defaults for the clusters of this tenant. The fields within this can use Go templating. See https://syn.tools/lieutenant-operator/explanations/templating.html for details.
 |===
 
 

@@ -45,7 +45,7 @@ spec:
             properties:
               clusterTemplate:
                 description: ClusterTemplate defines a template which will be used
-                  to set defaults for the clusters of this tenant. The fields whithin
+                  to set defaults for the clusters of this tenant. The fields within
                   this can use Go templating. See https://syn.tools/lieutenant-operator/explanations/templating.html
                   for details.
                 properties:

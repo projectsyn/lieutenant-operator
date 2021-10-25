@@ -29,7 +29,7 @@ type TenantSpec struct {
 	// +kubebuilder:validation:Enum=Delete;Retain;Archive
 	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
 	// ClusterTemplate defines a template which will be used to set defaults for the clusters of this tenant.
-	// The fields whithin this can use Go templating.
+	// The fields within this can use Go templating.
 	// See https://syn.tools/lieutenant-operator/explanations/templating.html for details.
 	ClusterTemplate *ClusterSpec `json:"clusterTemplate,omitempty"`
 }
