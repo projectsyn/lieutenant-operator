@@ -112,6 +112,90 @@ var clusterTemplateTestCases = map[string]struct {
 			},
 		},
 	},
+	"template accessing tenant": {
+		cluster: &synv1alpha1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "foo",
+				Namespace: "bar",
+			},
+			Spec: synv1alpha1.ClusterSpec{
+				DisplayName: "Foo",
+				GitRepoURL:  "git.foo.example.com",
+			},
+		},
+		tenant: &synv1alpha1.Tenant{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "t-Foo",
+			},
+			Spec: synv1alpha1.TenantSpec{
+				ClusterTemplate: &synv1alpha1.ClusterSpec{
+					DisplayName:    "BLUB",
+					DeletionPolicy: "Delete",
+					GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
+						RepoName:    "{{ .Name }}",
+						DisplayName: "{{ .Spec.DisplayName }} of {{ .Tenant.Name }}",
+					},
+				},
+			},
+		},
+		out: &synv1alpha1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "foo",
+				Namespace: "bar",
+			},
+			Spec: synv1alpha1.ClusterSpec{
+				DisplayName:    "Foo",
+				GitRepoURL:     "git.foo.example.com",
+				DeletionPolicy: "Delete",
+				GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
+					RepoName:    "foo",
+					DisplayName: "Foo of t-Foo",
+				},
+			},
+		},
+	},
+	"template accessing tenant annotation": {
+		cluster: &synv1alpha1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "foo",
+				Namespace: "bar",
+			},
+			Spec: synv1alpha1.ClusterSpec{
+				GitRepoURL: "git.foo.example.com",
+			},
+		},
+		tenant: &synv1alpha1.Tenant{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "t-Foo",
+				Annotations: map[string]string{
+					"confidential": "true",
+				},
+			},
+			Spec: synv1alpha1.TenantSpec{
+				ClusterTemplate: &synv1alpha1.ClusterSpec{
+					DisplayName:    "{{if eq .Tenant.Annotations.confidential  \"true\" }}CONFIDENTIAL{{ else }}Foo{{ end }}",
+					DeletionPolicy: "Delete",
+					GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
+						RepoName: "{{ .Name }}",
+					},
+				},
+			},
+		},
+		out: &synv1alpha1.Cluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "foo",
+				Namespace: "bar",
+			},
+			Spec: synv1alpha1.ClusterSpec{
+				DisplayName:    "CONFIDENTIAL",
+				GitRepoURL:     "git.foo.example.com",
+				DeletionPolicy: "Delete",
+				GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
+					RepoName: "foo",
+				},
+			},
+		},
+	},
 }
 
 func TestApplyClusterTemplate(t *testing.T) {

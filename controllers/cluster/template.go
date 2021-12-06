@@ -11,15 +11,20 @@ import (
 )
 
 type templateParser struct {
-	cluster *synv1alpha1.Cluster
-	err     error
+	data templateData
+	err  error
+}
+
+type templateData struct {
+	*synv1alpha1.Cluster
+	Tenant *synv1alpha1.Tenant
 }
 
 func (r *templateParser) ParseString(in string) interface{} {
 	if r.err != nil || len(in) == 0 {
 		return in
 	}
-	str, err := RenderTemplate(in, r.cluster)
+	str, err := RenderTemplate(in, r.data)
 	if err != nil {
 		r.err = err
 		return in
@@ -36,8 +41,11 @@ func applyClusterTemplate(cluster *synv1alpha1.Cluster, tenant *synv1alpha1.Tena
 	tenant = tenant.DeepCopy()
 
 	parser := &templateParser{
-		cluster: cluster,
-		err:     nil,
+		data: templateData{
+			Cluster: cluster,
+			Tenant:  tenant,
+		},
+		err: nil,
 	}
 
 	structparse.Strings(parser, tenant.Spec.ClusterTemplate)
