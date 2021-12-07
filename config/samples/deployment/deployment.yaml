@@ -9,7 +9,7 @@ spec:
       serviceAccountName: lieutenant-operator
       containers:
         - name: lieutenant-operator
-          image: docker.io/projectsyn/lieutenant-operator:1.1.2
+          image: docker.io/projectsyn/lieutenant-operator:1.2.0
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
