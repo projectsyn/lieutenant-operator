@@ -48,14 +48,14 @@ spec:
     repoName: t-aezoo6
   clusterTemplate:
     facts:
-      name: '{{ index .Annotations "syn.tools/name"}}'<1>
+      name: '{{ index .Annotations "syn.tools/name" }}'<1>
       creation: '{{ .CreationTimestamp }}'
     gitRepoTemplate:
       apiSecretRef:
         name: secret-{{ .Spec.TenantRef.Name }}
-      path: cluster-catalogs/{{ index .Spec.Facts "cloud"}}
+      path: cluster-catalogs/{{ index .Spec.Facts "cloud" }}
       repoName: catalog-{{ .Name }}
-      displayName: '{{.Tenant.Spec.DisplayName}} - {{ .Spec.DisplayName }}'<2>
+      displayName: '{{ .Tenant.Spec.DisplayName }} - {{ .Spec.DisplayName }}'<2>
 ----
 <1> Sets the fact `name` to the value in the annotation `syn.tools/name` of the cluster being templated.
-<2> Sets the git repository display name to a concatination of the tenants display name and the clusters display name.
+<2> Sets the git repository display name to a concatenation of the tenant's display name and the clusters display name.
