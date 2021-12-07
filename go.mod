@@ -3,11 +3,11 @@ module github.com/projectsyn/lieutenant-operator
 go 1.16
 
 require (
-	github.com/banzaicloud/bank-vaults/pkg/sdk v0.7.0
+	github.com/banzaicloud/bank-vaults/pkg/sdk v0.8.2
 	github.com/elastic/crd-ref-docs v0.0.7
 	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.4.0
-	github.com/hashicorp/vault/api v1.1.1
+	github.com/hashicorp/vault/api v1.3.0
 	github.com/imdario/mergo v0.3.12
 	github.com/ryankurte/go-structparse v1.2.0
 	github.com/stretchr/testify v1.7.0
