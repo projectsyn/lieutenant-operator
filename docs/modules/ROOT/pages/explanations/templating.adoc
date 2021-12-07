@@ -13,10 +13,11 @@ The template will only be applied to fields of the cluster which aren't already 
 It's for example not possible to set the displayName of a cluster if it already defines one.
 
 All _string_ fields within this allow to use Go templates which are rendered by the operator.
-As input data to the template rendering, the instance of the cluster on which the template is being applied on can be used.
-This data is a Go type defined https://github.com/projectsyn/lieutenant-operator/blob/34db9df5d2090a8840e69816d16ec13527c4fc2c/pkg/apis/syn/v1alpha1/cluster_types.go#L60[here].
+The template has access to both the cluster as well as the tenant instance.
+The cluster data can be accessed directly, while the tenant data is accessible through the `{{ .Tenant }}` field.
 
-Since it's a Go type, only https://golang.org/ref/spec#Exported_identifiers[exported fields] (uppercase) can be accessed.
+Since both cluster and tenant are Go types, only https://golang.org/ref/spec#Exported_identifiers[exported fields] (uppercase) can be accessed.
+The Go types are generally equivalent to the CRD YAML and differ only in that the fields are capitalized.
 
 [NOTE]
 ====
@@ -47,11 +48,14 @@ spec:
     repoName: t-aezoo6
   clusterTemplate:
     facts:
-      name: '{{ index .Annotations "syn.tools/name"}}'
+      name: '{{ index .Annotations "syn.tools/name"}}'<1>
       creation: '{{ .CreationTimestamp }}'
     gitRepoTemplate:
       apiSecretRef:
         name: secret-{{ .Spec.TenantRef.Name }}
       path: cluster-catalogs/{{ index .Spec.Facts "cloud"}}
       repoName: catalog-{{ .Name }}
+      displayName: '{{.Tenant.Spec.DisplayName}} - {{ .Spec.DisplayName }}'<2>
 ----
+<1> Sets the fact `name` to the value in the annotation `syn.tools/name` of the cluster being templated.
+<2> Sets the git repository display name to a concatination of the tenants display name and the clusters display name.
