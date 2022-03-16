@@ -73,6 +73,7 @@ func newBankVaultClient(deletionPolicy synv1alpha1.DeletionPolicy, log logr.Logg
 
 	client, err := vault.NewClientFromConfig(
 		&api.Config{Address: os.Getenv(api.EnvVaultAddress)},
+		vault.ClientAuthPath(os.Getenv("VAULT_AUTH_PATH")), // Will be set to "kubernetes" if empty string
 		vault.ClientRole("lieutenant-operator"),
 		vault.ClientLogger(logAdapter{log.WithName("vaultclient")}),
 	)
