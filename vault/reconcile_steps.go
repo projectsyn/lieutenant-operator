@@ -32,17 +32,17 @@ func CreateOrUpdateVault(obj pipeline.Object, data *pipeline.Context) pipeline.R
 
 	token, err := GetServiceAccountToken(obj, data)
 	if err != nil {
-		return pipeline.Result{Err: err}
+		return pipeline.Result{Err: fmt.Errorf("get SA token: %w", err)}
 	}
 
 	vaultClient, err := getVaultClient(obj, data)
 	if err != nil {
-		return pipeline.Result{Err: err}
+		return pipeline.Result{Err: fmt.Errorf("get vault client: %w", err)}
 	}
 
 	err = vaultClient.AddSecrets([]VaultSecret{{Path: secretPath, Value: token}})
 	if err != nil {
-		return pipeline.Result{Err: err}
+		return pipeline.Result{Err: fmt.Errorf("add vault secret '%s': %w", secretPath, err)}
 	}
 
 	return pipeline.Result{}
@@ -93,11 +93,11 @@ func HandleVaultDeletion(obj pipeline.Object, data *pipeline.Context) pipeline.R
 	if data.Deleted {
 		vaultClient, err := getVaultClient(obj, data)
 		if err != nil {
-			return pipeline.Result{Err: err}
+			return pipeline.Result{Err: fmt.Errorf("get vault client: %w", err)}
 		}
 		err = vaultClient.RemoveSecrets([]VaultSecret{{Path: path.Dir(secretPath), Value: ""}})
 		if err != nil {
-			return pipeline.Result{Err: err}
+			return pipeline.Result{Err: fmt.Errorf("remove secret: %w", err)}
 		}
 	}
 	return pipeline.Result{}

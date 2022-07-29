@@ -90,7 +90,7 @@ func UpdateURLAndHostKeys(obj pipeline.Object, data *pipeline.Context) pipeline.
 		if errors.IsNotFound(err) {
 			return pipeline.Result{}
 		}
-		return pipeline.Result{Abort: true, Err: err}
+		return pipeline.Result{Abort: true, Err: fmt.Errorf("get gitrepo: %w", err)}
 	}
 
 	if gitRepo.Spec.RepoType != synv1alpha1.UnmanagedRepoType {

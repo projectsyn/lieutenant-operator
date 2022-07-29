@@ -37,7 +37,7 @@ func updateTenantGitRepo(obj pipeline.Object, data *pipeline.Context) pipeline.R
 
 	err := data.Client.List(data.Context, clusterList, listOptions)
 	if err != nil {
-		return pipeline.Result{Err: err}
+		return pipeline.Result{Err: fmt.Errorf("list clusters: %w", err)}
 	}
 
 	for _, cluster := range clusterList.Items {

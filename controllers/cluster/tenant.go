@@ -15,7 +15,7 @@ func setTenantOwner(obj pipeline.Object, data *pipeline.Context) pipeline.Result
 
 	err := data.Client.Get(data.Context, tenantName, tenant)
 	if err != nil {
-		return pipeline.Result{Err: err}
+		return pipeline.Result{Err: fmt.Errorf("get tenant: %w", err)}
 	}
 
 	obj.SetOwnerReferences([]metav1.OwnerReference{
@@ -39,7 +39,7 @@ func applyClusterTemplateFromTenant(obj pipeline.Object, data *pipeline.Context)
 	}
 
 	if err := applyClusterTemplate(instance, tenant); err != nil {
-		return pipeline.Result{Err: err}
+		return pipeline.Result{Err: fmt.Errorf("apply cluster template: %w", err)}
 	}
 	return pipeline.Result{}
 }

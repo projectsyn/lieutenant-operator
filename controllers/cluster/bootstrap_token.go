@@ -21,7 +21,7 @@ func setBootstrapToken(obj pipeline.Object, data *pipeline.Context) pipeline.Res
 		data.Log.Info("Adding status to Cluster object")
 		err := newClusterStatus(instance)
 		if err != nil {
-			return pipeline.Result{Err: err}
+			return pipeline.Result{Err: fmt.Errorf("setting initial status on cluster: %w", err)}
 		}
 	}
 
