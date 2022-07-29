@@ -174,8 +174,8 @@ github.com/docopt/docopt-go v0.0.0-20180111231733-ee0de3bc6815/go.mod h1:WwZ+bS3
 github.com/dustin/go-humanize v0.0.0-20171111073723-bb3d318650d4/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/dustin/go-humanize v1.0.0/go.mod h1:HtrtbFcZ19U5GC7JDqmcUSB87Iq5E25KnS6fMYU6eOk=
 github.com/dustmop/soup v1.1.2-0.20190516214245-38228baa104e/go.mod h1:CgNC6SGbT+Xb8wGGvzilttZL1mc5sQ/5KkcxsZttMIk=
-github.com/elastic/crd-ref-docs v0.0.7 h1:usuQSnzJYmvNBA4tIarvoq1P2ZZEkORZmRbqlchjSwk=
-github.com/elastic/crd-ref-docs v0.0.7/go.mod h1:osieo9JUDPSestb0X9RsantkSvWqIvh6vvEngY5794Y=
+github.com/elastic/crd-ref-docs v0.0.8 h1:Sy0A24E+L5aCj/8BGTgxkumCSNeckg4650d96o7QHiU=
+github.com/elastic/crd-ref-docs v0.0.8/go.mod h1:Jd1XDGgrvHzd/+qCf4SwBnOnLl4RaFRjind0ORnHovo=
 github.com/elazarl/goproxy v0.0.0-20170405201442-c4fc26588b6e/go.mod h1:/Zj4wYkgs4iZTTu3o/KG3Itv/qCCa8VVMlb3i9OVuzc=
 github.com/elazarl/goproxy v0.0.0-20180725130230-947c36da3153/go.mod h1:/Zj4wYkgs4iZTTu3o/KG3Itv/qCCa8VVMlb3i9OVuzc=
 github.com/emicklei/go-restful v0.0.0-20170410110728-ff4f55a20633/go.mod h1:otzb+WCGbkyDHkqmQmT5YD2WR4BBwUdeQoFo8l/7tVs=
