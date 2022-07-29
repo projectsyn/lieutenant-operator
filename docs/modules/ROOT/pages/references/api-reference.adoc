@@ -288,7 +288,7 @@ TenantTemplateList contains a list of TenantTemplate
 | *`kind`* __string__ | `TenantTemplateList`
 | *`metadata`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#listmeta-v1-meta[$$ListMeta$$]__ | Refer to Kubernetes API documentation for fields of `metadata`.
 
-| *`items`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenanttemplate[$$TenantTemplate$$]__ | 
+| *`items`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenanttemplate[$$TenantTemplate$$] array__ | 
 |===
 
 

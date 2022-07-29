@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/banzaicloud/bank-vaults/pkg/sdk v0.8.3-0.20220301082525-77aada86429b
-	github.com/elastic/crd-ref-docs v0.0.7
+	github.com/elastic/crd-ref-docs v0.0.8
 	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.4.0
 	github.com/hashicorp/vault/api v1.3.0
