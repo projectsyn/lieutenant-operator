@@ -10,7 +10,7 @@ require (
 	github.com/hashicorp/vault/api v1.3.0
 	github.com/imdario/mergo v0.3.12
 	github.com/ryankurte/go-structparse v1.2.0
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.0
 	github.com/xanzy/go-gitlab v0.50.1
 	go.uber.org/zap v1.21.0
 	k8s.io/api v0.21.2
@@ -159,7 +159,7 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiextensions-apiserver v0.21.2 // indirect
 	k8s.io/component-base v0.21.2 // indirect
 	k8s.io/klog/v2 v2.8.0 // indirect
