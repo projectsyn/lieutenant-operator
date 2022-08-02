@@ -47,4 +47,9 @@ Lieutenant Operator is configured via environment variables:
  If left empty, the `GlobalGitRepoURL` field will remain untouched.
 |
 
+|LIEUTENANT_CREATE_SERVICEACCOUNT_TOKEN_SECRET
+|Defines whether the operator should manage ServiceAccount token secrets for the Tenant and Cluster ServiceAccounts as documented for https://kubernetes.io/docs/reference/access-authn-authz/service-accounts-admin/#to-create-additional-api-tokens[creating additional API tokens] in the upstream Kubernetes documentation.
+ This must be set to `true` on Kubernetes 1.24+ to ensure that API access tokens for new clusters are generated correctly.
+|false
+
 |===
