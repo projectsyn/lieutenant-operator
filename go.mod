@@ -1,6 +1,6 @@
 module github.com/projectsyn/lieutenant-operator
 
-go 1.17
+go 1.18
 
 require (
 	github.com/banzaicloud/bank-vaults/pkg/sdk v0.8.3
