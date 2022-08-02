@@ -50,7 +50,7 @@ func NewRoleBinding(scheme *runtime.Scheme, tenant *synv1alpha1.Tenant) (*rbacv1
 	}
 
 	setManagedByLabel(&binding)
-	if err := controllerutil.SetOwnerReference(tenant, &binding, scheme); err != nil {
+	if err := controllerutil.SetControllerReference(tenant, &binding, scheme); err != nil {
 		return nil, err
 	}
 
