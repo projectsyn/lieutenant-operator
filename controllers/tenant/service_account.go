@@ -39,7 +39,7 @@ func newServiceAccount(scheme *runtime.Scheme, tenant *synv1alpha1.Tenant) (*cor
 		},
 	}
 	setManagedByLabel(sa)
-	if err := controllerutil.SetOwnerReference(tenant, sa, scheme); err != nil {
+	if err := controllerutil.SetControllerReference(tenant, sa, scheme); err != nil {
 		return nil, err
 	}
 

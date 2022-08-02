@@ -6,6 +6,7 @@ import (
 	"github.com/projectsyn/lieutenant-operator/controllers/gitrepo"
 	"github.com/projectsyn/lieutenant-operator/controllers/tenant"
 	"github.com/projectsyn/lieutenant-operator/pipeline"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -70,5 +71,6 @@ func (r *TenantReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&synv1alpha1.Tenant{}).
 		Owns(&synv1alpha1.GitRepo{}).
 		Owns(&synv1alpha1.Cluster{}).
+		Owns(&corev1.ServiceAccount{}).
 		Complete(r)
 }
