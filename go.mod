@@ -3,11 +3,11 @@ module github.com/projectsyn/lieutenant-operator
 go 1.17
 
 require (
-	github.com/banzaicloud/bank-vaults/pkg/sdk v0.8.3-0.20220301082525-77aada86429b
+	github.com/banzaicloud/bank-vaults/pkg/sdk v0.8.4-0.20220526092355-db9255789fae
 	github.com/elastic/crd-ref-docs v0.0.8
 	github.com/go-logr/logr v0.4.0
 	github.com/go-logr/zapr v0.4.0
-	github.com/hashicorp/vault/api v1.3.0
+	github.com/hashicorp/vault/api v1.4.1
 	github.com/imdario/mergo v0.3.13
 	github.com/ryankurte/go-structparse v1.2.0
 	github.com/stretchr/testify v1.8.0
@@ -80,7 +80,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.0.5 // indirect
 	github.com/googleapis/gnostic v0.5.5 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
-	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
+	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-hclog v0.16.2 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
@@ -96,7 +96,7 @@ require (
 	github.com/hashicorp/go-version v1.2.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
-	github.com/hashicorp/vault/sdk v0.3.0 // indirect
+	github.com/hashicorp/vault/sdk v0.4.1 // indirect
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect
 	github.com/huandu/xstrings v1.2.1 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
