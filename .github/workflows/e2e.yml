@@ -11,7 +11,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - kind-node-version: v1.20.0
+          - kind-node-version: v1.20.15
+          - kind-node-version: v1.24.2
     steps:
       - uses: actions/checkout@v3
       - name: Determine Go version from go.mod
