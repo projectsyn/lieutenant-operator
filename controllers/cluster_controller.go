@@ -22,12 +22,14 @@ import (
 type ClusterReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+
+	CreateSATokenSecret bool
 }
 
 //+kubebuilder:rbac:groups=syn.tools,resources=clusters,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=syn.tools,resources=clusters/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=syn.tools,resources=clusters/finalizers,verbs=update
-//+kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=secrets;serviceaccounts,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings;roles,verbs=get;list;watch;create;update;patch;delete
 
 func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
@@ -45,11 +47,12 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	data := &pipeline.Context{
-		Context:       ctx,
-		Client:        r.Client,
-		Log:           reqLogger,
-		FinalizerName: synv1alpha1.FinalizerName,
-		Reconciler:    r,
+		Context:             ctx,
+		Client:              r.Client,
+		Log:                 reqLogger,
+		FinalizerName:       synv1alpha1.FinalizerName,
+		Reconciler:          r,
+		CreateSATokenSecret: r.CreateSATokenSecret,
 	}
 
 	steps := []pipeline.Step{
@@ -72,6 +75,7 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&synv1alpha1.Cluster{}).
 		Owns(&synv1alpha1.GitRepo{}).
 		Owns(&corev1.ServiceAccount{}).
+		Owns(&corev1.Secret{}).
 		Owns(&rbacv1.Role{}).
 		Owns(&rbacv1.RoleBinding{}).
 		Complete(r)

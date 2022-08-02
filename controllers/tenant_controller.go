@@ -22,13 +22,15 @@ import (
 type TenantReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+
+	CreateSATokenSecret bool
 }
 
 //+kubebuilder:rbac:groups=syn.tools,resources=tenants,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=syn.tools,resources=tenants/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=syn.tools,resources=tenants/finalizers,verbs=update
 //+kubebuilder:rbac:groups=syn.tools,resources=tenanttemplates,verbs=get;list;watch
-//+kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups="",resources=secrets;serviceaccounts,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings;roles,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile The Controller will requeue the Request to be processed again if the returned error is non-nil or
@@ -48,11 +50,12 @@ func (r *TenantReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 	}
 
 	data := &pipeline.Context{
-		Context:       ctx,
-		Client:        r.Client,
-		Log:           reqLogger,
-		FinalizerName: "",
-		Reconciler:    r,
+		Context:             ctx,
+		Client:              r.Client,
+		Log:                 reqLogger,
+		FinalizerName:       "",
+		Reconciler:          r,
+		CreateSATokenSecret: r.CreateSATokenSecret,
 	}
 
 	steps := []pipeline.Step{
@@ -74,6 +77,7 @@ func (r *TenantReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&synv1alpha1.GitRepo{}).
 		Owns(&synv1alpha1.Cluster{}).
 		Owns(&corev1.ServiceAccount{}).
+		Owns(&corev1.Secret{}).
 		Owns(&rbacv1.Role{}).
 		Owns(&rbacv1.RoleBinding{}).
 		Complete(r)

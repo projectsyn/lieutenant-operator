@@ -35,13 +35,14 @@ type Object interface {
 
 // Context contains additional data about the CRD being processed.
 type Context struct {
-	Context        context.Context
-	FinalizerName  string
-	Client         client.Client
-	Log            logr.Logger
-	Deleted        bool
-	originalObject Object
-	Reconciler     reconcile.Reconciler
+	Context             context.Context
+	FinalizerName       string
+	Client              client.Client
+	Log                 logr.Logger
+	Deleted             bool
+	originalObject      Object
+	Reconciler          reconcile.Reconciler
+	CreateSATokenSecret bool
 }
 
 // Result indicates whether the current execution should be aborted and

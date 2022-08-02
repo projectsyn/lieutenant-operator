@@ -28,6 +28,18 @@ func createServiceAccount(obj pipeline.Object, data *pipeline.Context) pipeline.
 		return pipeline.Result{Err: fmt.Errorf("create serviceaccount: %w", err)}
 	}
 
+	if data.CreateSATokenSecret {
+		secret, err := newServiceAccountTokenSecret(data.Client.Scheme(), tenant)
+		if err != nil {
+			return pipeline.Result{Err: fmt.Errorf("failed to create ServiceAccount token secret for tenant: %w", err)}
+		}
+
+		err = data.Client.Create(data.Context, secret)
+		if err != nil && !errors.IsAlreadyExists(err) {
+			return pipeline.Result{Err: fmt.Errorf("create serviceaccount token secret: %w", err)}
+		}
+	}
+
 	return pipeline.Result{}
 }
 
@@ -44,4 +56,23 @@ func newServiceAccount(scheme *runtime.Scheme, tenant *synv1alpha1.Tenant) (*cor
 	}
 
 	return sa, nil
+}
+
+func newServiceAccountTokenSecret(scheme *runtime.Scheme, tenant *synv1alpha1.Tenant) (*corev1.Secret, error) {
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      tenant.Name,
+			Namespace: tenant.Namespace,
+			Annotations: map[string]string{
+				corev1.ServiceAccountNameKey: tenant.Name,
+			},
+		},
+		Type: corev1.SecretTypeServiceAccountToken,
+	}
+	setManagedByLabel(secret)
+	if err := controllerutil.SetControllerReference(tenant, secret, scheme); err != nil {
+		return nil, err
+	}
+
+	return secret, nil
 }

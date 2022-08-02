@@ -9,7 +9,7 @@ CRD_ROOT_DIR ?= config/crd/
 
 CRD_DOCS_REF_PATH ?= docs/modules/ROOT/pages/references/api-reference.adoc
 
-KIND_NODE_VERSION ?= v1.21.2
+KIND_NODE_VERSION ?= v1.24.2
 KIND ?= go run sigs.k8s.io/kind
 
 ENABLE_LEADER_ELECTION ?= false

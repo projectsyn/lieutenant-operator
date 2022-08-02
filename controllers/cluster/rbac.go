@@ -19,7 +19,7 @@ func createClusterRBAC(obj pipeline.Object, data *pipeline.Context) pipeline.Res
 		Namespace:       obj.GetNamespace(),
 		OwnerReferences: []metav1.OwnerReference{*metav1.NewControllerRef(obj, synv1alpha1.SchemeBuilder.GroupVersion.WithKind("Cluster"))},
 	}
-	if err := createClusterSA(data.Context, data.Client, objMeta); err != nil {
+	if err := createClusterSA(data.Context, data.Client, objMeta, data.CreateSATokenSecret); err != nil {
 		return pipeline.Result{Err: err}
 	}
 	if err := createOrUpdateClusterRole(data.Context, data.Client, objMeta); err != nil {
@@ -32,10 +32,22 @@ func createClusterRBAC(obj pipeline.Object, data *pipeline.Context) pipeline.Res
 	return pipeline.Result{}
 }
 
-func createClusterSA(ctx context.Context, c client.Client, objMeta metav1.ObjectMeta) error {
+func createClusterSA(ctx context.Context, c client.Client, objMeta metav1.ObjectMeta, createTokenSecret bool) error {
 	sa := &corev1.ServiceAccount{ObjectMeta: objMeta}
 	if err := c.Create(ctx, sa); err != nil && !errors.IsAlreadyExists(err) {
 		return err
+	}
+	if createTokenSecret {
+		secret := &corev1.Secret{
+			ObjectMeta: objMeta,
+			Type:       corev1.SecretTypeServiceAccountToken,
+		}
+		secret.ObjectMeta.Annotations = map[string]string{
+			corev1.ServiceAccountNameKey: sa.Name,
+		}
+		if err := c.Create(ctx, secret); err != nil && !errors.IsAlreadyExists(err) {
+			return err
+		}
 	}
 	return nil
 }
