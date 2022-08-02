@@ -7,6 +7,7 @@ import (
 	"github.com/projectsyn/lieutenant-operator/controllers/tenant"
 	"github.com/projectsyn/lieutenant-operator/pipeline"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -28,6 +29,7 @@ type TenantReconciler struct {
 //+kubebuilder:rbac:groups=syn.tools,resources=tenants/finalizers,verbs=update
 //+kubebuilder:rbac:groups=syn.tools,resources=tenanttemplates,verbs=get;list;watch
 //+kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings;roles,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
@@ -72,5 +74,7 @@ func (r *TenantReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&synv1alpha1.GitRepo{}).
 		Owns(&synv1alpha1.Cluster{}).
 		Owns(&corev1.ServiceAccount{}).
+		Owns(&rbacv1.Role{}).
+		Owns(&rbacv1.RoleBinding{}).
 		Complete(r)
 }

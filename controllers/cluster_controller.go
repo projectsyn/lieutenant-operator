@@ -7,6 +7,7 @@ import (
 	"github.com/projectsyn/lieutenant-operator/controllers/gitrepo"
 	"github.com/projectsyn/lieutenant-operator/pipeline"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -27,6 +28,7 @@ type ClusterReconciler struct {
 //+kubebuilder:rbac:groups=syn.tools,resources=clusters/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=syn.tools,resources=clusters/finalizers,verbs=update
 //+kubebuilder:rbac:groups="",resources=serviceaccounts,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings;roles,verbs=get;list;watch;create;update;patch;delete
 
 func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	reqLogger := log.FromContext(ctx)
@@ -70,5 +72,7 @@ func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&synv1alpha1.Cluster{}).
 		Owns(&synv1alpha1.GitRepo{}).
 		Owns(&corev1.ServiceAccount{}).
+		Owns(&rbacv1.Role{}).
+		Owns(&rbacv1.RoleBinding{}).
 		Complete(r)
 }

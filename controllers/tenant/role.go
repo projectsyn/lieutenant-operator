@@ -43,7 +43,7 @@ func newRole(scheme *runtime.Scheme, tenant *synv1alpha1.Tenant) (*rbacv1.Role, 
 		},
 	}
 	setManagedByLabel(role)
-	if err := controllerutil.SetOwnerReference(tenant, role, scheme); err != nil {
+	if err := controllerutil.SetControllerReference(tenant, role, scheme); err != nil {
 		return nil, err
 	}
 	roleUtil.EnsureRules(role)
