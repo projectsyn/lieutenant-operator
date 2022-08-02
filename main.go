@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -24,6 +25,16 @@ import (
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
+)
+
+const (
+	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
+	// which specifies the Namespace to watch.
+	// An empty value means the operator is running with cluster scope.
+	watchNamespaceEnvVar = "WATCH_NAMESPACE"
+	// createSAEnvVar is the contant nfor the env variable which indicates
+	// whether to create ServiceAccount token secrets
+	createSATokenEnvVar = "LIEUTENANT_CREATE_SERVICEACCOUNT_TOKEN_SECRET"
 )
 
 func init() {
@@ -54,6 +65,12 @@ func main() {
 	if err != nil {
 		setupLog.Error(err, "unable to get WatchNamespace, "+
 			"the manager will watch and manage resources in all namespaces")
+	}
+
+	createSATokenSecret, err := getCreateSATokenSecret()
+	if err != nil {
+		setupLog.Error(err, "unable to get TokenSecret flag, "+
+			"the operator won't manage ServiceAccount token secrets.")
 	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
@@ -111,14 +128,23 @@ func main() {
 
 // getWatchNamespace returns the Namespace the operator should be watching for changes
 func getWatchNamespace() (string, error) {
-	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
-	// which specifies the Namespace to watch.
-	// An empty value means the operator is running with cluster scope.
-	const watchNamespaceEnvVar = "WATCH_NAMESPACE"
 
 	ns, found := os.LookupEnv(watchNamespaceEnvVar)
 	if !found {
 		return "", fmt.Errorf("environment variable '%s' not found", watchNamespaceEnvVar)
 	}
 	return ns, nil
+}
+
+// getCreateSATokenSecret returns a boolean indicating whether the operator should manage ServiceAccount token secrets
+func getCreateSATokenSecret() (bool, error) {
+	value, found := os.LookupEnv(createSATokenEnvVar)
+	if !found {
+		return false, fmt.Errorf("environment variable '%s' not found", createSATokenEnvVar)
+	}
+	create, err := strconv.ParseBool(value)
+	if err != nil {
+		return false, fmt.Errorf("unable to parse '%s': %v", value, err)
+	}
+	return create, nil
 }
