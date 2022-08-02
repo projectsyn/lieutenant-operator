@@ -290,7 +290,7 @@ func (g *Gitlab) setDeployKeys(localKeys map[string]synv1alpha1.DeployKey, force
 	return nil
 }
 
-func (g *Gitlab) overwriteKey(existingKeys []*gitlab.DeployKey, key string) {
+func (g *Gitlab) overwriteKey(existingKeys []*gitlab.ProjectDeployKey, key string) {
 	// unfortunately there's no way via the API to update a key, so we have to delete and recreate it, when it differs from
 	// the yaml in the k8s cluster.
 	for _, deleteKey := range existingKeys {
@@ -301,7 +301,7 @@ func (g *Gitlab) overwriteKey(existingKeys []*gitlab.DeployKey, key string) {
 	}
 }
 
-func (g *Gitlab) deleteKey(deleteKey *gitlab.DeployKey) {
+func (g *Gitlab) deleteKey(deleteKey *gitlab.ProjectDeployKey) {
 	_, err := g.client.DeployKeys.DeleteDeployKey(g.project.ID, deleteKey.ID)
 	if err != nil {
 		g.log.Error(err, "could not delete existing deploy key "+deleteKey.Title)
@@ -321,7 +321,7 @@ func (g *Gitlab) getDeployKeys() (map[string]synv1alpha1.DeployKey, error) {
 		deployKeys[key.Title] = synv1alpha1.DeployKey{
 			Type:        splittedKey[0],
 			Key:         splittedKey[1],
-			WriteAccess: *key.CanPush,
+			WriteAccess: key.CanPush,
 		}
 	}
 
