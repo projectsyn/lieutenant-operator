@@ -253,7 +253,7 @@ func (g *Gitlab) New(options manager.RepoOptions) (manager.Repo, error) {
 
 func (g *Gitlab) getNamespaceID() (*int, error) {
 
-	fetchedNamespace, _, err := g.client.Namespaces.GetNamespace(url.PathEscape(g.ops.Path))
+	fetchedNamespace, _, err := g.client.Namespaces.GetNamespace(g.ops.Path)
 	if err != nil {
 		return nil, err
 	}

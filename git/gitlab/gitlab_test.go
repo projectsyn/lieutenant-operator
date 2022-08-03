@@ -107,6 +107,19 @@ func testGetCreateServer() *httptest.Server {
 		res.WriteHeader(http.StatusOK)
 		_, _ = res.Write([]byte(`{"id":2,"name":"group1","path":"group1","kind":"group","full_path":"group1","parent_id":null,"members_count_with_descendants":2}`))
 	})
+	// The request is actually for `/api/v4/namespaces/path%2Fto%2Fgroup2`,
+	// but Go's ServeMux uses the unescaped path to look up the handler
+	// function, cf.
+	// https://cs.opensource.google/go/go/+/refs/tags/go1.19:src/net/http/server.go;l=2423;drc=1b7e71e8ae824c2ac661dd793bca29cf60378936;bpv=0;bpt=1
+	mux.HandleFunc("/api/v4/namespaces/path/to/group2", func(res http.ResponseWriter, req *http.Request) {
+		if req.URL.RawPath != "/api/v4/namespaces/path%2Fto%2Fgroup2" {
+			res.WriteHeader(http.StatusInternalServerError)
+			_, _ = res.Write([]byte(`{"message":"500 Request path not URL-escaped as expected"}`))
+		} else {
+			res.WriteHeader(http.StatusOK)
+			_, _ = res.Write([]byte(`{"id":6,"name":"group2","path":"group2","kind":"group","full_path":"path/to/group2","parent_id":5,"members_count_with_descendants":2}`))
+		}
+	})
 
 	return httptest.NewServer(mux)
 }
@@ -129,6 +142,17 @@ func TestGitlab_Create(t *testing.T) {
 			fields: fields{
 				credentials: manager.Credentials{},
 				namespace:   "group1",
+				projectname: "test",
+				description: "desc",
+			},
+			httpServer: testGetCreateServer(),
+			wantErr:    false,
+		},
+		{
+			name: "subgroup create successful",
+			fields: fields{
+				credentials: manager.Credentials{},
+				namespace:   "path/to/group2",
 				projectname: "test",
 				description: "desc",
 			},
