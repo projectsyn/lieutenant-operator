@@ -45,12 +45,25 @@ func steps(obj pipeline.Object, data *pipeline.Context, getGitClient gitClientFa
 
 	if !repoExists(repo) {
 		data.Log.Info("creating git repo", manager.SecretEndpointName, repo.FullURL())
+		instance.Status.URL = repo.FullURL().String()
+		phase := synv1alpha1.Creating
+		instance.Status.Phase = &phase
+		if err := data.Client.Status().Update(data.Context, instance); err != nil {
+			return pipeline.Result{Err: fmt.Errorf("could not set status while creating repository: %w", err)}
+		}
 		err := repo.Create()
 		if err != nil {
+			instance.Status.URL = "" // Revert status to reduce race condition likelihood
 			return pipeline.Result{Err: handleRepoError(data.Context, err, instance, data.Client)}
 
 		}
 		data.Log.Info("successfully created the repository")
+	}
+
+	if instance.Status.URL != repo.FullURL().String() {
+		phase := synv1alpha1.Failed
+		instance.Status.Phase = &phase
+		return pipeline.Result{}
 	}
 
 	if data.Deleted {
@@ -68,7 +81,7 @@ func steps(obj pipeline.Object, data *pipeline.Context, getGitClient gitClientFa
 
 	changed, err := repo.Update()
 	if err != nil {
-		return pipeline.Result{Err: fmt.Errorf("update repo: %w", err)}
+		return pipeline.Result{Err: handleRepoError(data.Context, fmt.Errorf("update repo: %w", err), instance, data.Client)}
 	}
 
 	if changed {
@@ -84,11 +97,9 @@ func steps(obj pipeline.Object, data *pipeline.Context, getGitClient gitClientFa
 }
 
 func repoExists(repo manager.Repo) bool {
-	if err := repo.Read(); err == nil {
-		return true
-	}
+	err := repo.Read()
+	return err == nil
 
-	return false
 }
 
 func handleRepoError(ctx context.Context, err error, instance *synv1alpha1.GitRepo, client client.Client) error {
