@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/go-logr/logr"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
 
 	// Register Gitrepo implementation - DONOT REMOVE
@@ -14,6 +15,12 @@ import (
 )
 
 func Steps(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
+	return steps(obj, data, manager.GetGitClient)
+}
+
+type gitClientFactory func(ctx context.Context, instance *synv1alpha1.GitRepoTemplate, namespace string, reqLogger logr.Logger, client client.Client) (manager.Repo, string, error)
+
+func steps(obj pipeline.Object, data *pipeline.Context, getGitClient gitClientFactory) pipeline.Result {
 	instance, ok := obj.(*synv1alpha1.GitRepo)
 	if !ok {
 		return pipeline.Result{Err: fmt.Errorf("object '%s/%s' is not of kind GitRepository", obj.GetNamespace(), obj.GetName())}
@@ -29,7 +36,7 @@ func Steps(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 		return pipeline.Result{}
 	}
 
-	repo, hostKeys, err := manager.GetGitClient(data.Context, &instance.Spec.GitRepoTemplate, instance.GetNamespace(), data.Log, data.Client)
+	repo, hostKeys, err := getGitClient(data.Context, &instance.Spec.GitRepoTemplate, instance.GetNamespace(), data.Log, data.Client)
 	if err != nil {
 		return pipeline.Result{Err: fmt.Errorf("get Git client: %w", err)}
 	}
