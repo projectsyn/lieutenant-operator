@@ -25,6 +25,7 @@ const (
 // GitPhase enum values
 const (
 	Created       GitPhase       = "created"
+	Creating      GitPhase       = "creating"
 	Failed        GitPhase       = "failed"
 	PhaseUnknown  GitPhase       = ""
 	ArchivePolicy DeletionPolicy = "Archive"
