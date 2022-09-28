@@ -582,3 +582,17 @@ func TestGitlab_CommitTemplateFiles(t *testing.T) {
 		})
 	}
 }
+
+func TestGitlab_FullURL(t *testing.T) {
+	serverURL, err := url.Parse("git.example.com/foo/bar")
+	require.NoError(t, err)
+	expectedFullURL := "ssh://git@git.example.com/foo/bar.git"
+	g := &Gitlab{
+		ops: manager.RepoOptions{
+			URL: serverURL,
+		},
+	}
+	assert.Equal(t, expectedFullURL, g.FullURL().String())
+	assert.Equal(t, expectedFullURL, g.FullURL().String())
+	assert.Equal(t, expectedFullURL, g.FullURL().String())
+}
