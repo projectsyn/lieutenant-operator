@@ -61,9 +61,13 @@ func steps(obj pipeline.Object, data *pipeline.Context, getGitClient gitClientFa
 	}
 
 	if instance.Status.URL != repo.FullURL().String() {
-		phase := synv1alpha1.Failed
-		instance.Status.Phase = &phase
-		return pipeline.Result{}
+		var err error
+		if !data.Deleted {
+			phase := synv1alpha1.Failed
+			instance.Status.Phase = &phase
+			err = handleRepoError(data.Context, fmt.Errorf("Failed to adopt repository. Repository %q already exists and is not managed by %s ", repo.FullURL().String(), instance.Name), instance, data.Client)
+		}
+		return pipeline.Result{Err: err}
 	}
 
 	if data.Deleted {

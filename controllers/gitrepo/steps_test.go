@@ -39,6 +39,8 @@ func TestSteps(t *testing.T) {
 		deleted   bool
 		statusURL string
 
+		shouldError bool
+
 		shouldCreate     bool
 		shouldUpdate     bool
 		shouldDelete     bool
@@ -113,6 +115,8 @@ func TestSteps(t *testing.T) {
 			exists:  true,
 			repoUrl: "git.example.com/foo/bar",
 
+			shouldError: true,
+
 			path:     "foo",
 			name:     "bar",
 			repoType: synv1alpha1.AutoRepoType,
@@ -177,7 +181,11 @@ func TestSteps(t *testing.T) {
 				url:    repoURL,
 			}
 			res := steps(repo, ctx, fakeGitClientFactory(fr))
-			assert.NoError(t, res.Err)
+			if tc.shouldError {
+				assert.Error(t, res.Err)
+			} else {
+				assert.NoError(t, res.Err)
+			}
 
 			assert.Equal(t, tc.shouldCreate, fr.created, "Should create repo")
 			assert.Equal(t, tc.shouldUpdate, fr.updated, "Should update repo")
