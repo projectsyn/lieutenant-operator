@@ -28,6 +28,11 @@ type TenantSpec struct {
 	// Archive: will archive the external resources, if it supports that
 	// +kubebuilder:validation:Enum=Delete;Retain;Archive
 	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
+	// CreationPolicy defines how the external resources should be treated upon CR creation.
+	// Create: will only create a new external resource and will not manage already existing resources
+	// Adopt:  will create a new external resource or will adopt and manage en already existing resource
+	// +kubebuilder:validation:Enum=Create;Adopt
+	CreationPolicy CreationPolicy `json:"creationPolicy,omitempty"`
 	// ClusterTemplate defines a template which will be used to set defaults for the clusters of this tenant.
 	// The fields within this can use Go templating.
 	// See https://syn.tools/lieutenant-operator/explanations/templating.html for details.
@@ -83,6 +88,11 @@ func (t *Tenant) GetTenantRef() corev1.LocalObjectReference {
 // GetDeletionPolicy returns the object's deletion policy
 func (t *Tenant) GetDeletionPolicy() DeletionPolicy {
 	return t.Spec.DeletionPolicy
+}
+
+// GetCreationPolicy returns the object's deletion policy
+func (t *Tenant) GetCreationPolicy() CreationPolicy {
+	return t.Spec.CreationPolicy
 }
 
 // GetDisplayName returns the display name of the object

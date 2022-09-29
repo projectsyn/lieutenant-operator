@@ -39,6 +39,13 @@ func CreateOrUpdate(obj pipeline.Object, data *pipeline.Context) pipeline.Result
 			template.DeletionPolicy = obj.GetDeletionPolicy()
 		}
 	}
+	if template.CreationPolicy == "" {
+		if obj.GetCreationPolicy() == "" {
+			template.CreationPolicy = data.DefaultCreationPolicy
+		} else {
+			template.CreationPolicy = obj.GetCreationPolicy()
+		}
+	}
 
 	if template.RepoType == synv1alpha1.DefaultRepoType {
 		template.RepoType = synv1alpha1.AutoRepoType

@@ -34,6 +34,11 @@ type ClusterSpec struct {
 	// Archive: will archive the external resources, if it supports that
 	// +kubebuilder:validation:Enum=Delete;Retain;Archive
 	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
+	// CreationPolicy defines how the external resources should be treated upon CR creation.
+	// Create: will only create a new external resource and will not manage already existing resources
+	// Adopt:  will create a new external resource or will adopt and manage en already existing resource
+	// +kubebuilder:validation:Enum=Create;Adopt
+	CreationPolicy CreationPolicy `json:"creationPolicy,omitempty"`
 }
 
 // BootstrapToken this key is used only once for Steward to register.
@@ -97,6 +102,11 @@ func (c *Cluster) GetTenantRef() corev1.LocalObjectReference {
 // GetDeletionPolicy returns the object's deletion policy
 func (c *Cluster) GetDeletionPolicy() DeletionPolicy {
 	return c.Spec.DeletionPolicy
+}
+
+// GetCreationPolicy returns the object's deletion policy
+func (c *Cluster) GetCreationPolicy() CreationPolicy {
+	return c.Spec.CreationPolicy
 }
 
 // GetDisplayName returns the display name of the object

@@ -37,6 +37,7 @@ func TestSteps(t *testing.T) {
 		name      string
 		repoType  synv1alpha1.RepoType
 		deleted   bool
+		adopt     bool
 		statusURL string
 
 		shouldError bool
@@ -121,6 +122,18 @@ func TestSteps(t *testing.T) {
 			name:     "bar",
 			repoType: synv1alpha1.AutoRepoType,
 		},
+		"should adopt repo": {
+			exists:  true,
+			repoUrl: "git.example.com/foo/bar",
+			adopt:   true,
+
+			path:     "foo",
+			name:     "bar",
+			repoType: synv1alpha1.AutoRepoType,
+
+			shouldUpdate:     true,
+			updatedStatusURL: "git.example.com/foo/bar",
+		},
 		"should not delete unadopted repo": {
 			exists:  true,
 			repoUrl: "git.example.com/foo/bar",
@@ -129,6 +142,18 @@ func TestSteps(t *testing.T) {
 			name:     "bar",
 			repoType: synv1alpha1.AutoRepoType,
 			deleted:  true,
+		},
+		"should adopt and delete repo": {
+			exists:  true,
+			repoUrl: "git.example.com/foo/bar",
+			adopt:   true,
+
+			path:     "foo",
+			name:     "bar",
+			repoType: synv1alpha1.AutoRepoType,
+			deleted:  true,
+
+			shouldDelete: true,
 		},
 		"should create other repo": {
 			exists:  false,
@@ -154,14 +179,18 @@ func TestSteps(t *testing.T) {
 				},
 				Spec: synv1alpha1.GitRepoSpec{
 					GitRepoTemplate: synv1alpha1.GitRepoTemplate{
-						Path:     tc.path,
-						RepoName: tc.name,
-						RepoType: tc.repoType,
+						Path:           tc.path,
+						RepoName:       tc.name,
+						RepoType:       tc.repoType,
+						CreationPolicy: synv1alpha1.CreatePolicy,
 					},
 				},
 				Status: synv1alpha1.GitRepoStatus{
 					URL: tc.statusURL,
 				},
+			}
+			if tc.adopt {
+				repo.Spec.GitRepoTemplate.CreationPolicy = synv1alpha1.AdoptPolicy
 			}
 			c := fake.NewClientBuilder().
 				WithScheme(scheme).
