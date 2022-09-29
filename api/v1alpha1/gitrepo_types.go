@@ -84,7 +84,7 @@ type GitRepoTemplate struct {
 	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
 	// CreationPolicy defines how the external resources should be treated upon CR creation.
 	// Create: will only create a new external resource and will not manage already existing resources
-	// Adopt:  will create a new external resource or will adopt and manage en already existing resource
+	// Adopt:  will create a new external resource or will adopt and manage an already existing resource
 	// +kubebuilder:validation:Enum=Create;Adopt
 	CreationPolicy CreationPolicy `json:"creationPolicy,omitempty"`
 }
@@ -157,7 +157,7 @@ func (g *GitRepo) GetDeletionPolicy() DeletionPolicy {
 	return g.Spec.DeletionPolicy
 }
 
-// GetCreationPolicy returns the object's deletion policy
+// GetCreationPolicy returns the object's creation policy
 func (g *GitRepo) GetCreationPolicy() CreationPolicy {
 	return g.Spec.CreationPolicy
 }

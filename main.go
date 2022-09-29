@@ -32,10 +32,10 @@ const (
 	// which specifies the Namespace to watch.
 	// An empty value means the operator is running with cluster scope.
 	watchNamespaceEnvVar = "WATCH_NAMESPACE"
-	// createSAEnvVar is the contant for the env variable which indicates
+	// createSAEnvVar is the constant for the env variable which indicates
 	// whether to create ServiceAccount token secrets
 	createSATokenEnvVar = "LIEUTENANT_CREATE_SERVICEACCOUNT_TOKEN_SECRET"
-	// createSAEnvVar is the contant for the env variable which indicates
+	// createSAEnvVar is the constant for the env variable which indicates
 	// the default creation policy for git repositories
 	defaultCreationPolicy = "DEFAULT_CREATION_POLICY"
 )

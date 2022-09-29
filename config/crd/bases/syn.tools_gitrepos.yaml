@@ -66,7 +66,7 @@ spec:
                 description: 'CreationPolicy defines how the external resources should
                   be treated upon CR creation. Create: will only create a new external
                   resource and will not manage already existing resources Adopt:  will
-                  create a new external resource or will adopt and manage en already
+                  create a new external resource or will adopt and manage an already
                   existing resource'
                 enum:
                 - Create
