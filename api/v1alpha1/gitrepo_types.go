@@ -31,6 +31,8 @@ const (
 	ArchivePolicy DeletionPolicy = "Archive"
 	DeletePolicy  DeletionPolicy = "Delete"
 	RetainPolicy  DeletionPolicy = "Retain"
+	CreatePolicy  CreationPolicy = "Create"
+	AdoptPolicy   CreationPolicy = "Adopt"
 )
 
 // GitPhase is the enum for the git phase status
@@ -44,6 +46,9 @@ type RepoType string
 
 // DeletionPolicy defines the type deletion policy
 type DeletionPolicy string
+
+// CreationPolicy defines the type creation policy
+type CreationPolicy string
 
 // GitRepoSpec defines the desired state of GitRepo
 type GitRepoSpec struct {
@@ -77,6 +82,11 @@ type GitRepoTemplate struct {
 	// Archive: will archive the external resources, if it supports that
 	// +kubebuilder:validation:Enum=Delete;Retain;Archive
 	DeletionPolicy DeletionPolicy `json:"deletionPolicy,omitempty"`
+	// CreationPolicy defines how the external resources should be treated upon CR creation.
+	// Create: will only create a new external resource and will not manage already existing resources
+	// Adopt:  will create a new external resource or will adopt and manage an already existing resource
+	// +kubebuilder:validation:Enum=Create;Adopt
+	CreationPolicy CreationPolicy `json:"creationPolicy,omitempty"`
 }
 
 // DeployKey defines an SSH key to be used for git operations.
@@ -145,6 +155,11 @@ func (g *GitRepo) GetTenantRef() corev1.LocalObjectReference {
 // GetDeletionPolicy returns the object's deletion policy
 func (g *GitRepo) GetDeletionPolicy() DeletionPolicy {
 	return g.Spec.DeletionPolicy
+}
+
+// GetCreationPolicy returns the object's creation policy
+func (g *GitRepo) GetCreationPolicy() CreationPolicy {
+	return g.Spec.CreationPolicy
 }
 
 // GetDisplayName returns the display name of the object

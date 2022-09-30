@@ -86,8 +86,23 @@ ClusterSpec defines the desired state of Cluster
 | *`tokenLifeTime`* __string__ | TokenLifetime set the token lifetime
 | *`facts`* __object (keys:string, values:string)__ | Facts are key/value pairs for statically configured facts
 | *`deletionPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deletionpolicy[$$DeletionPolicy$$]__ | DeletionPolicy defines how the external resources should be treated upon CR deletion. Retain: will not delete any external resources Delete: will delete the external resources Archive: will archive the external resources, if it supports that
+| *`creationPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-creationpolicy[$$CreationPolicy$$]__ | CreationPolicy defines how the external resources should be treated upon CR creation. Create: will only create a new external resource and will not manage already existing resources Adopt:  will create a new external resource or will adopt and manage an already existing resource
 |===
 
+
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-creationpolicy"]
+=== CreationPolicy (string) 
+
+CreationPolicy defines the type creation policy
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterspec[$$ClusterSpec$$]
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenantspec[$$TenantSpec$$]
+****
 
 
 
@@ -190,6 +205,7 @@ GitRepoTemplate is used for templating git repos, it does not contain the tenant
 | *`displayName`* __string__ | DisplayName of Git repository
 | *`templateFiles`* __object (keys:string, values:string)__ | TemplateFiles is a list of files that should be pushed to the repository after its creation.
 | *`deletionPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deletionpolicy[$$DeletionPolicy$$]__ | DeletionPolicy defines how the external resources should be treated upon CR deletion. Retain: will not delete any external resources Delete: will delete the external resources Archive: will archive the external resources, if it supports that
+| *`creationPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-creationpolicy[$$CreationPolicy$$]__ | CreationPolicy defines how the external resources should be treated upon CR creation. Create: will only create a new external resource and will not manage already existing resources Adopt:  will create a new external resource or will adopt and manage an already existing resource
 |===
 
 
@@ -247,6 +263,7 @@ TenantSpec defines the desired state of Tenant
 | *`globalGitRepoRevision`* __string__ | GlobalGitRepoRevision allows to configure the revision of the global configuration to use. It can be any git tree-ish reference. Defaults to HEAD if left empty.
 | *`gitRepoTemplate`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]__ | GitRepoTemplate Template for managing the GitRepo object. If not set, no GitRepo object will be created.
 | *`deletionPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deletionpolicy[$$DeletionPolicy$$]__ | DeletionPolicy defines how the external resources should be treated upon CR deletion. Retain: will not delete any external resources Delete: will delete the external resources Archive: will archive the external resources, if it supports that
+| *`creationPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-creationpolicy[$$CreationPolicy$$]__ | CreationPolicy defines how the external resources should be treated upon CR creation. Create: will only create a new external resource and will not manage already existing resources Adopt:  will create a new external resource or will adopt and manage an already existing resource
 | *`clusterTemplate`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterspec[$$ClusterSpec$$]__ | ClusterTemplate defines a template which will be used to set defaults for the clusters of this tenant. The fields within this can use Go templating. See https://syn.tools/lieutenant-operator/explanations/templating.html for details.
 |===
 

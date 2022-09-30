@@ -23,7 +23,8 @@ type TenantReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 
-	CreateSATokenSecret bool
+	CreateSATokenSecret   bool
+	DefaultCreationPolicy synv1alpha1.CreationPolicy
 }
 
 //+kubebuilder:rbac:groups=syn.tools,resources=tenants,verbs=get;list;watch;create;update;patch;delete
@@ -50,12 +51,13 @@ func (r *TenantReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 	}
 
 	data := &pipeline.Context{
-		Context:             ctx,
-		Client:              r.Client,
-		Log:                 reqLogger,
-		FinalizerName:       "",
-		Reconciler:          r,
-		CreateSATokenSecret: r.CreateSATokenSecret,
+		Context:               ctx,
+		Client:                r.Client,
+		Log:                   reqLogger,
+		FinalizerName:         "",
+		Reconciler:            r,
+		CreateSATokenSecret:   r.CreateSATokenSecret,
+		DefaultCreationPolicy: r.DefaultCreationPolicy,
 	}
 
 	steps := []pipeline.Step{

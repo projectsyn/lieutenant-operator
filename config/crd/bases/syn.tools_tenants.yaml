@@ -49,6 +49,16 @@ spec:
                   this can use Go templating. See https://syn.tools/lieutenant-operator/explanations/templating.html
                   for details.
                 properties:
+                  creationPolicy:
+                    description: 'CreationPolicy defines how the external resources
+                      should be treated upon CR creation. Create: will only create
+                      a new external resource and will not manage already existing
+                      resources Adopt:  will create a new external resource or will
+                      adopt and manage an already existing resource'
+                    enum:
+                    - Create
+                    - Adopt
+                    type: string
                   deletionPolicy:
                     description: 'DeletionPolicy defines how the external resources
                       should be treated upon CR deletion. Retain: will not delete
@@ -90,6 +100,16 @@ spec:
                               the secret name must be unique.
                             type: string
                         type: object
+                      creationPolicy:
+                        description: 'CreationPolicy defines how the external resources
+                          should be treated upon CR creation. Create: will only create
+                          a new external resource and will not manage already existing
+                          resources Adopt:  will create a new external resource or
+                          will adopt and manage an already existing resource'
+                        enum:
+                        - Create
+                        - Adopt
+                        type: string
                       deletionPolicy:
                         description: 'DeletionPolicy defines how the external resources
                           should be treated upon CR deletion. Retain: will not delete
@@ -174,6 +194,16 @@ spec:
                     description: TokenLifetime set the token lifetime
                     type: string
                 type: object
+              creationPolicy:
+                description: 'CreationPolicy defines how the external resources should
+                  be treated upon CR creation. Create: will only create a new external
+                  resource and will not manage already existing resources Adopt:  will
+                  create a new external resource or will adopt and manage an already
+                  existing resource'
+                enum:
+                - Create
+                - Adopt
+                type: string
               deletionPolicy:
                 description: 'DeletionPolicy defines how the external resources should
                   be treated upon CR deletion. Retain: will not delete any external
@@ -209,6 +239,16 @@ spec:
                           secret name must be unique.
                         type: string
                     type: object
+                  creationPolicy:
+                    description: 'CreationPolicy defines how the external resources
+                      should be treated upon CR creation. Create: will only create
+                      a new external resource and will not manage already existing
+                      resources Adopt:  will create a new external resource or will
+                      adopt and manage an already existing resource'
+                    enum:
+                    - Create
+                    - Adopt
+                    type: string
                   deletionPolicy:
                     description: 'DeletionPolicy defines how the external resources
                       should be treated upon CR deletion. Retain: will not delete

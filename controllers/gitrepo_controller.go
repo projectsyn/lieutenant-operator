@@ -19,6 +19,8 @@ import (
 type GitRepoReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+
+	DefaultCreationPolicy synv1alpha1.CreationPolicy
 }
 
 //+kubebuilder:rbac:groups=syn.tools,resources=gitrepos,verbs=get;list;watch;create;update;patch;delete
@@ -46,11 +48,12 @@ func (r *GitRepoReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 	}
 
 	data := &pipeline.Context{
-		Context:       ctx,
-		Client:        r.Client,
-		Log:           reqLogger,
-		FinalizerName: synv1alpha1.FinalizerName,
-		Reconciler:    r,
+		Context:               ctx,
+		Client:                r.Client,
+		Log:                   reqLogger,
+		FinalizerName:         synv1alpha1.FinalizerName,
+		Reconciler:            r,
+		DefaultCreationPolicy: r.DefaultCreationPolicy,
 	}
 
 	steps := []pipeline.Step{

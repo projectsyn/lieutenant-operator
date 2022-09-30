@@ -60,7 +60,7 @@ func steps(obj pipeline.Object, data *pipeline.Context, getGitClient gitClientFa
 		data.Log.Info("successfully created the repository")
 	}
 
-	if instance.Status.URL != repo.FullURL().String() {
+	if instance.Status.URL != repo.FullURL().String() && instance.Spec.CreationPolicy != synv1alpha1.AdoptPolicy {
 		var err error
 		if !data.Deleted {
 			phase := synv1alpha1.Failed

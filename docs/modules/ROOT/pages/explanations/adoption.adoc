@@ -1,0 +1,9 @@
+= Repository Adoption
+
+Repository Adoption is the process of managing Git repositories that weren't created by Lieutenant.
+
+By default if you create a `GitRepo` resource that references a Git repository that already exits, Lieutenant will not adopt and manage it.
+This should prevent accidental modification of existing repositories and also avoids issues if two `GitRepo` resources reference the same repository.
+
+Adoption can be enabled per `GitRepo` by setting `spec.creationPolicy` to `Adopt` or as a global default by setting `DEFAULT_CREATION_POLICY` to `Adopt`.
+Enabling adoption can be helpful for migrations or disaster recovery.

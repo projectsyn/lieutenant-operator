@@ -33,6 +33,11 @@ Lieutenant Operator is configured via environment variables:
 |Sets what deletion policy for external resources (Git, Vault) should be used by default. One of `Archive`, `Delete`, `Retain`. See xref:lieutenant-operator:ROOT:explanations/deletion.adoc[Explanation/Object Deletion] for more information.
 |Archive
 
+|DEFAULT_CREATION_POLICY
+|Sets what creation policy for Git repositories should be used by default. One of `Create` or `Adopt`. See xref:lieutenant-operator:ROOT:explanations/adption.adoc[Object Adoption] for more information.
+|Create
+
+
 |LIEUTENANT_DELETE_PROTECTION
 |Defines whether the annotation to protect for accidental deletion should be set by default. See xref:lieutenant-operator:ROOT:explanations/deletion.adoc[Explanation/Object Deletion] for more information.
 |true

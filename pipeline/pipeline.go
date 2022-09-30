@@ -26,6 +26,7 @@ type Object interface {
 	GroupVersionKind() schema.GroupVersionKind
 	GetTenantRef() corev1.LocalObjectReference
 	GetDeletionPolicy() synv1alpha1.DeletionPolicy
+	GetCreationPolicy() synv1alpha1.CreationPolicy
 	GetDisplayName() string
 	SetGitRepoURLAndHostKeys(URL, hostKeys string)
 	GetMeta() metav1.ObjectMeta
@@ -35,14 +36,15 @@ type Object interface {
 
 // Context contains additional data about the CRD being processed.
 type Context struct {
-	Context             context.Context
-	FinalizerName       string
-	Client              client.Client
-	Log                 logr.Logger
-	Deleted             bool
-	originalObject      Object
-	Reconciler          reconcile.Reconciler
-	CreateSATokenSecret bool
+	Context               context.Context
+	FinalizerName         string
+	Client                client.Client
+	Log                   logr.Logger
+	Deleted               bool
+	originalObject        Object
+	Reconciler            reconcile.Reconciler
+	CreateSATokenSecret   bool
+	DefaultCreationPolicy synv1alpha1.CreationPolicy
 }
 
 // Result indicates whether the current execution should be aborted and

@@ -32,9 +32,12 @@ const (
 	// which specifies the Namespace to watch.
 	// An empty value means the operator is running with cluster scope.
 	watchNamespaceEnvVar = "WATCH_NAMESPACE"
-	// createSAEnvVar is the contant nfor the env variable which indicates
+	// createSAEnvVar is the constant for the env variable which indicates
 	// whether to create ServiceAccount token secrets
 	createSATokenEnvVar = "LIEUTENANT_CREATE_SERVICEACCOUNT_TOKEN_SECRET"
+	// createSAEnvVar is the constant for the env variable which indicates
+	// the default creation policy for git repositories
+	defaultCreationPolicy = "DEFAULT_CREATION_POLICY"
 )
 
 func init() {
@@ -73,6 +76,8 @@ func main() {
 			"the operator won't manage ServiceAccount token secrets.")
 	}
 
+	creationPolicy := getDefaultCreationPolicy()
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		MetricsBindAddress:     metricsAddr,
@@ -88,24 +93,27 @@ func main() {
 	}
 
 	if err = (&controllers.ClusterReconciler{
-		Client:              mgr.GetClient(),
-		Scheme:              mgr.GetScheme(),
-		CreateSATokenSecret: createSATokenSecret,
+		Client:                mgr.GetClient(),
+		Scheme:                mgr.GetScheme(),
+		CreateSATokenSecret:   createSATokenSecret,
+		DefaultCreationPolicy: creationPolicy,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Cluster")
 		os.Exit(1)
 	}
 	if err = (&controllers.GitRepoReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:                mgr.GetClient(),
+		Scheme:                mgr.GetScheme(),
+		DefaultCreationPolicy: creationPolicy,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GitRepo")
 		os.Exit(1)
 	}
 	if err = (&controllers.TenantReconciler{
-		Client:              mgr.GetClient(),
-		Scheme:              mgr.GetScheme(),
-		CreateSATokenSecret: createSATokenSecret,
+		Client:                mgr.GetClient(),
+		Scheme:                mgr.GetScheme(),
+		CreateSATokenSecret:   createSATokenSecret,
+		DefaultCreationPolicy: creationPolicy,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Tenant")
 		os.Exit(1)
@@ -149,4 +157,19 @@ func getCreateSATokenSecret() (bool, error) {
 		return false, fmt.Errorf("unable to parse '%s': %v", value, err)
 	}
 	return create, nil
+}
+
+// getDefaultCreationPolicy returns to fallback creation policy for git repositories
+func getDefaultCreationPolicy() synv1alpha1.CreationPolicy {
+	p, found := os.LookupEnv(defaultCreationPolicy)
+	if !found {
+		return synv1alpha1.CreatePolicy
+	}
+	cp := synv1alpha1.CreationPolicy(p)
+	switch cp {
+	case synv1alpha1.CreatePolicy, synv1alpha1.AdoptPolicy:
+		return cp
+	default:
+		return synv1alpha1.CreatePolicy
+	}
 }
