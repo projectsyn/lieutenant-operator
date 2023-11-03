@@ -5,14 +5,14 @@ go 1.18
 require (
 	github.com/banzaicloud/bank-vaults/pkg/sdk v0.8.3
 	github.com/elastic/crd-ref-docs v0.0.8
-	github.com/go-logr/logr v0.4.0
-	github.com/go-logr/zapr v0.4.0
+	github.com/go-logr/logr v1.3.0
+	github.com/go-logr/zapr v1.3.0
 	github.com/hashicorp/vault/api v1.7.2
 	github.com/imdario/mergo v0.3.13
 	github.com/ryankurte/go-structparse v1.2.0
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.8.4
 	github.com/xanzy/go-gitlab v0.70.0
-	go.uber.org/zap v1.21.0
+	go.uber.org/zap v1.26.0
 	k8s.io/api v0.21.2
 	k8s.io/apimachinery v0.21.2
 	k8s.io/client-go v0.21.2
@@ -139,7 +139,7 @@ require (
 	go.opencensus.io v0.22.5 // indirect
 	go.starlark.net v0.0.0-20200306205701-8dd3e2ee1dd5 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	go.uber.org/multierr v1.6.0 // indirect
+	go.uber.org/multierr v1.10.0 // indirect
 	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97 // indirect
 	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/net v0.0.0-20220520000938-2e3eb7b945c2 // indirect
