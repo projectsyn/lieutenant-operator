@@ -15,7 +15,7 @@ go_build ?= go build -o $(BIN_FILENAME) main.go
 
 setup-envtest ?= go run sigs.k8s.io/controller-runtime/tools/setup-envtest
 
-# Run tests (see https://sdk.operatorframework.io/docs/building-operators/golang/references/envtest-setup)
+# Run tests (see https://book.kubebuilder.io/reference/envtest.html?highlight=envtest#configuring-envtest-for-integration-tests)
 ENVTEST_ASSETS_DIR=$(shell pwd)/testbin
 
 all: build ## Invokes the build target
