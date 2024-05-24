@@ -195,6 +195,7 @@ func TestSteps(t *testing.T) {
 			c := fake.NewClientBuilder().
 				WithScheme(scheme).
 				WithObjects(repo).
+				WithStatusSubresource(&synv1alpha1.GitRepo{}).
 				Build()
 			ctx := &pipeline.Context{
 				Context:       context.TODO(),
@@ -268,6 +269,7 @@ func TestStepsCreationFailure(t *testing.T) {
 			c := fake.NewClientBuilder().
 				WithScheme(scheme).
 				WithObjects(repo).
+				WithStatusSubresource(&synv1alpha1.GitRepo{}).
 				Build()
 			ctx := &pipeline.Context{
 				Context:       context.TODO(),

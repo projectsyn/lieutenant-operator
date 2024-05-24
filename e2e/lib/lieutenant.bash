@@ -41,7 +41,7 @@ teardown() {
 }
 
 kustomize() {
-	go run sigs.k8s.io/kustomize/kustomize/v3 "${@}"
+	go run sigs.k8s.io/kustomize/kustomize/v5 "${@}"
 }
 
 replace_in_file() {

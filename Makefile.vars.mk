@@ -26,7 +26,7 @@ BATS_FILES ?= .
 
 INTEGRATION_TEST_DEBUG_OUTPUT ?= false
 
-KUSTOMIZE ?= go run sigs.k8s.io/kustomize/kustomize/v3
+KUSTOMIZE ?= go run sigs.k8s.io/kustomize/kustomize/v5
 
 # Image URL to use all building/pushing image targets
 DOCKER_IMG ?= docker.io/projectsyn/lieutenant-operator:$(IMG_TAG)

@@ -16,7 +16,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
@@ -35,10 +34,15 @@ type args struct {
 }
 
 // testSetupClient returns a client containing all objects in objs
-func testSetupClient(objs []runtime.Object) (client.Client, *runtime.Scheme) {
-	s := scheme.Scheme
-	s.AddKnownTypes(synv1alpha1.GroupVersion, objs...)
-	return fake.NewFakeClientWithScheme(s, objs...), s
+func testSetupClient(objs ...client.Object) (client.Client, *runtime.Scheme) {
+	s := runtime.NewScheme()
+	err := synv1alpha1.AddToScheme(s)
+	if err != nil {
+		panic(fmt.Errorf("unexpected error while adding to scheme: %w", err))
+	}
+	return fake.NewClientBuilder().WithScheme(s).WithObjects(objs...).WithStatusSubresource(
+		&synv1alpha1.Cluster{}, &synv1alpha1.Tenant{}, &synv1alpha1.GitRepo{},
+	).Build(), s
 }
 
 func TestGetDeletionPolicyDefault(t *testing.T) {
@@ -131,7 +135,7 @@ var handleDeletionCases = genericCases{
 func TestHandleDeletion(t *testing.T) {
 	for name, tt := range handleDeletionCases {
 		t.Run(name, func(t *testing.T) {
-			testClient, _ := testSetupClient([]runtime.Object{&synv1alpha1.Cluster{}})
+			testClient, _ := testSetupClient()
 
 			data := addLogger(&Context{
 				Client:        testClient,
@@ -321,9 +325,7 @@ var updateObjectCases = genericCases{
 func Test_updateObject(t *testing.T) {
 	for name, tt := range updateObjectCases {
 		t.Run(name, func(t *testing.T) {
-			tt.args.data.Client, _ = testSetupClient([]runtime.Object{
-				tt.args.tenant,
-			})
+			tt.args.data.Client, _ = testSetupClient(tt.args.tenant)
 
 			got := updateObject(tt.args.tenant, tt.args.data)
 			if (got.Err != nil) != tt.wantErr {
@@ -334,24 +336,19 @@ func Test_updateObject(t *testing.T) {
 }
 
 func Test_updateObjectStatus(t *testing.T) {
-	ex := addLogger(&Context{
-		originalObject: &synv1alpha1.Cluster{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:            "cluster-a",
-				ResourceVersion: "1234",
-			},
-		},
-	})
 	cluster := &synv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:            "cluster-a",
-			ResourceVersion: "1234",
+			Name: "cluster-a",
 		},
 		Spec: synv1alpha1.ClusterSpec{
 			DisplayName: "My Test cluster",
 		},
 	}
-	ex.Client, _ = testSetupClient([]runtime.Object{cluster})
+	ex := addLogger(&Context{
+		originalObject: cluster,
+	})
+	ex.Client, _ = testSetupClient()
+	require.NoError(t, ex.Client.Create(context.Background(), cluster))
 
 	res := updateObject(&synv1alpha1.Cluster{
 		ObjectMeta: cluster.ObjectMeta,

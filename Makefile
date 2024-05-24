@@ -25,7 +25,7 @@ test: ## Run tests
 	go test ./... -coverprofile cover.out
 
 # See https://storage.googleapis.com/kubebuilder-tools/ for list of supported K8s versions
-integration-test: export ENVTEST_K8S_VERSION = 1.21.x
+integration-test: export ENVTEST_K8S_VERSION = 1.27.x
 integration-test: export KUBEBUILDER_ATTACH_CONTROL_PLANE_OUTPUT = $(INTEGRATION_TEST_DEBUG_OUTPUT)
 integration-test: generate $(testbin_created) ## Run integration tests with envtest
 	$(setup-envtest) use '$(ENVTEST_K8S_VERSION)!'
