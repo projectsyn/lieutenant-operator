@@ -58,6 +58,46 @@ type ClusterStatus struct {
 	BootstrapToken *BootstrapToken `json:"bootstrapToken,omitempty"`
 	// Facts are key/value pairs for dynamically fetched facts
 	Facts Facts `json:"facts,omitempty"`
+	// CompileMeta contains information about the last compilation with Commodore.
+	CompileMeta CompileMeta `json:"compileMeta,omitempty"`
+}
+
+// CompileMeta contains information about the last compilation with Commodore.
+type CompileMeta struct {
+	// LastCompile is the time of the last successful compilation.
+	LastCompile metav1.Time `json:"lastCompile,omitempty"`
+	// CommodoreBuildInfo is the freeform build information reported by the Commodore binary used for the last compilation.
+	CommodoreBuildInfo map[string]string `json:"commodoreBuildInfo,omitempty"`
+	// Global contains the information of the global configuration used for the last compilation.
+	Global CompileMetaVersionInfo `json:"global,omitempty"`
+	// Tenant contains the information of the tenant configuration used for the last compilation.
+	Tenant CompileMetaVersionInfo `json:"tenant,omitempty"`
+	// Packages contains the information of the packages used for the last compilation.
+	Packages map[string]CompileMetaVersionInfo `json:"packages,omitempty"`
+	// Instances contains the information of the component instances used for the last compilation.
+	// The key is the name of the component instance.
+	Instances map[string]CompileMetaInstanceVersionInfo `json:"instances,omitempty"`
+}
+
+// CompileMetaVersionInfo contains information about the version of a configuration repo or a package.
+type CompileMetaVersionInfo struct {
+	// URL is the URL of the git repository.
+	URL string `json:"url,omitempty"`
+	// GitSHA is the git commit SHA of the used commit.
+	GitSHA string `json:"gitSha,omitempty"`
+	// Version is the version of the configuration.
+	// Can point to a tag, branch or any other git reference.
+	Version string `json:"version,omitempty"`
+	// Path is the path inside the git repository where the configuration is stored.
+	Path string `json:"path,omitempty"`
+}
+
+// CompileMetaInstanceVersionInfo contains information about the version of a component instance.
+type CompileMetaInstanceVersionInfo struct {
+	CompileMetaVersionInfo `json:",inline"`
+
+	// Component is the name of a component instance.
+	Component string `json:"component,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

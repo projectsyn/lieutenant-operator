@@ -218,6 +218,113 @@ spec:
                     format: date-time
                     type: string
                 type: object
+              compileMeta:
+                description: CompileMeta contains information about the last compilation
+                  with Commodore.
+                properties:
+                  commodoreBuildInfo:
+                    additionalProperties:
+                      type: string
+                    description: CommodoreBuildInfo is the freeform build information
+                      reported by the Commodore binary used for the last compilation.
+                    type: object
+                  global:
+                    description: Global contains the information of the global configuration
+                      used for the last compilation.
+                    properties:
+                      gitSha:
+                        description: GitSHA is the git commit SHA of the used commit.
+                        type: string
+                      path:
+                        description: Path is the path inside the git repository where
+                          the configuration is stored.
+                        type: string
+                      url:
+                        description: URL is the URL of the git repository.
+                        type: string
+                      version:
+                        description: |-
+                          Version is the version of the configuration.
+                          Can point to a tag, branch or any other git reference.
+                        type: string
+                    type: object
+                  instances:
+                    additionalProperties:
+                      description: CompileMetaInstanceVersionInfo contains information
+                        about the version of a component instance.
+                      properties:
+                        component:
+                          description: Component is the name of a component instance.
+                          type: string
+                        gitSha:
+                          description: GitSHA is the git commit SHA of the used commit.
+                          type: string
+                        path:
+                          description: Path is the path inside the git repository
+                            where the configuration is stored.
+                          type: string
+                        url:
+                          description: URL is the URL of the git repository.
+                          type: string
+                        version:
+                          description: |-
+                            Version is the version of the configuration.
+                            Can point to a tag, branch or any other git reference.
+                          type: string
+                      type: object
+                    description: |-
+                      Instances contains the information of the component instances used for the last compilation.
+                      The key is the name of the component instance.
+                    type: object
+                  lastCompile:
+                    description: LastCompile is the time of the last successful compilation.
+                    format: date-time
+                    type: string
+                  packages:
+                    additionalProperties:
+                      description: CompileMetaVersionInfo contains information about
+                        the version of a configuration repo or a package.
+                      properties:
+                        gitSha:
+                          description: GitSHA is the git commit SHA of the used commit.
+                          type: string
+                        path:
+                          description: Path is the path inside the git repository
+                            where the configuration is stored.
+                          type: string
+                        url:
+                          description: URL is the URL of the git repository.
+                          type: string
+                        version:
+                          description: |-
+                            Version is the version of the configuration.
+                            Can point to a tag, branch or any other git reference.
+                          type: string
+                      type: object
+                    description: Packages contains the information of the packages
+                      used for the last compilation.
+                    type: object
+                  tenant:
+                    description: Tenant contains the information of the tenant configuration
+                      used for the last compilation.
+                    properties:
+                      gitSha:
+                        description: GitSHA is the git commit SHA of the used commit.
+                        type: string
+                      path:
+                        description: Path is the path inside the git repository where
+                          the configuration is stored.
+                        type: string
+                      url:
+                        description: URL is the URL of the git repository.
+                        type: string
+                      version:
+                        description: |-
+                          Version is the version of the configuration.
+                          Can point to a tag, branch or any other git reference.
+                        type: string
+                    type: object
+                type: object
               facts:
                 additionalProperties:
                   type: string
