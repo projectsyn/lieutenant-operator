@@ -1,9 +1,7 @@
 domain: syn.tools
 layout:
 - go.kubebuilder.io/v3
-plugins:
-  manifests.sdk.operatorframework.io/v2: {}
-  scorecard.sdk.operatorframework.io/v2: {}
+plugins: {}
 projectName: lieutenant-operator
 repo: github.com/projectsyn/lieutenant-operator
 resources:

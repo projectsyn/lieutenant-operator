@@ -10,6 +10,6 @@ It also handles the management of some requirements like Git repositories and se
 
 The main interaction point with the Lieutenant Operator is through the https://syn.tools/lieutenant-api/[Lieutenant API].
 
-The operator is written in Go using the https://github.com/operator-framework/operator-sdk/[Operator SDK].
+The operator is written in Go using [Kubebuilder](https://github.com/kubernetes-sigs/kubebuilder).
 
 TIP: To get started fast, have a look at the tutorial xref:syn::tutorials/getting-started.html[Getting Started with Project Syn].

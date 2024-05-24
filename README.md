@@ -35,7 +35,7 @@ Some example data to test the operator is available under `config/samples/`.
 
 ## Development
 
-The Operator is implemented using the [Operator SDK](https://github.com/operator-framework/operator-sdk).
+The Operator is implemented using [Kubebuilder](https://github.com/kubernetes-sigs/kubebuilder).
 
 There are many `make` targets available.
 Run `make help` to get a list of relevant targets.
