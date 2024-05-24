@@ -10,7 +10,7 @@ require (
 	github.com/hashicorp/vault/api v1.7.2
 	github.com/imdario/mergo v0.3.13
 	github.com/ryankurte/go-structparse v1.2.0
-	github.com/stretchr/testify v1.8.0
+	github.com/stretchr/testify v1.9.0
 	github.com/xanzy/go-gitlab v0.70.0
 	go.uber.org/zap v1.21.0
 	k8s.io/api v0.21.2
