@@ -1,11 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.4.1
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.15.0
   name: gitrepos.syn.tools
 spec:
   group: syn.tools
@@ -35,14 +33,19 @@ spec:
         description: GitRepo is the Schema for the gitrepos API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -54,29 +57,30 @@ spec:
                   information
                 properties:
                   name:
-                    description: Name is unique within a namespace to reference a
+                    description: name is unique within a namespace to reference a
                       secret resource.
                     type: string
                   namespace:
-                    description: Namespace defines the space within which the secret
+                    description: namespace defines the space within which the secret
                       name must be unique.
                     type: string
                 type: object
+                x-kubernetes-map-type: atomic
               creationPolicy:
-                description: 'CreationPolicy defines how the external resources should
-                  be treated upon CR creation. Create: will only create a new external
-                  resource and will not manage already existing resources Adopt:  will
-                  create a new external resource or will adopt and manage an already
-                  existing resource'
+                description: |-
+                  CreationPolicy defines how the external resources should be treated upon CR creation.
+                  Create: will only create a new external resource and will not manage already existing resources
+                  Adopt:  will create a new external resource or will adopt and manage an already existing resource
                 enum:
                 - Create
                 - Adopt
                 type: string
               deletionPolicy:
-                description: 'DeletionPolicy defines how the external resources should
-                  be treated upon CR deletion. Retain: will not delete any external
-                  resources Delete: will delete the external resources Archive: will
-                  archive the external resources, if it supports that'
+                description: |-
+                  DeletionPolicy defines how the external resources should be treated upon CR deletion.
+                  Retain: will not delete any external resources
+                  Delete: will delete the external resources
+                  Archive: will archive the external resources, if it supports that
                 enum:
                 - Delete
                 - Retain
@@ -120,17 +124,26 @@ spec:
               templateFiles:
                 additionalProperties:
                   type: string
-                description: TemplateFiles is a list of files that should be pushed
-                  to the repository after its creation.
+                description: |-
+                  TemplateFiles is a list of files that should be pushed to the repository
+                  after its creation.
                 type: object
               tenantRef:
                 description: TenantRef references the tenant this repo belongs to
                 properties:
                   name:
-                    description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                      TODO: Add other useful fields. apiVersion, kind, uid?'
+                    default: ""
+                    description: |-
+                      Name of the referent.
+                      This field is effectively required, but due to backwards compatibility is
+                      allowed to be empty. Instances of this type with an empty value here are
+                      almost certainly wrong.
+                      TODO: Add other useful fields. apiVersion, kind, uid?
+                      More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                      TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                     type: string
                 type: object
+                x-kubernetes-map-type: atomic
             type: object
           status:
             description: GitRepoStatus defines the observed state of GitRepo
@@ -139,9 +152,9 @@ spec:
                 description: SSH HostKeys of the git server
                 type: string
               phase:
-                description: Updated by Operator with current phase. The GitPhase
-                  enum will be used for application logic as using it directly would
-                  only print an integer.
+                description: |-
+                  Updated by Operator with current phase. The GitPhase enum will be used for application logic
+                  as using it directly would only print an integer.
                 type: string
               type:
                 description: Type autodiscovered Git repo type. Same behaviour for
@@ -156,9 +169,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

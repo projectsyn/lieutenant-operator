@@ -133,9 +133,10 @@ func Test_handleVaultDeletion(t *testing.T) {
 			objs := []runtime.Object{
 				tt.args.cluster,
 			}
+			require.NoError(t, synv1alpha1.AddToScheme(s))
 
 			s.AddKnownTypes(synv1alpha1.GroupVersion, objs...)
-			tt.args.data.Client = fake.NewFakeClientWithScheme(s, objs...)
+			tt.args.data.Client = fake.NewClientBuilder().WithScheme(s).WithObjects(tt.args.cluster).Build()
 
 			got := HandleVaultDeletion(tt.args.cluster, tt.args.data)
 			assert.NoError(t, got.Err)

@@ -1,11 +1,9 @@
-
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.4.1
-  creationTimestamp: null
+    controller-gen.kubebuilder.io/version: v0.15.0
   name: tenanttemplates.syn.tools
 spec:
   group: syn.tools
@@ -29,14 +27,19 @@ spec:
         description: TenantTemplate is the Schema for the tenant templates API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
@@ -44,27 +47,26 @@ spec:
             description: TenantSpec defines the desired state of Tenant
             properties:
               clusterTemplate:
-                description: ClusterTemplate defines a template which will be used
-                  to set defaults for the clusters of this tenant. The fields within
-                  this can use Go templating. See https://syn.tools/lieutenant-operator/explanations/templating.html
-                  for details.
+                description: |-
+                  ClusterTemplate defines a template which will be used to set defaults for the clusters of this tenant.
+                  The fields within this can use Go templating.
+                  See https://syn.tools/lieutenant-operator/explanations/templating.html for details.
                 properties:
                   creationPolicy:
-                    description: 'CreationPolicy defines how the external resources
-                      should be treated upon CR creation. Create: will only create
-                      a new external resource and will not manage already existing
-                      resources Adopt:  will create a new external resource or will
-                      adopt and manage an already existing resource'
+                    description: |-
+                      CreationPolicy defines how the external resources should be treated upon CR creation.
+                      Create: will only create a new external resource and will not manage already existing resources
+                      Adopt:  will create a new external resource or will adopt and manage an already existing resource
                     enum:
                     - Create
                     - Adopt
                     type: string
                   deletionPolicy:
-                    description: 'DeletionPolicy defines how the external resources
-                      should be treated upon CR deletion. Retain: will not delete
-                      any external resources Delete: will delete the external resources
-                      Archive: will archive the external resources, if it supports
-                      that'
+                    description: |-
+                      DeletionPolicy defines how the external resources should be treated upon CR deletion.
+                      Retain: will not delete any external resources
+                      Delete: will delete the external resources
+                      Archive: will archive the external resources, if it supports that
                     enum:
                     - Delete
                     - Retain
@@ -92,30 +94,30 @@ spec:
                           information
                         properties:
                           name:
-                            description: Name is unique within a namespace to reference
+                            description: name is unique within a namespace to reference
                               a secret resource.
                             type: string
                           namespace:
-                            description: Namespace defines the space within which
+                            description: namespace defines the space within which
                               the secret name must be unique.
                             type: string
                         type: object
+                        x-kubernetes-map-type: atomic
                       creationPolicy:
-                        description: 'CreationPolicy defines how the external resources
-                          should be treated upon CR creation. Create: will only create
-                          a new external resource and will not manage already existing
-                          resources Adopt:  will create a new external resource or
-                          will adopt and manage an already existing resource'
+                        description: |-
+                          CreationPolicy defines how the external resources should be treated upon CR creation.
+                          Create: will only create a new external resource and will not manage already existing resources
+                          Adopt:  will create a new external resource or will adopt and manage an already existing resource
                         enum:
                         - Create
                         - Adopt
                         type: string
                       deletionPolicy:
-                        description: 'DeletionPolicy defines how the external resources
-                          should be treated upon CR deletion. Retain: will not delete
-                          any external resources Delete: will delete the external
-                          resources Archive: will archive the external resources,
-                          if it supports that'
+                        description: |-
+                          DeletionPolicy defines how the external resources should be treated upon CR deletion.
+                          Retain: will not delete any external resources
+                          Delete: will delete the external resources
+                          Archive: will archive the external resources, if it supports that
                         enum:
                         - Delete
                         - Retain
@@ -161,8 +163,9 @@ spec:
                       templateFiles:
                         additionalProperties:
                           type: string
-                        description: TemplateFiles is a list of files that should
-                          be pushed to the repository after its creation.
+                        description: |-
+                          TemplateFiles is a list of files that should be pushed to the repository
+                          after its creation.
                         type: object
                     type: object
                   gitRepoURL:
@@ -186,29 +189,37 @@ spec:
                       belongs to.
                     properties:
                       name:
-                        description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?'
+                        default: ""
+                        description: |-
+                          Name of the referent.
+                          This field is effectively required, but due to backwards compatibility is
+                          allowed to be empty. Instances of this type with an empty value here are
+                          almost certainly wrong.
+                          TODO: Add other useful fields. apiVersion, kind, uid?
+                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                          TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
                         type: string
                     type: object
+                    x-kubernetes-map-type: atomic
                   tokenLifeTime:
                     description: TokenLifetime set the token lifetime
                     type: string
                 type: object
               creationPolicy:
-                description: 'CreationPolicy defines how the external resources should
-                  be treated upon CR creation. Create: will only create a new external
-                  resource and will not manage already existing resources Adopt:  will
-                  create a new external resource or will adopt and manage an already
-                  existing resource'
+                description: |-
+                  CreationPolicy defines how the external resources should be treated upon CR creation.
+                  Create: will only create a new external resource and will not manage already existing resources
+                  Adopt:  will create a new external resource or will adopt and manage an already existing resource
                 enum:
                 - Create
                 - Adopt
                 type: string
               deletionPolicy:
-                description: 'DeletionPolicy defines how the external resources should
-                  be treated upon CR deletion. Retain: will not delete any external
-                  resources Delete: will delete the external resources Archive: will
-                  archive the external resources, if it supports that'
+                description: |-
+                  DeletionPolicy defines how the external resources should be treated upon CR deletion.
+                  Retain: will not delete any external resources
+                  Delete: will delete the external resources
+                  Archive: will archive the external resources, if it supports that
                 enum:
                 - Delete
                 - Retain
@@ -231,30 +242,30 @@ spec:
                       information
                     properties:
                       name:
-                        description: Name is unique within a namespace to reference
+                        description: name is unique within a namespace to reference
                           a secret resource.
                         type: string
                       namespace:
-                        description: Namespace defines the space within which the
+                        description: namespace defines the space within which the
                           secret name must be unique.
                         type: string
                     type: object
+                    x-kubernetes-map-type: atomic
                   creationPolicy:
-                    description: 'CreationPolicy defines how the external resources
-                      should be treated upon CR creation. Create: will only create
-                      a new external resource and will not manage already existing
-                      resources Adopt:  will create a new external resource or will
-                      adopt and manage an already existing resource'
+                    description: |-
+                      CreationPolicy defines how the external resources should be treated upon CR creation.
+                      Create: will only create a new external resource and will not manage already existing resources
+                      Adopt:  will create a new external resource or will adopt and manage an already existing resource
                     enum:
                     - Create
                     - Adopt
                     type: string
                   deletionPolicy:
-                    description: 'DeletionPolicy defines how the external resources
-                      should be treated upon CR deletion. Retain: will not delete
-                      any external resources Delete: will delete the external resources
-                      Archive: will archive the external resources, if it supports
-                      that'
+                    description: |-
+                      DeletionPolicy defines how the external resources should be treated upon CR deletion.
+                      Retain: will not delete any external resources
+                      Delete: will delete the external resources
+                      Archive: will archive the external resources, if it supports that
                     enum:
                     - Delete
                     - Retain
@@ -299,8 +310,9 @@ spec:
                   templateFiles:
                     additionalProperties:
                       type: string
-                    description: TemplateFiles is a list of files that should be pushed
-                      to the repository after its creation.
+                    description: |-
+                      TemplateFiles is a list of files that should be pushed to the repository
+                      after its creation.
                     type: object
                 type: object
               gitRepoURL:
@@ -321,9 +333,3 @@ spec:
     storage: true
     subresources:
       status: {}
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []

@@ -36,7 +36,8 @@ BootstrapToken this key is used only once for Steward to register.
 |===
 | Field | Description
 | *`token`* __string__ | Token is the actual token to register the cluster
-| *`validUntil`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#time-v1-meta[$$Time$$]__ | ValidUntil timespan how long the token is valid. If the token is used after this timestamp it will be rejected.
+| *`validUntil`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#time-v1-meta[$$Time$$]__ | ValidUntil timespan how long the token is valid. If the token is
+used after this timestamp it will be rejected.
 | *`tokenValid`* __boolean__ | TokenValid indicates if the token is still valid or was already used.
 |===
 
@@ -84,9 +85,14 @@ ClusterSpec defines the desired state of Cluster
 | *`tenantGitRepoRevision`* __string__ | TenantGitRepoRevision allows to configure the revision of the tenant configuration to use. It can be any git tree-ish reference. The revision from the tenant will be inherited if left empty.
 | *`globalGitRepoRevision`* __string__ | GlobalGitRepoRevision allows to configure the revision of the global configuration to use. It can be any git tree-ish reference. The revision from the tenant will be inherited if left empty.
 | *`tokenLifeTime`* __string__ | TokenLifetime set the token lifetime
-| *`facts`* __object (keys:string, values:string)__ | Facts are key/value pairs for statically configured facts
-| *`deletionPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deletionpolicy[$$DeletionPolicy$$]__ | DeletionPolicy defines how the external resources should be treated upon CR deletion. Retain: will not delete any external resources Delete: will delete the external resources Archive: will archive the external resources, if it supports that
-| *`creationPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-creationpolicy[$$CreationPolicy$$]__ | CreationPolicy defines how the external resources should be treated upon CR creation. Create: will only create a new external resource and will not manage already existing resources Adopt:  will create a new external resource or will adopt and manage an already existing resource
+| *`facts`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-facts[$$Facts$$]__ | Facts are key/value pairs for statically configured facts
+| *`deletionPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deletionpolicy[$$DeletionPolicy$$]__ | DeletionPolicy defines how the external resources should be treated upon CR deletion.
+Retain: will not delete any external resources
+Delete: will delete the external resources
+Archive: will archive the external resources, if it supports that
+| *`creationPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-creationpolicy[$$CreationPolicy$$]__ | CreationPolicy defines how the external resources should be treated upon CR creation.
+Create: will only create a new external resource and will not manage already existing resources
+Adopt:  will create a new external resource or will adopt and manage an already existing resource
 |===
 
 
@@ -100,6 +106,7 @@ CreationPolicy defines the type creation policy
 .Appears In:
 ****
 - xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterspec[$$ClusterSpec$$]
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepospec[$$GitRepoSpec$$]
 - xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]
 - xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenantspec[$$TenantSpec$$]
 ****
@@ -114,6 +121,7 @@ DeletionPolicy defines the type deletion policy
 .Appears In:
 ****
 - xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterspec[$$ClusterSpec$$]
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepospec[$$GitRepoSpec$$]
 - xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]
 - xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenantspec[$$TenantSpec$$]
 ****
@@ -127,6 +135,7 @@ DeployKey defines an SSH key to be used for git operations.
 
 .Appears In:
 ****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepospec[$$GitRepoSpec$$]
 - xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]
 ****
 
@@ -138,6 +147,29 @@ DeployKey defines an SSH key to be used for git operations.
 | *`writeAccess`* __boolean__ | WriteAccess if the key has RW access or not
 |===
 
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-facts"]
+=== Facts (object) 
+
+Facts is a map of arbitrary facts for the cluster
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterspec[$$ClusterSpec$$]
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterstatus[$$ClusterStatus$$]
+****
+
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitphase"]
+=== GitPhase (string) 
+
+GitPhase is the enum for the git phase status
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepostatus[$$GitRepoStatus$$]
+****
 
 
 
@@ -175,7 +207,21 @@ GitRepoSpec defines the desired state of GitRepo
 [cols="25a,75a", options="header"]
 |===
 | Field | Description
-| *`GitRepoTemplate`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]__ | 
+| *`apiSecretRef`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#secretreference-v1-core[$$SecretReference$$]__ | APISecretRef reference to secret containing connection information
+| *`deployKeys`* __object (keys:string, values:xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deploykey[$$DeployKey$$])__ | DeployKeys optional list of SSH deploy keys. If not set, not deploy keys will be configured
+| *`path`* __string__ | Path to Git repository
+| *`repoName`* __string__ | RepoName name of Git repository
+| *`repoType`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-repotype[$$RepoType$$]__ | RepoType specifies if a repo should be managed by the git controller. A value of 'unmanaged' means it's not manged by the controller
+| *`displayName`* __string__ | DisplayName of Git repository
+| *`templateFiles`* __object (keys:string, values:string)__ | TemplateFiles is a list of files that should be pushed to the repository
+after its creation.
+| *`deletionPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deletionpolicy[$$DeletionPolicy$$]__ | DeletionPolicy defines how the external resources should be treated upon CR deletion.
+Retain: will not delete any external resources
+Delete: will delete the external resources
+Archive: will archive the external resources, if it supports that
+| *`creationPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-creationpolicy[$$CreationPolicy$$]__ | CreationPolicy defines how the external resources should be treated upon CR creation.
+Create: will only create a new external resource and will not manage already existing resources
+Adopt:  will create a new external resource or will adopt and manage an already existing resource
 | *`tenantRef`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#localobjectreference-v1-core[$$LocalObjectReference$$]__ | TenantRef references the tenant this repo belongs to
 |===
 
@@ -185,7 +231,8 @@ GitRepoSpec defines the desired state of GitRepo
 [id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate"]
 === GitRepoTemplate 
 
-GitRepoTemplate is used for templating git repos, it does not contain the tenantRef as it will be added by the controller creating the template instance.
+GitRepoTemplate is used for templating git repos, it does not contain the tenantRef as it will be added by the
+controller creating the template instance.
 
 .Appears In:
 ****
@@ -203,10 +250,28 @@ GitRepoTemplate is used for templating git repos, it does not contain the tenant
 | *`repoName`* __string__ | RepoName name of Git repository
 | *`repoType`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-repotype[$$RepoType$$]__ | RepoType specifies if a repo should be managed by the git controller. A value of 'unmanaged' means it's not manged by the controller
 | *`displayName`* __string__ | DisplayName of Git repository
-| *`templateFiles`* __object (keys:string, values:string)__ | TemplateFiles is a list of files that should be pushed to the repository after its creation.
-| *`deletionPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deletionpolicy[$$DeletionPolicy$$]__ | DeletionPolicy defines how the external resources should be treated upon CR deletion. Retain: will not delete any external resources Delete: will delete the external resources Archive: will archive the external resources, if it supports that
-| *`creationPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-creationpolicy[$$CreationPolicy$$]__ | CreationPolicy defines how the external resources should be treated upon CR creation. Create: will only create a new external resource and will not manage already existing resources Adopt:  will create a new external resource or will adopt and manage an already existing resource
+| *`templateFiles`* __object (keys:string, values:string)__ | TemplateFiles is a list of files that should be pushed to the repository
+after its creation.
+| *`deletionPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deletionpolicy[$$DeletionPolicy$$]__ | DeletionPolicy defines how the external resources should be treated upon CR deletion.
+Retain: will not delete any external resources
+Delete: will delete the external resources
+Archive: will archive the external resources, if it supports that
+| *`creationPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-creationpolicy[$$CreationPolicy$$]__ | CreationPolicy defines how the external resources should be treated upon CR creation.
+Create: will only create a new external resource and will not manage already existing resources
+Adopt:  will create a new external resource or will adopt and manage an already existing resource
 |===
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gittype"]
+=== GitType (string) 
+
+GitType as the enum for git types
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepostatus[$$GitRepoStatus$$]
+****
+
 
 
 [id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-repotype"]
@@ -216,6 +281,7 @@ RepoType specifies the type of the repo
 
 .Appears In:
 ****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepospec[$$GitRepoSpec$$]
 - xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]
 ****
 
@@ -262,9 +328,16 @@ TenantSpec defines the desired state of Tenant
 | *`globalGitRepoURL`* __string__ | GlobalGitRepoURL git repository storing the global configuration.
 | *`globalGitRepoRevision`* __string__ | GlobalGitRepoRevision allows to configure the revision of the global configuration to use. It can be any git tree-ish reference. Defaults to HEAD if left empty.
 | *`gitRepoTemplate`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]__ | GitRepoTemplate Template for managing the GitRepo object. If not set, no GitRepo object will be created.
-| *`deletionPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deletionpolicy[$$DeletionPolicy$$]__ | DeletionPolicy defines how the external resources should be treated upon CR deletion. Retain: will not delete any external resources Delete: will delete the external resources Archive: will archive the external resources, if it supports that
-| *`creationPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-creationpolicy[$$CreationPolicy$$]__ | CreationPolicy defines how the external resources should be treated upon CR creation. Create: will only create a new external resource and will not manage already existing resources Adopt:  will create a new external resource or will adopt and manage an already existing resource
-| *`clusterTemplate`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterspec[$$ClusterSpec$$]__ | ClusterTemplate defines a template which will be used to set defaults for the clusters of this tenant. The fields within this can use Go templating. See https://syn.tools/lieutenant-operator/explanations/templating.html for details.
+| *`deletionPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deletionpolicy[$$DeletionPolicy$$]__ | DeletionPolicy defines how the external resources should be treated upon CR deletion.
+Retain: will not delete any external resources
+Delete: will delete the external resources
+Archive: will archive the external resources, if it supports that
+| *`creationPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-creationpolicy[$$CreationPolicy$$]__ | CreationPolicy defines how the external resources should be treated upon CR creation.
+Create: will only create a new external resource and will not manage already existing resources
+Adopt:  will create a new external resource or will adopt and manage an already existing resource
+| *`clusterTemplate`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterspec[$$ClusterSpec$$]__ | ClusterTemplate defines a template which will be used to set defaults for the clusters of this tenant.
+The fields within this can use Go templating.
+See https://syn.tools/lieutenant-operator/explanations/templating.html for details.
 |===
 
 
