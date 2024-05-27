@@ -98,6 +98,73 @@ Adopt:  will create a new external resource or will adopt and manage an already 
 
 
 
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-compilemeta"]
+=== CompileMeta 
+
+CompileMeta contains information about the last compilation with Commodore.
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterstatus[$$ClusterStatus$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`lastCompile`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#time-v1-meta[$$Time$$]__ | LastCompile is the time of the last successful compilation.
+| *`commodoreBuildInfo`* __object (keys:string, values:string)__ | CommodoreBuildInfo is the freeform build information reported by the Commodore binary used for the last compilation.
+| *`global`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-compilemetaversioninfo[$$CompileMetaVersionInfo$$]__ | Global contains the information of the global configuration used for the last compilation.
+| *`tenant`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-compilemetaversioninfo[$$CompileMetaVersionInfo$$]__ | Tenant contains the information of the tenant configuration used for the last compilation.
+| *`packages`* __object (keys:string, values:xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-compilemetaversioninfo[$$CompileMetaVersionInfo$$])__ | Packages contains the information of the packages used for the last compilation.
+| *`instances`* __object (keys:string, values:xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-compilemetainstanceversioninfo[$$CompileMetaInstanceVersionInfo$$])__ | Instances contains the information of the component instances used for the last compilation.
+The key is the name of the component instance.
+|===
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-compilemetainstanceversioninfo"]
+=== CompileMetaInstanceVersionInfo 
+
+CompileMetaInstanceVersionInfo contains information about the version of a component instance.
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-compilemeta[$$CompileMeta$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`url`* __string__ | URL is the URL of the git repository.
+| *`gitSha`* __string__ | GitSHA is the git commit SHA of the used commit.
+| *`version`* __string__ | Version is the version of the configuration.
+Can point to a tag, branch or any other git reference.
+| *`path`* __string__ | Path is the path inside the git repository where the configuration is stored.
+| *`component`* __string__ | Component is the name of a component instance.
+|===
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-compilemetaversioninfo"]
+=== CompileMetaVersionInfo 
+
+CompileMetaVersionInfo contains information about the version of a configuration repo or a package.
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-compilemeta[$$CompileMeta$$]
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-compilemetainstanceversioninfo[$$CompileMetaInstanceVersionInfo$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`url`* __string__ | URL is the URL of the git repository.
+| *`gitSha`* __string__ | GitSHA is the git commit SHA of the used commit.
+| *`version`* __string__ | Version is the version of the configuration.
+Can point to a tag, branch or any other git reference.
+| *`path`* __string__ | Path is the path inside the git repository where the configuration is stored.
+|===
+
+
 [id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-creationpolicy"]
 === CreationPolicy (string) 
 
