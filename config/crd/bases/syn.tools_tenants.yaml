@@ -12,6 +12,7 @@ spec:
     listKind: TenantList
     plural: tenants
     singular: tenant
+  preserveUnknownFields: false
   scope: Namespaced
   versions:
   - additionalPrinterColumns:

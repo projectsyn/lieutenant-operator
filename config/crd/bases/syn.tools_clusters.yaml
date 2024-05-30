@@ -12,6 +12,7 @@ spec:
     listKind: ClusterList
     plural: clusters
     singular: cluster
+  preserveUnknownFields: false
   scope: Namespaced
   versions:
   - additionalPrinterColumns:

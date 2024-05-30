@@ -12,6 +12,7 @@ spec:
     listKind: GitRepoList
     plural: gitrepos
     singular: gitrepo
+  preserveUnknownFields: false
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
