@@ -58,7 +58,7 @@ func createOrUpdateClusterRole(ctx context.Context, c client.Client, objMeta met
 		Rules: []rbacv1.PolicyRule{{
 			APIGroups:     []string{synv1alpha1.GroupVersion.Group},
 			Resources:     []string{"clusters", "clusters/status"},
-			Verbs:         []string{"get", "update"},
+			Verbs:         []string{"get", "update", "patch"},
 			ResourceNames: []string{objMeta.Name},
 		}},
 	}
