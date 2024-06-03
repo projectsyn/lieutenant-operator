@@ -52,7 +52,12 @@ func EnsureRules(role *rbacv1.Role) int {
 			Verbs:     []string{"get"},
 			Resources: []string{"tenants", "clusters"},
 		}
-		role.Rules = append(role.Rules, rule)
+		statusRule := rbacv1.PolicyRule{
+			APIGroups: []string{synv1alpha1.GroupVersion.Group},
+			Verbs:     []string{"get", "update", "patch"},
+			Resources: []string{"clusters/status"},
+		}
+		role.Rules = append(role.Rules, rule, statusRule)
 		i = len(role.Rules) - 1
 	}
 
