@@ -14,7 +14,6 @@ func SpecificSteps(obj pipeline.Object, data *pipeline.Context) pipeline.Result 
 		{Name: "delete vault entries", F: vault.HandleVaultDeletion},
 		{Name: "set tenant owner", F: setTenantOwner},
 		{Name: "apply cluster template from tenant", F: applyClusterTemplateFromTenant},
-		{Name: "update Role", F: clusterUpdateRole},
 	}
 
 	return pipeline.RunPipeline(obj, data, steps)
