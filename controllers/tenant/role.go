@@ -18,7 +18,6 @@ func reconcileRole(obj pipeline.Object, data *pipeline.Context) pipeline.Result 
 		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
 	}
 
-	rns := []string{tenant.Name}
 	cls := v1alpha1.ClusterList{}
 	if err := data.Client.List(data.Context, &cls,
 		client.InNamespace(tenant.Namespace),
@@ -26,8 +25,9 @@ func reconcileRole(obj pipeline.Object, data *pipeline.Context) pipeline.Result 
 	); err != nil {
 		return pipeline.Result{Err: fmt.Errorf("failed to list clusters: %w", err)}
 	}
+	clusterNames := make([]string, 0, len(cls.Items))
 	for _, c := range cls.Items {
-		rns = append(rns, c.Name)
+		clusterNames = append(clusterNames, c.Name)
 	}
 
 	role := rbacv1.Role{
@@ -41,13 +41,20 @@ func reconcileRole(obj pipeline.Object, data *pipeline.Context) pipeline.Result 
 			{
 				APIGroups:     []string{synv1alpha1.GroupVersion.Group},
 				Verbs:         []string{"get"},
-				Resources:     []string{"tenants", "clusters"},
-				ResourceNames: rns,
-			}, {
+				Resources:     []string{"tenants"},
+				ResourceNames: []string{tenant.Name},
+			},
+			{
+				APIGroups:     []string{synv1alpha1.GroupVersion.Group},
+				Verbs:         []string{"get"},
+				Resources:     []string{"clusters"},
+				ResourceNames: clusterNames,
+			},
+			{
 				APIGroups:     []string{synv1alpha1.GroupVersion.Group},
 				Verbs:         []string{"get", "update", "patch"},
 				Resources:     []string{"clusters/status"},
-				ResourceNames: rns,
+				ResourceNames: clusterNames,
 			},
 		}
 		return controllerutil.SetControllerReference(tenant, &role, data.Client.Scheme())
