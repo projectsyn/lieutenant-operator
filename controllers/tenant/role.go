@@ -44,18 +44,21 @@ func reconcileRole(obj pipeline.Object, data *pipeline.Context) pipeline.Result 
 				Resources:     []string{"tenants"},
 				ResourceNames: []string{tenant.Name},
 			},
-			{
-				APIGroups:     []string{synv1alpha1.GroupVersion.Group},
-				Verbs:         []string{"get"},
-				Resources:     []string{"clusters"},
-				ResourceNames: clusterNames,
-			},
-			{
-				APIGroups:     []string{synv1alpha1.GroupVersion.Group},
-				Verbs:         []string{"get", "update", "patch"},
-				Resources:     []string{"clusters/status"},
-				ResourceNames: clusterNames,
-			},
+		}
+		if len(clusterNames) > 0 {
+			role.Rules = append(role.Rules,
+				rbacv1.PolicyRule{
+					APIGroups:     []string{synv1alpha1.GroupVersion.Group},
+					Verbs:         []string{"get"},
+					Resources:     []string{"clusters"},
+					ResourceNames: clusterNames,
+				},
+				rbacv1.PolicyRule{
+					APIGroups:     []string{synv1alpha1.GroupVersion.Group},
+					Verbs:         []string{"get", "update", "patch"},
+					Resources:     []string{"clusters/status"},
+					ResourceNames: clusterNames,
+				})
 		}
 		return controllerutil.SetControllerReference(tenant, &role, data.Client.Scheme())
 	})
