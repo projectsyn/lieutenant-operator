@@ -10,7 +10,7 @@ require (
 	github.com/go-logr/logr v1.4.2
 	github.com/go-logr/zapr v1.3.0
 	github.com/hashicorp/vault/api v1.14.0
-	github.com/imdario/mergo v0.3.16
+	github.com/imdario/mergo v1.0.0
 	github.com/prometheus/client_golang v1.19.1
 	github.com/ryankurte/go-structparse v1.2.0
 	github.com/stretchr/testify v1.9.0
