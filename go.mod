@@ -5,12 +5,12 @@ go 1.22.0
 toolchain go1.22.4
 
 require (
+	dario.cat/mergo v1.0.0
 	github.com/banzaicloud/bank-vaults/pkg/sdk v0.8.3
 	github.com/elastic/crd-ref-docs v0.0.12
 	github.com/go-logr/logr v1.4.2
 	github.com/go-logr/zapr v1.3.0
 	github.com/hashicorp/vault/api v1.14.0
-	github.com/imdario/mergo v1.0.0
 	github.com/prometheus/client_golang v1.19.1
 	github.com/ryankurte/go-structparse v1.2.0
 	github.com/stretchr/testify v1.9.0
@@ -82,6 +82,7 @@ require (
 	github.com/hashicorp/go-sockaddr v1.0.6 // indirect
 	github.com/hashicorp/hcl v1.0.1-vault-5 // indirect
 	github.com/huandu/xstrings v1.4.0 // indirect
+	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
