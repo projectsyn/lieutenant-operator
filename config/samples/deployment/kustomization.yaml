@@ -5,7 +5,7 @@ commonLabels:
   app.kubernetes.io/part-of: project-syn
 images:
   - name: docker.io/projectsyn/lieutenant-operator
-    newTag: 1.6.1
+    newTag: latest
 resources:
   - deployment.yaml
   - role_binding.yaml
