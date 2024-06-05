@@ -16,12 +16,17 @@ bases:
   - ../crd
   - ../rbac
   - ../manager
+  - ../prometheus
 
 commonLabels:
   app.kubernetes.io/name: lieutenant-operator
   app.kubernetes.io/part-of: project-syn
 
-patchesStrategicMerge: []
+patchesStrategicMerge:
+# Protect the /metrics endpoint by putting it behind auth.
+# If you want your controller-manager to expose the /metrics
+# endpoint w/o any authn/z, please comment the following line.
+- manager_auth_proxy_patch.yaml
 
 # the following config is for teaching kustomize how to do var substitution
 vars: []

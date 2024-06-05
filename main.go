@@ -19,10 +19,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/controllers"
+	operatorMetrics "github.com/projectsyn/lieutenant-operator/metrics"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -111,6 +113,11 @@ func main() {
 		setupLog.Error(err, "unable to create tenantRef field indexer for Cluster")
 		os.Exit(1)
 	}
+
+	metrics.Registry.MustRegister(&operatorMetrics.CompileMetaCollector{
+		Client:    mgr.GetClient(),
+		Namespace: watchNamespace,
+	})
 
 	if err = (&controllers.ClusterReconciler{
 		Client:                mgr.GetClient(),
