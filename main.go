@@ -118,6 +118,14 @@ func main() {
 		Client:    mgr.GetClient(),
 		Namespace: watchNamespace,
 	})
+	metrics.Registry.MustRegister(&operatorMetrics.ClusterInfoCollector{
+		Client:    mgr.GetClient(),
+		Namespace: watchNamespace,
+	})
+	metrics.Registry.MustRegister(&operatorMetrics.TenantInfoCollector{
+		Client:    mgr.GetClient(),
+		Namespace: watchNamespace,
+	})
 
 	if err = (&controllers.ClusterReconciler{
 		Client:                mgr.GetClient(),
