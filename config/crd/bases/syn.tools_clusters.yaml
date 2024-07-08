@@ -85,6 +85,13 @@ spec:
               gitRepoTemplate:
                 description: GitRepoTemplate template for managing the GitRepo object.
                 properties:
+                  accessTokenSecretName:
+                    description: |-
+                      AccessTokenSecretName contains a reference to a secret.
+                      If set, the Lieutenant operator will store an access token into this secret, which can be used to access the Git repository.
+                      The token is stored under the key "token".
+                      In the case of GitLab, this would be a Project Access Token with read-write access to the repository.
+                    type: string
                   apiSecretRef:
                     description: APISecretRef reference to secret containing connection
                       information
@@ -99,6 +106,58 @@ spec:
                         type: string
                     type: object
                     x-kubernetes-map-type: atomic
+                  ciVariables:
+                    description: |-
+                      CIVariables is a list of key-value pairs that will be set as CI variables in the Git repository.
+
+
+                      The variables are not expanded like PodSpec environment variables.
+                    items:
+                      description: EnvVar represents an environment added to the CI
+                        system of the Git repository.
+                      properties:
+                        name:
+                          description: Name of the environment variable
+                          type: string
+                        value:
+                          description: Value of the environment variable
+                          type: string
+                        valueFrom:
+                          description: ValueFrom is a reference to an object that
+                            contains the value of the environment variable
+                          properties:
+                            secretKeyRef:
+                              description: Selects a key of a secret in the pod's
+                                namespace
+                              properties:
+                                key:
+                                  description: The key of the secret to select from.  Must
+                                    be a valid secret key.
+                                  type: string
+                                name:
+                                  default: ""
+                                  description: |-
+                                    Name of the referent.
+                                    This field is effectively required, but due to backwards compatibility is
+                                    allowed to be empty. Instances of this type with an empty value here are
+                                    almost certainly wrong.
+                                    TODO: Add other useful fields. apiVersion, kind, uid?
+                                    More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                                    TODO: Drop `kubebuilder:default` when controller-gen doesn't need it https://github.com/kubernetes-sigs/kubebuilder/issues/3896.
+                                  type: string
+                                optional:
+                                  description: Specify whether the Secret or its key
+                                    must be defined
+                                  type: boolean
+                              required:
+                              - key
+                              type: object
+                              x-kubernetes-map-type: atomic
+                          type: object
+                      required:
+                      - name
+                      type: object
+                    type: array
                   creationPolicy:
                     description: |-
                       CreationPolicy defines how the external resources should be treated upon CR creation.

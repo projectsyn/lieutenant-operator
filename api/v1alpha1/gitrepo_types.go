@@ -87,6 +87,36 @@ type GitRepoTemplate struct {
 	// Adopt:  will create a new external resource or will adopt and manage an already existing resource
 	// +kubebuilder:validation:Enum=Create;Adopt
 	CreationPolicy CreationPolicy `json:"creationPolicy,omitempty"`
+	// AccessTokenSecretName contains a reference to a secret.
+	// If set, the Lieutenant operator will store an access token into this secret, which can be used to access the Git repository.
+	// The token is stored under the key "token".
+	// In the case of GitLab, this would be a Project Access Token with read-write access to the repository.
+	AccessTokenSecretName string `json:"accessTokenSecretName,omitempty"`
+	// CIVariables is a list of key-value pairs that will be set as CI variables in the Git repository.
+	//
+	// The variables are not expanded like PodSpec environment variables.
+	CIVariables []EnvVar `json:"ciVariables,omitempty"`
+}
+
+// EnvVar represents an environment added to the CI system of the Git repository.
+type EnvVar struct {
+	// Name of the environment variable
+	// +required
+	Name string `json:"name"`
+	// Value of the environment variable
+	// +optional
+	Value string `json:"value,omitempty"`
+
+	// ValueFrom is a reference to an object that contains the value of the environment variable
+	// +optional
+	ValueFrom *EnvVarSource `json:"valueFrom,omitempty"`
+}
+
+// EnvVarSource represents a source for the value of an EnvVar.
+type EnvVarSource struct {
+	// Selects a key of a secret in the pod's namespace
+	// +optional
+	SecretKeyRef *corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
 // DeployKey defines an SSH key to be used for git operations.
