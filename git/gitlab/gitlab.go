@@ -1,20 +1,21 @@
 package gitlab
 
 import (
+	"context"
 	"fmt"
 	"net/url"
+	"slices"
+	"strconv"
 	"strings"
-
-	"k8s.io/utils/pointer"
-
-	"github.com/projectsyn/lieutenant-operator/git/helpers"
-	"github.com/projectsyn/lieutenant-operator/git/manager"
+	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/xanzy/go-gitlab"
+	"k8s.io/utils/ptr"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
-
-	"github.com/xanzy/go-gitlab"
+	"github.com/projectsyn/lieutenant-operator/git/helpers"
+	"github.com/projectsyn/lieutenant-operator/git/manager"
 )
 
 func init() {
@@ -438,13 +439,96 @@ func (g *Gitlab) compareFiles() ([]manager.CommitFile, error) {
 func (g *Gitlab) getCommitOptions() *gitlab.CreateCommitOptions {
 
 	co := &gitlab.CreateCommitOptions{
-		AuthorEmail:   pointer.StringPtr("lieutenant-operator@syn.local"),
-		AuthorName:    pointer.StringPtr("Lieutenant Operator"),
-		Branch:        pointer.StringPtr("master"),
-		CommitMessage: pointer.StringPtr("Update cluster files"),
+		AuthorEmail:   ptr.To("lieutenant-operator@syn.local"),
+		AuthorName:    ptr.To("Lieutenant Operator"),
+		Branch:        ptr.To("master"),
+		CommitMessage: ptr.To("Update cluster files"),
 	}
 
 	co.Actions = make([]*gitlab.CommitActionOptions, 0)
 
 	return co
+}
+
+// EnsureProjectAccessToken ensures that the project has an access token set.
+// If the token is expired or not set, a new token will be created.
+// This implementation does not use the Gitlab token rotation feature.
+// Using this feature would invalidate old tokens immediately, which would break pipelines.
+// Also the newly created token would immediately be revoked if an old one is used.
+func (g *Gitlab) EnsureProjectAccessToken(ctx context.Context, name string, opts manager.EnsureProjectAccessTokenOptions) (manager.ProjectAccessToken, error) {
+	at, _, err := g.client.ProjectAccessTokens.ListProjectAccessTokens(g.project.ID, &gitlab.ListProjectAccessTokensOptions{}, gitlab.WithContext(ctx))
+	if err != nil {
+		return manager.ProjectAccessToken{}, err
+	}
+	validATs := make([]gitlab.ProjectAccessToken, 0, len(at))
+	for _, token := range at {
+		if token == nil {
+			continue
+		}
+		if !token.Active {
+			continue
+		}
+		if token.Revoked {
+			continue
+		}
+		if token.ExpiresAt == nil {
+			continue
+		}
+		if time.Time(*token.ExpiresAt).Before(g.ops.Now().Add(-10 * 24 * time.Hour)) {
+			continue
+		}
+		validATs = append(validATs, *token)
+	}
+
+	slices.SortFunc(validATs, func(a, b gitlab.ProjectAccessToken) int {
+		at := time.Time(ptr.Deref(a.ExpiresAt, gitlab.ISOTime{}))
+		bt := time.Time(ptr.Deref(b.ExpiresAt, gitlab.ISOTime{}))
+		if at.Before(bt) {
+			return 1
+		}
+		if at.After(bt) {
+			return -1
+		}
+		return 0
+	})
+
+	if opts.UID == "" {
+		if len(validATs) > 0 {
+			return manager.ProjectAccessToken{
+				UID:       strconv.Itoa(validATs[0].ID),
+				ExpiresAt: time.Time(*validATs[0].ExpiresAt),
+			}, nil
+		}
+	} else {
+		for _, token := range validATs {
+			if strconv.Itoa(token.ID) == opts.UID {
+				return manager.ProjectAccessToken{
+					UID:       opts.UID,
+					ExpiresAt: time.Time(*token.ExpiresAt),
+				}, nil
+			}
+		}
+		if len(validATs) > 0 {
+			g.log.Info("found valid access token, but no UID match", "uid", validATs[0].ID, "given_uid", opts.UID)
+		}
+	}
+
+	token, _, err := g.client.ProjectAccessTokens.CreateProjectAccessToken(g.project.ID, &gitlab.CreateProjectAccessTokenOptions{
+		// Gitlab allows duplicated names and we can easily identify tokens by age.
+		// So we just reuse the name.
+		Name:        &name,
+		ExpiresAt:   ptr.To(gitlab.ISOTime(g.ops.Now().Add(30 * 24 * time.Hour))),
+		Scopes:      ptr.To([]string{"write_repository"}),
+		AccessLevel: ptr.To(gitlab.MaintainerPermissions),
+	}, gitlab.WithContext(ctx))
+
+	if err != nil {
+		return manager.ProjectAccessToken{}, fmt.Errorf("error response from gitlab when creating ProjectAccessToken: %w", err)
+	}
+
+	return manager.ProjectAccessToken{
+		UID:       strconv.Itoa(token.ID),
+		Token:     token.Token,
+		ExpiresAt: time.Time(ptr.Deref(token.ExpiresAt, gitlab.ISOTime{})),
+	}, nil
 }

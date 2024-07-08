@@ -3,15 +3,20 @@ package gitrepo
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/go-logr/logr"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	// Register Gitrepo implementation - DONOT REMOVE
 	_ "github.com/projectsyn/lieutenant-operator/git"
 	"github.com/projectsyn/lieutenant-operator/git/manager"
 	"github.com/projectsyn/lieutenant-operator/pipeline"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func Steps(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
@@ -78,6 +83,10 @@ func steps(obj pipeline.Object, data *pipeline.Context, getGitClient gitClientFa
 		return pipeline.Result{}
 	}
 
+	if err := ensureAccessToken(data.Context, data.Client, instance, repo); err != nil {
+		return pipeline.Result{Err: fmt.Errorf("ensure access token: %w", err)}
+	}
+
 	err = repo.CommitTemplateFiles()
 	if err != nil {
 		return pipeline.Result{Err: handleRepoError(data.Context, err, instance, data.Client)}
@@ -113,4 +122,52 @@ func handleRepoError(ctx context.Context, err error, instance *synv1alpha1.GitRe
 		return fmt.Errorf("could not set status while handling error: %s: %s", updateErr, err)
 	}
 	return err
+}
+
+const (
+	LieutenantAccessTokenUIDAnnotation       = "lieutenant.syn.tools/accessTokenUID"
+	LieutenantAccessTokenExpiresAtAnnotation = "lieutenant.syn.tools/accessTokenExpiresAt"
+)
+
+func ensureAccessToken(ctx context.Context, cli client.Client, instance *synv1alpha1.GitRepo, repo manager.Repo) error {
+	name := instance.Spec.AccessToken.SecretRef
+	if name == "" {
+		return nil
+	}
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      name,
+			Namespace: instance.Namespace,
+		},
+	}
+	op, err := controllerutil.CreateOrUpdate(ctx, cli, secret, func() error {
+		uid := secret.Annotations[LieutenantAccessTokenUIDAnnotation]
+
+		pat, err := repo.EnsureProjectAccessToken(ctx, instance.GetName(), manager.EnsureProjectAccessTokenOptions{
+			UID: uid,
+		})
+		if err != nil {
+			return fmt.Errorf("error ensuring project access token: %w", err)
+		}
+
+		if pat.Updated() {
+			if secret.Annotations == nil {
+				secret.Annotations = make(map[string]string)
+			}
+			secret.Annotations[LieutenantAccessTokenUIDAnnotation] = pat.UID
+			secret.Annotations[LieutenantAccessTokenExpiresAtAnnotation] = pat.ExpiresAt.Format(time.RFC3339)
+			secret.Data = map[string][]byte{
+				"token": []byte(pat.Token),
+			}
+		}
+
+		return controllerutil.SetControllerReference(instance, secret, cli.Scheme())
+	})
+	if err != nil {
+		return fmt.Errorf("error creating or updating access token secret: %w", err)
+	}
+	log.FromContext(ctx).Info("Reconciled secret", "secret", secret, "op", op)
+
+	return nil
 }
