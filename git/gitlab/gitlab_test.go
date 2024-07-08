@@ -18,6 +18,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/projectsyn/lieutenant-operator/git/manager"
+	"github.com/projectsyn/lieutenant-operator/testutils"
 )
 
 func testGetHTTPServer(statusCode int, body []byte) *httptest.Server {
@@ -82,7 +83,7 @@ func TestGitlab_Read(t *testing.T) {
 }
 
 //goland:noinspection HttpUrlsUsage
-func testGetCreateServer() *httptest.Server {
+func testGetCreateServer(t *testing.T) *httptest.Server {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/v4/projects/3/deploy_keys", func(res http.ResponseWriter, req *http.Request) {
@@ -117,6 +118,8 @@ func testGetCreateServer() *httptest.Server {
 		}
 	})
 
+	mux.HandleFunc("/", testutils.LogNotFoundHandler(t))
+
 	return httptest.NewServer(mux)
 }
 
@@ -141,7 +144,7 @@ func TestGitlab_Create(t *testing.T) {
 				projectname: "test",
 				description: "desc",
 			},
-			httpServer: testGetCreateServer(),
+			httpServer: testGetCreateServer(t),
 			wantErr:    false,
 		},
 		{
@@ -152,7 +155,7 @@ func TestGitlab_Create(t *testing.T) {
 				projectname: "test",
 				description: "desc",
 			},
-			httpServer: testGetCreateServer(),
+			httpServer: testGetCreateServer(t),
 			wantErr:    false,
 		},
 		{
@@ -247,7 +250,7 @@ func TestGitlab_Delete(t *testing.T) {
 }
 
 //goland:noinspection HttpUrlsUsage
-func testGetUpdateServer(fail bool) *httptest.Server {
+func testGetUpdateServer(t *testing.T, fail bool) *httptest.Server {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/v4/projects/3/deploy_keys", func(res http.ResponseWriter, req *http.Request) {
@@ -288,6 +291,8 @@ func testGetUpdateServer(fail bool) *httptest.Server {
 
 	mux.HandleFunc("/api/v4/projects/3/deploy_keys/3", deleteOk)
 
+	mux.HandleFunc("/", testutils.LogNotFoundHandler(t))
+
 	return httptest.NewServer(mux)
 
 }
@@ -313,7 +318,7 @@ func TestGitlab_Update(t *testing.T) {
 				},
 			},
 			wantErr:    false,
-			httpServer: testGetUpdateServer(false),
+			httpServer: testGetUpdateServer(t, false),
 		},
 		{
 			name: "update failed",
@@ -326,7 +331,7 @@ func TestGitlab_Update(t *testing.T) {
 				},
 			},
 			wantErr:    true,
-			httpServer: testGetUpdateServer(true),
+			httpServer: testGetUpdateServer(t, true),
 		},
 	}
 
@@ -388,13 +393,12 @@ func TestGitlab_Type(t *testing.T) {
 }
 
 //goland:noinspection HttpUrlsUsage
-func testGetCommitServer(files []string) *httptest.Server {
+func testGetCommitServer(t *testing.T, files []string) *httptest.Server {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/v4/projects/3/repository/tree", func(res http.ResponseWriter, req *http.Request) {
 		if len(files) == 0 {
-			res.WriteHeader(http.StatusNotFound)
-			_, _ = res.Write([]byte(`{"error":"Tree Not Found"}`))
+			_, _ = res.Write([]byte(`[]`))
 			return
 		}
 
@@ -464,6 +468,8 @@ func testGetCommitServer(files []string) *httptest.Server {
 		_, _ = res.Write([]byte(`{"id":"ed899a2f4b50b4370feeea94676502b42383c746","short_id":"ed899a2f4b5","title":"some commit message","author_name":"Example User","author_email":"user@example.com","committer_name":"Example User","committer_email":"user@example.com","created_at":"2016-09-20T09:26:24.000-07:00","message":"some commit message","parent_ids":["ae1d9fb46aa2b07ee9836d49862ec4e2c46fbbba"],"committed_date":"2016-09-20T09:26:24.000-07:00","authored_date":"2016-09-20T09:26:24.000-07:00","stats":{"additions":2,"deletions":2,"total":4},"status":null,"web_url":"https://localhost:8080/thedude/gitlab-foss/-/commit/ed899a2f4b50b4370feeea94676502b42383c746"}`))
 	})
 
+	mux.HandleFunc("/", testutils.LogNotFoundHandler(t))
+
 	return httptest.NewServer(mux)
 }
 
@@ -479,7 +485,7 @@ func TestGitlab_CommitTemplateFiles(t *testing.T) {
 	}{
 		"set template files": {
 			wantErr:    false,
-			httpServer: testGetCommitServer([]string{"file1"}),
+			httpServer: testGetCommitServer(t, []string{"file1"}),
 			fields: fields{
 				project: &gitlab.Project{
 					ID: 3,
@@ -493,7 +499,7 @@ func TestGitlab_CommitTemplateFiles(t *testing.T) {
 		},
 		"set existing file": {
 			wantErr:    false,
-			httpServer: testGetCommitServer([]string{"file1"}),
+			httpServer: testGetCommitServer(t, []string{"file1"}),
 			fields: fields{
 				project: &gitlab.Project{
 					ID: 3,
@@ -507,7 +513,7 @@ func TestGitlab_CommitTemplateFiles(t *testing.T) {
 		},
 		"set multiple template files": {
 			wantErr:    false,
-			httpServer: testGetCommitServer([]string{"file1"}),
+			httpServer: testGetCommitServer(t, []string{"file1"}),
 			fields: fields{
 				project: &gitlab.Project{
 					ID: 3,
@@ -523,7 +529,7 @@ func TestGitlab_CommitTemplateFiles(t *testing.T) {
 		},
 		"delete  file": {
 			wantErr:    false,
-			httpServer: testGetCommitServer([]string{"file1"}),
+			httpServer: testGetCommitServer(t, []string{"file1"}),
 			fields: fields{
 				project: &gitlab.Project{
 					ID: 3,
@@ -537,7 +543,7 @@ func TestGitlab_CommitTemplateFiles(t *testing.T) {
 		},
 		"set and delete file while empty": {
 			wantErr:    false,
-			httpServer: testGetCommitServer([]string{}),
+			httpServer: testGetCommitServer(t, []string{}),
 			fields: fields{
 				project: &gitlab.Project{
 					ID: 3,

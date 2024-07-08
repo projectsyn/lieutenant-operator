@@ -12,10 +12,12 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
 	"github.com/hashicorp/vault/api"
-	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+
+	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
+	"github.com/projectsyn/lieutenant-operator/testutils"
 )
 
 func testGetHTTPServer(statusCode int, body []byte) *httptest.Server {
@@ -224,7 +226,7 @@ func TestBankVaultClient_RemoveSecrets(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			instanceClient = nil
-			server := getVersionHTTPServer()
+			server := getVersionHTTPServer(t)
 
 			err = os.Setenv(api.EnvVaultToken, "myroot")
 			require.NoError(t, err)
@@ -243,7 +245,7 @@ func TestBankVaultClient_RemoveSecrets(t *testing.T) {
 	}
 }
 
-func getVersionHTTPServer() *httptest.Server {
+func getVersionHTTPServer(t *testing.T) *httptest.Server {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/kv/delete/kv2/test/foo", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -337,6 +339,8 @@ func getVersionHTTPServer() *httptest.Server {
 
 	})
 
+	mux.HandleFunc("/", testutils.LogNotFoundHandler(t))
+
 	return httptest.NewServer(mux)
 }
 
@@ -381,7 +385,7 @@ func TestBankVaultClient_getVersionList(t *testing.T) {
 	}
 }
 
-func getListHTTPServer() *httptest.Server {
+func getListHTTPServer(t *testing.T) *httptest.Server {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/v1/kv/metadata/test", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -391,6 +395,8 @@ func getListHTTPServer() *httptest.Server {
 			}
 		  }`)
 	})
+
+	mux.HandleFunc("/", testutils.LogNotFoundHandler(t))
 
 	return httptest.NewServer(mux)
 }
@@ -424,7 +430,7 @@ func TestBankVaultClient_listSecrets(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 
 			instanceClient = nil
-			server := getListHTTPServer()
+			server := getListHTTPServer(t)
 
 			err = os.Setenv(api.EnvVaultToken, "myroot")
 			require.NoError(t, err)
