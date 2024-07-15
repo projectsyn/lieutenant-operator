@@ -2,6 +2,8 @@ package gitlab
 
 import (
 	"bytes"
+	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,13 +11,16 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strconv"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/go-logr/zapr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xanzy/go-gitlab"
 	"go.uber.org/zap"
+	"k8s.io/utils/ptr"
 
 	"github.com/projectsyn/lieutenant-operator/git/manager"
 	"github.com/projectsyn/lieutenant-operator/testutils"
@@ -249,6 +254,15 @@ func TestGitlab_Delete(t *testing.T) {
 	}
 }
 
+//go:embed testdata/testGetUpdateServer/deploy_keys.json
+var keysResponse []byte
+
+//go:embed testdata/testGetUpdateServer/projects_path_response.json
+var projectsPathResponse []byte
+
+//go:embed testdata/testGetUpdateServer/projects_id_response.json
+var projectsIDResponse []byte
+
 //goland:noinspection HttpUrlsUsage
 func testGetUpdateServer(t *testing.T, fail bool) *httptest.Server {
 	mux := http.NewServeMux()
@@ -260,13 +274,13 @@ func testGetUpdateServer(t *testing.T, fail bool) *httptest.Server {
 			respH = http.StatusInternalServerError
 		}
 		res.WriteHeader(respH)
-		_, _ = res.Write([]byte(`[{"id":1,"title":"Public key","key":"ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAIEAiPWx6WM4lhHNedGfBpPJNPpZ7yKu+dnn1SJejgt4596k6YjzGGphH2TUxwKzxcKDKKezwkpfnxPkSMkuEspGRt/aZZ9wa++Oi7Qkr8prgHc4soW6NUlfDzpvZK2H5E7eQaSeP3SAwGmQKUFHCddNaP0L+hM7zhFNzjFvpaMgJw0=","created_at":"2013-10-02T10:12:29Z","can_push":false},{"id":3,"title":"Another Public key","key":"ssh-rsa AAAAB3NzaC1yc2EAAAABJQAAAIEAiPWx6WM4lhHNedGfBpPJNPpZ7yKu+dnn1SJejgt4596k6YjzGGphH2TUxwKzxcKDKKezwkpfnxPkSMkuEspGRt/aZZ9wa++Oi7Qkr8prgHc4soW6NUlfDzpvZK2H5E7eQaSeP3SAwGmQKUFHCddNaP0L+hM7zhFNzjFvpaMgJw0=","created_at":"2013-10-02T11:12:29Z","can_push":false}]`))
+		_, _ = res.Write(keysResponse)
 	})
 
 	mux.HandleFunc("/api/v4/projects/updated%2Frepo", func(res http.ResponseWriter, req *http.Request) {
 		respH := http.StatusOK
 		res.WriteHeader(respH)
-		_, _ = res.Write([]byte(`{"id":3,"description":"oldDesc","default_branch":"master","visibility":"private","ssh_url_to_repo":"git@example.com:luzifern/luzifern-project-site.git","http_url_to_repo":"http://example.com/diaspora/diaspora-project-site.git","web_url":"http://example.com/diaspora/diaspora-project-site","readme_url":"http://example.com/diaspora/diaspora-project-site/blob/master/README.md","tag_list":["example","disapora project"],"owner":{"id":3,"name":"Diaspora","created_at":"2013-09-30T13:46:02Z"},"name":"repo","name_with_namespace":"group1 / Diaspora Project Site","path":"diaspora-project-site","path_with_namespace":"group1/diaspora-project-site","issues_enabled":true,"open_issues_count":1,"merge_requests_enabled":true,"jobs_enabled":true,"wiki_enabled":true,"snippets_enabled":false,"resolve_outdated_diff_discussions":false,"container_registry_enabled":false,"container_expiration_policy":{"cadence":"7d","enabled":false,"keep_n":null,"older_than":null,"name_regex":null,"next_run_at":"2020-01-07T21:42:58.658Z"},"created_at":"2013-09-30T13:46:02Z","last_activity_at":"2013-09-30T13:46:02Z","creator_id":2,"namespace":{"id":2,"name":"group1","path":"group1","kind":"group","full_path":"group1","parent_id":null,"members_count_with_descendants":2},"import_status":"none","import_error":null,"permissions":{"project_access":{"access_level":10,"notification_level":3},"group_access":{"access_level":50,"notification_level":3}},"archived":false,"avatar_url":"http://example.com/uploads/project/avatar/3/uploads/avatar.png","license_url":"http://example.com/diaspora/diaspora-client/blob/master/LICENSE","license":{"key":"lgpl-3.0","name":"GNU Lesser General Public License v3.0","nickname":"GNU LGPLv3","html_url":"http://choosealicense.com/licenses/lgpl-3.0/","source_url":"http://www.gnu.org/licenses/lgpl-3.0.txt"},"shared_runners_enabled":true,"forks_count":0,"star_count":0,"runners_token":"b8bc4a7a29eb76ea83cf79e4908c2b","ci_default_git_depth":50,"public_jobs":true,"shared_with_groups":[{"group_id":4,"group_name":"Twitter","group_full_path":"twitter","group_access_level":30},{"group_id":3,"group_name":"Gitlab Org","group_full_path":"gitlab-org","group_access_level":10}],"repository_storage":"default","only_allow_merge_if_pipeline_succeeds":false,"only_allow_merge_if_all_discussions_are_resolved":false,"remove_source_branch_after_merge":false,"printing_merge_requests_link_enabled":true,"request_access_enabled":false,"merge_method":"merge","auto_devops_enabled":true,"auto_devops_deploy_strategy":"continuous","approvals_before_merge":0,"mirror":false,"mirror_user_id":45,"mirror_trigger_builds":false,"only_mirror_protected_branches":false,"mirror_overwrites_diverged_branches":false,"external_authorization_classification_label":null,"packages_enabled":true,"service_desk_enabled":false,"service_desk_address":null,"autoclose_referenced_issues":true,"suggestion_commit_message":null,"statistics":{"commit_count":37,"storage_size":1038090,"repository_size":1038090,"wiki_size":0,"lfs_objects_size":0,"job_artifacts_size":0,"packages_size":0},"_links":{"self":"http://example.com/api/v4/projects","issues":"http://example.com/api/v4/projects/1/issues","merge_requests":"http://example.com/api/v4/projects/1/merge_requests","repo_branches":"http://example.com/api/v4/projects/1/repository_branches","labels":"http://example.com/api/v4/projects/1/labels","events":"http://example.com/api/v4/projects/1/events","members":"http://example.com/api/v4/projects/1/members"}}`))
+		_, _ = res.Write([]byte(projectsPathResponse))
 	})
 
 	mux.HandleFunc("/api/v4/projects/3", func(res http.ResponseWriter, req *http.Request) {
@@ -279,7 +293,26 @@ func testGetUpdateServer(t *testing.T, fail bool) *httptest.Server {
 			response = http.StatusInternalServerError
 		}
 		res.WriteHeader(response)
-		_, _ = res.Write([]byte(`{"id":3,"description":"` + *editProjectOptions.Description + `","default_branch":"master","visibility":"private","ssh_url_to_repo":"git@example.com:luzifern/luzifern-project-site.git","http_url_to_repo":"http://example.com/diaspora/diaspora-project-site.git","web_url":"http://example.com/diaspora/diaspora-project-site","readme_url":"http://example.com/diaspora/diaspora-project-site/blob/master/README.md","tag_list":["example","disapora project"],"owner":{"id":3,"name":"Diaspora","created_at":"2013-09-30T13:46:02Z"},"name":"repo","name_with_namespace":"group1 / Diaspora Project Site","path":"diaspora-project-site","path_with_namespace":"group1/diaspora-project-site","issues_enabled":true,"open_issues_count":1,"merge_requests_enabled":true,"jobs_enabled":true,"wiki_enabled":true,"snippets_enabled":false,"resolve_outdated_diff_discussions":false,"container_registry_enabled":false,"container_expiration_policy":{"cadence":"7d","enabled":false,"keep_n":null,"older_than":null,"name_regex":null,"next_run_at":"2020-01-07T21:42:58.658Z"},"created_at":"2013-09-30T13:46:02Z","last_activity_at":"2013-09-30T13:46:02Z","creator_id":2,"namespace":{"id":2,"name":"group1","path":"group1","kind":"group","full_path":"group1","parent_id":null,"members_count_with_descendants":2},"import_status":"none","import_error":null,"permissions":{"project_access":{"access_level":10,"notification_level":3},"group_access":{"access_level":50,"notification_level":3}},"archived":false,"avatar_url":"http://example.com/uploads/project/avatar/3/uploads/avatar.png","license_url":"http://example.com/diaspora/diaspora-client/blob/master/LICENSE","license":{"key":"lgpl-3.0","name":"GNU Lesser General Public License v3.0","nickname":"GNU LGPLv3","html_url":"http://choosealicense.com/licenses/lgpl-3.0/","source_url":"http://www.gnu.org/licenses/lgpl-3.0.txt"},"shared_runners_enabled":true,"forks_count":0,"star_count":0,"runners_token":"b8bc4a7a29eb76ea83cf79e4908c2b","ci_default_git_depth":50,"public_jobs":true,"shared_with_groups":[{"group_id":4,"group_name":"Twitter","group_full_path":"twitter","group_access_level":30},{"group_id":3,"group_name":"Gitlab Org","group_full_path":"gitlab-org","group_access_level":10}],"repository_storage":"default","only_allow_merge_if_pipeline_succeeds":false,"only_allow_merge_if_all_discussions_are_resolved":false,"remove_source_branch_after_merge":false,"printing_merge_requests_link_enabled":true,"request_access_enabled":false,"merge_method":"merge","auto_devops_enabled":true,"auto_devops_deploy_strategy":"continuous","approvals_before_merge":0,"mirror":false,"mirror_user_id":45,"mirror_trigger_builds":false,"only_mirror_protected_branches":false,"mirror_overwrites_diverged_branches":false,"external_authorization_classification_label":null,"packages_enabled":true,"service_desk_enabled":false,"service_desk_address":null,"autoclose_referenced_issues":true,"suggestion_commit_message":null,"statistics":{"commit_count":37,"storage_size":1038090,"repository_size":1038090,"wiki_size":0,"lfs_objects_size":0,"job_artifacts_size":0,"packages_size":0},"_links":{"self":"http://example.com/api/v4/projects","issues":"http://example.com/api/v4/projects/1/issues","merge_requests":"http://example.com/api/v4/projects/1/merge_requests","repo_branches":"http://example.com/api/v4/projects/1/repository_branches","labels":"http://example.com/api/v4/projects/1/labels","events":"http://example.com/api/v4/projects/1/events","members":"http://example.com/api/v4/projects/1/members"}}`))
+
+		var project gitlab.Project
+		if err := json.Unmarshal(projectsIDResponse, &project); err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
+			t.Logf("unmarshal failed: %v", err)
+			_, _ = res.Write([]byte(`{"error":"test server error: unmarshal failed"}`))
+			return
+		}
+
+		project.Description = *editProjectOptions.Description
+
+		projectBytes, err := json.Marshal(project)
+		if err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
+			t.Logf("marshal failed: %v", err)
+			_, _ = res.Write([]byte(`{"error":"test server error: marshal failed"}`))
+			return
+		}
+
+		_, _ = res.Write([]byte(projectBytes))
 	})
 
 	deleteOk := func(res http.ResponseWriter, req *http.Request) {
@@ -600,4 +633,116 @@ func TestGitlab_FullURL(t *testing.T) {
 	assert.Equal(t, expectedFullURL, g.FullURL().String())
 	assert.Equal(t, expectedFullURL, g.FullURL().String())
 	assert.Equal(t, expectedFullURL, g.FullURL().String())
+}
+
+type mockClock struct {
+	now time.Time
+}
+
+func (m *mockClock) Now() time.Time {
+	return m.now
+}
+
+func (m *mockClock) Advance(d time.Duration) {
+	m.now = m.now.Add(d)
+}
+
+func TestGitlab_EnsureProjectAccessToken(t *testing.T) {
+	clock := &mockClock{now: time.Now()}
+
+	serv := testProjectAccessTokenServer(t, clock.Now)
+	defer serv.Close()
+
+	url, err := url.Parse(serv.URL)
+	require.NoError(t, err)
+
+	g := &Gitlab{
+		project: &gitlab.Project{
+			ID: 3,
+		},
+		ops: manager.RepoOptions{
+			URL:   url,
+			Clock: clock,
+		},
+	}
+
+	require.NoError(t, g.Connect())
+
+	pat, err := g.EnsureProjectAccessToken(context.Background(), "test", manager.EnsureProjectAccessTokenOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "token101", pat.Token)
+
+	for _, uid := range []string{"", pat.UID} {
+		opts := manager.EnsureProjectAccessTokenOptions{UID: uid}
+		samepat, err := g.EnsureProjectAccessToken(context.Background(), "test", opts)
+		require.NoError(t, err)
+		assert.Equal(t, pat.UID, samepat.UID, "Should reuse the same token", "opts", opts)
+		assert.Equal(t, pat.ExpiresAt, samepat.ExpiresAt)
+	}
+
+	newPat, err := g.EnsureProjectAccessToken(context.Background(), "test", manager.EnsureProjectAccessTokenOptions{UID: "other id"})
+	require.NoError(t, err)
+	assert.NotEqual(t, pat.UID, newPat.UID, "Should return new token if UID does not match")
+
+	// Access token expiry are floored to the nearest day
+	// Check that newest token is returned
+	clock.Advance(24 * time.Hour)
+	newerPat, err := g.EnsureProjectAccessToken(context.Background(), "test", manager.EnsureProjectAccessTokenOptions{UID: "other id"})
+	require.NoError(t, err)
+	assert.NotEqual(t, newPat.UID, newerPat.UID, "Should return new token if UID does not match")
+	newerPat2, err := g.EnsureProjectAccessToken(context.Background(), "test", manager.EnsureProjectAccessTokenOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, newerPat.UID, newerPat2.UID, "Should return the newest created token")
+
+	clock.Advance(time.Hour * 24 * 90)
+
+	renewedPat, err := g.EnsureProjectAccessToken(context.Background(), "test", manager.EnsureProjectAccessTokenOptions{UID: pat.UID})
+	require.NoError(t, err)
+	assert.NotEmpty(t, renewedPat.Token, "Should return new token if old token is expired")
+	assert.NotEqual(t, pat.UID, renewedPat.UID, "Should return new token if old token is expired")
+}
+
+func testProjectAccessTokenServer(t *testing.T, clock func() time.Time) *httptest.Server {
+	mux := http.NewServeMux()
+
+	var patsMux sync.Mutex
+	var pats []gitlab.ProjectAccessToken
+
+	mux.HandleFunc("GET /api/v4/projects/3/access_tokens", func(res http.ResponseWriter, req *http.Request) {
+		patsMux.Lock()
+		defer patsMux.Unlock()
+		_ = json.NewEncoder(res).Encode(pats)
+	})
+
+	mux.HandleFunc("POST /api/v4/projects/3/access_tokens", func(res http.ResponseWriter, req *http.Request) {
+		var createPAT gitlab.CreateProjectAccessTokenOptions
+		if err := json.NewDecoder(req.Body).Decode(&createPAT); err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
+			t.Logf("unmarshal failed: %v", err)
+			_, _ = res.Write([]byte(`{"error":"unmarshal failed"}`))
+			return
+		}
+
+		patsMux.Lock()
+		id := 100 + len(pats) + 1
+		nPat := gitlab.ProjectAccessToken{
+			ID:          id,
+			UserID:      123,
+			Name:        *createPAT.Name,
+			Scopes:      *createPAT.Scopes,
+			CreatedAt:   ptr.To(clock()),
+			ExpiresAt:   createPAT.ExpiresAt,
+			Active:      true,
+			Revoked:     false,
+			Token:       "token" + strconv.Itoa(id),
+			AccessLevel: *createPAT.AccessLevel,
+		}
+		pats = append(pats, nPat)
+		patsMux.Unlock()
+		_ = json.NewEncoder(res).Encode(nPat)
+	})
+
+	mux.HandleFunc("/", testutils.LogNotFoundHandler(t))
+
+	return httptest.NewServer(mux)
 }

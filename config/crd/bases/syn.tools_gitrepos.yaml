@@ -53,13 +53,18 @@ spec:
           spec:
             description: GitRepoSpec defines the desired state of GitRepo
             properties:
-              accessTokenSecretName:
+              accessToken:
                 description: |-
-                  AccessTokenSecretName contains a reference to a secret.
+                  AccessToken contains configuration for storing an access token in a secret.
                   If set, the Lieutenant operator will store an access token into this secret, which can be used to access the Git repository.
                   The token is stored under the key "token".
                   In the case of GitLab, this would be a Project Access Token with read-write access to the repository.
-                type: string
+                properties:
+                  secretRef:
+                    description: SecretRef references the secret the access token
+                      is stored in
+                    type: string
+                type: object
               apiSecretRef:
                 description: APISecretRef reference to secret containing connection
                   information

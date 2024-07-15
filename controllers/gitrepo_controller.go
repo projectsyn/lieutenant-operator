@@ -3,8 +3,7 @@ package controllers
 import (
 	"context"
 
-	"github.com/projectsyn/lieutenant-operator/controllers/gitrepo"
-	"github.com/projectsyn/lieutenant-operator/pipeline"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -13,6 +12,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
+	"github.com/projectsyn/lieutenant-operator/controllers/gitrepo"
+	"github.com/projectsyn/lieutenant-operator/pipeline"
 )
 
 // GitRepoReconciler reconciles a GitRepo object
@@ -73,5 +74,6 @@ func (r *GitRepoReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 func (r *GitRepoReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&synv1alpha1.GitRepo{}).
+		Owns(&corev1.Secret{}).
 		Complete(r)
 }

@@ -22,6 +22,24 @@ TIP: A more sophisticated documentation is available under https://doc.crds.dev/
 
 
 
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-accesstoken"]
+=== AccessToken 
+
+
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepospec[$$GitRepoSpec$$]
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`secretRef`* __string__ | SecretRef references the secret the access token is stored in
+|===
+
+
 [id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-bootstraptoken"]
 === BootstrapToken 
 
@@ -326,7 +344,7 @@ Archive: will archive the external resources, if it supports that
 | *`creationPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-creationpolicy[$$CreationPolicy$$]__ | CreationPolicy defines how the external resources should be treated upon CR creation.
 Create: will only create a new external resource and will not manage already existing resources
 Adopt:  will create a new external resource or will adopt and manage an already existing resource
-| *`accessTokenSecretName`* __string__ | AccessTokenSecretName contains a reference to a secret.
+| *`accessToken`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-accesstoken[$$AccessToken$$]__ | AccessToken contains configuration for storing an access token in a secret.
 If set, the Lieutenant operator will store an access token into this secret, which can be used to access the Git repository.
 The token is stored under the key "token".
 In the case of GitLab, this would be a Project Access Token with read-write access to the repository.
@@ -371,7 +389,7 @@ Archive: will archive the external resources, if it supports that
 | *`creationPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-creationpolicy[$$CreationPolicy$$]__ | CreationPolicy defines how the external resources should be treated upon CR creation.
 Create: will only create a new external resource and will not manage already existing resources
 Adopt:  will create a new external resource or will adopt and manage an already existing resource
-| *`accessTokenSecretName`* __string__ | AccessTokenSecretName contains a reference to a secret.
+| *`accessToken`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-accesstoken[$$AccessToken$$]__ | AccessToken contains configuration for storing an access token in a secret.
 If set, the Lieutenant operator will store an access token into this secret, which can be used to access the Git repository.
 The token is stored under the key "token".
 In the case of GitLab, this would be a Project Access Token with read-write access to the repository.

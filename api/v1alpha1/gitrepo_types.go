@@ -87,15 +87,20 @@ type GitRepoTemplate struct {
 	// Adopt:  will create a new external resource or will adopt and manage an already existing resource
 	// +kubebuilder:validation:Enum=Create;Adopt
 	CreationPolicy CreationPolicy `json:"creationPolicy,omitempty"`
-	// AccessTokenSecretName contains a reference to a secret.
+	// AccessToken contains configuration for storing an access token in a secret.
 	// If set, the Lieutenant operator will store an access token into this secret, which can be used to access the Git repository.
 	// The token is stored under the key "token".
 	// In the case of GitLab, this would be a Project Access Token with read-write access to the repository.
-	AccessTokenSecretName string `json:"accessTokenSecretName,omitempty"`
+	AccessToken AccessToken `json:"accessToken,omitempty"`
 	// CIVariables is a list of key-value pairs that will be set as CI variables in the Git repository.
 	//
 	// The variables are not expanded like PodSpec environment variables.
 	CIVariables []EnvVar `json:"ciVariables,omitempty"`
+}
+
+type AccessToken struct {
+	// SecretRef references the secret the access token is stored in
+	SecretRef string `json:"secretRef,omitempty"`
 }
 
 // EnvVar represents an environment added to the CI system of the Git repository.

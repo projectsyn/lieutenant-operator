@@ -5,10 +5,13 @@ import (
 	"errors"
 	"net/url"
 	"testing"
+	"time"
 
 	"github.com/go-logr/logr"
+	"github.com/go-logr/logr/testr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -201,7 +204,7 @@ func TestSteps(t *testing.T) {
 				Context:       context.TODO(),
 				FinalizerName: "foo",
 				Client:        c,
-				Log:           logr.Discard(),
+				Log:           testr.New(t),
 				Deleted:       tc.deleted,
 			}
 			repoURL, err := url.Parse(tc.repoUrl)
@@ -225,6 +228,63 @@ func TestSteps(t *testing.T) {
 			assert.Equal(t, tc.updatedStatusURL, repo.Status.URL)
 		})
 	}
+}
+
+func TestSteps_AccessToken(t *testing.T) {
+	scheme := runtime.NewScheme()
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(synv1alpha1.AddToScheme(scheme))
+
+	repo := &synv1alpha1.GitRepo{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "c-bar",
+			Namespace: "foo",
+		},
+		Spec: synv1alpha1.GitRepoSpec{
+			GitRepoTemplate: synv1alpha1.GitRepoTemplate{
+				AccessToken: synv1alpha1.AccessToken{
+					SecretRef: "buzz",
+				},
+			},
+		},
+	}
+
+	c := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(repo).
+		WithStatusSubresource(&synv1alpha1.GitRepo{}).
+		Build()
+	pContext := &pipeline.Context{
+		Context:       context.TODO(),
+		FinalizerName: "foo",
+		Client:        c,
+		Log:           testr.New(t),
+	}
+	fr := &fakeRepo{
+		exists: true,
+		url:    new(url.URL),
+		accessToken: manager.ProjectAccessToken{
+			UID:       "asdlfgkj",
+			Token:     "token",
+			ExpiresAt: time.Now().Add(30 * 24 * time.Hour),
+		},
+	}
+	gc := fakeGitClientFactory(fr)
+	res := steps(repo, pContext, gc)
+	assert.NoError(t, res.Err)
+
+	var secret corev1.Secret
+	require.NoError(t, c.Get(pContext.Context, types.NamespacedName{Namespace: repo.Namespace, Name: repo.Spec.AccessToken.SecretRef}, &secret))
+	assert.Equal(t, fr.accessToken.UID, secret.Annotations["lieutenant.syn.tools/accessTokenUID"])
+	assert.Equal(t, fr.accessToken.Token, string(secret.Data["token"]))
+	assert.Equal(t, fr.accessToken.ExpiresAt.Format(time.RFC3339), secret.Annotations["lieutenant.syn.tools/accessTokenExpiresAt"])
+
+	oldToken := fr.accessToken.Token
+	fr.accessToken.Token = ""
+	res = steps(repo, pContext, gc)
+	assert.NoError(t, res.Err)
+	require.NoError(t, c.Get(pContext.Context, types.NamespacedName{Namespace: repo.Namespace, Name: repo.Spec.AccessToken.SecretRef}, &secret))
+	assert.Equal(t, oldToken, string(secret.Data["token"]))
 }
 
 func TestStepsCreationFailure(t *testing.T) {
@@ -322,6 +382,8 @@ type fakeRepo struct {
 	failCreation bool
 	failUpdate   bool
 	failCommit   bool
+
+	accessToken manager.ProjectAccessToken
 }
 
 func (r fakeRepo) Type() string {
@@ -364,4 +426,7 @@ func (r *fakeRepo) CommitTemplateFiles() error {
 	}
 	r.committed = true
 	return nil
+}
+func (r *fakeRepo) EnsureProjectAccessToken(ctx context.Context, name string, opts manager.EnsureProjectAccessTokenOptions) (manager.ProjectAccessToken, error) {
+	return r.accessToken, nil
 }
