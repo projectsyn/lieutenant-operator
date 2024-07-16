@@ -10,7 +10,9 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -20,6 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/xanzy/go-gitlab"
 	"go.uber.org/zap"
+	"golang.org/x/exp/maps"
 	"k8s.io/utils/ptr"
 
 	"github.com/projectsyn/lieutenant-operator/git/manager"
@@ -702,6 +705,80 @@ func TestGitlab_EnsureProjectAccessToken(t *testing.T) {
 	assert.NotEqual(t, pat.UID, renewedPat.UID, "Should return new token if old token is expired")
 }
 
+func TestGitlab_EnsureCIVariables(t *testing.T) {
+	clock := &mockClock{now: time.Now()}
+
+	serv := testProjectProjectVariablesServer(t, clock.Now)
+	defer serv.Close()
+
+	url, err := url.Parse(serv.URL)
+	require.NoError(t, err)
+
+	g := &Gitlab{
+		project: &gitlab.Project{
+			ID: 3,
+		},
+		ops: manager.RepoOptions{
+			URL: url,
+		},
+	}
+
+	require.NoError(t, g.Connect())
+
+	vars := []manager.EnvVar{
+		{
+			Name:  "KEY1",
+			Value: "value1",
+		},
+		{
+			Name:  "KEY2",
+			Value: "value2",
+			GitlabOptions: manager.EnvVarGitlabOptions{
+				Protected: ptr.To(true),
+			},
+		},
+	}
+
+	// Create variables
+	require.NoError(t, g.EnsureCIVariables(context.Background(), []string{"KEY1", "KEY2"}, vars))
+	cvs, _, err := g.client.ProjectVariables.ListVariables(g.project.ID, &gitlab.ListProjectVariablesOptions{})
+	require.NoError(t, err)
+	require.Len(t, cvs, 2)
+	assert.Equal(t, "KEY1", cvs[0].Key)
+	assert.Equal(t, "value1", cvs[0].Value)
+	assert.False(t, cvs[0].Protected)
+	assert.Equal(t, "KEY2", cvs[1].Key)
+	assert.Equal(t, "value2", cvs[1].Value)
+	assert.True(t, cvs[1].Protected)
+
+	// Update variable value
+	vars[0].Value = "value1.1"
+	vars[1].Value = "value2.1"
+	require.NoError(t, g.EnsureCIVariables(context.Background(), []string{"KEY1"}, vars))
+	cvs, _, err = g.client.ProjectVariables.ListVariables(g.project.ID, &gitlab.ListProjectVariablesOptions{})
+	require.NoError(t, err)
+	require.Len(t, cvs, 2)
+	assert.Equal(t, "value1.1", cvs[0].Value)
+	assert.Equal(t, "value2", cvs[1].Value, "should not update unmanaged variable")
+
+	// Update variable advanced options
+	vars[0].GitlabOptions.Protected = ptr.To(true)
+	vars[1].GitlabOptions.Protected = ptr.To(false)
+	require.NoError(t, g.EnsureCIVariables(context.Background(), []string{"KEY1", "KEY2"}, vars))
+	cvs, _, err = g.client.ProjectVariables.ListVariables(g.project.ID, &gitlab.ListProjectVariablesOptions{})
+	require.NoError(t, err)
+	require.Len(t, cvs, 2)
+	assert.True(t, cvs[0].Protected)
+	assert.False(t, cvs[1].Protected)
+
+	// Delete variable
+	require.NoError(t, g.EnsureCIVariables(context.Background(), []string{"KEY1"}, nil))
+	cvs, _, err = g.client.ProjectVariables.ListVariables(g.project.ID, &gitlab.ListProjectVariablesOptions{})
+	require.NoError(t, err)
+	require.Len(t, cvs, 1, "should delete managed variable")
+	assert.Equal(t, "KEY2", cvs[0].Key, "should not delete unmanaged variable")
+}
+
 func testProjectAccessTokenServer(t *testing.T, clock func() time.Time) *httptest.Server {
 	mux := http.NewServeMux()
 
@@ -740,6 +817,125 @@ func testProjectAccessTokenServer(t *testing.T, clock func() time.Time) *httptes
 		pats = append(pats, nPat)
 		patsMux.Unlock()
 		_ = json.NewEncoder(res).Encode(nPat)
+	})
+
+	mux.HandleFunc("/", testutils.LogNotFoundHandler(t))
+
+	return httptest.NewServer(mux)
+}
+
+func testProjectProjectVariablesServer(t *testing.T, clock func() time.Time) *httptest.Server {
+	mux := http.NewServeMux()
+
+	var varsMux sync.Mutex
+	vars := make(map[string]gitlab.ProjectVariable)
+
+	mux.HandleFunc("GET /api/v4/projects/3/variables", func(res http.ResponseWriter, req *http.Request) {
+		varsMux.Lock()
+		defer varsMux.Unlock()
+		vs := maps.Values(vars)
+		slices.SortFunc(vs, func(a, b gitlab.ProjectVariable) int {
+			return strings.Compare(a.Key, b.Key)
+		})
+		_ = json.NewEncoder(res).Encode(vs)
+	})
+
+	mux.HandleFunc("POST /api/v4/projects/3/variables", func(res http.ResponseWriter, req *http.Request) {
+		var createVar gitlab.CreateProjectVariableOptions
+		if err := json.NewDecoder(req.Body).Decode(&createVar); err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
+			t.Logf("unmarshal failed: %v", err)
+			_, _ = res.Write([]byte(`{"error":"unmarshal failed"}`))
+			return
+		}
+
+		if createVar.Key == nil {
+			res.WriteHeader(http.StatusBadRequest)
+			_, _ = res.Write([]byte(`{"error":"key is required"}`))
+			return
+		}
+		key := *createVar.Key
+
+		varsMux.Lock()
+		if _, ok := vars[key]; ok {
+			res.WriteHeader(http.StatusBadRequest)
+			_, _ = res.Write([]byte(`{"error":"variable already exists"}`))
+			varsMux.Unlock()
+			return
+		}
+		defer varsMux.Unlock()
+		nVar := gitlab.ProjectVariable{
+			Key:              key,
+			Value:            ptr.Deref(createVar.Value, ""),
+			VariableType:     ptr.Deref(createVar.VariableType, gitlab.EnvVariableType),
+			Protected:        ptr.Deref(createVar.Protected, false),
+			Masked:           ptr.Deref(createVar.Masked, false),
+			Raw:              ptr.Deref(createVar.Raw, false),
+			EnvironmentScope: ptr.Deref(createVar.EnvironmentScope, "*"),
+			Description:      ptr.Deref(createVar.Description, ""),
+		}
+		vars[key] = nVar
+		_ = json.NewEncoder(res).Encode(nVar)
+	})
+
+	mux.HandleFunc("PUT /api/v4/projects/3/variables/{key}", func(res http.ResponseWriter, req *http.Request) {
+		var createVar gitlab.UpdateProjectVariableOptions
+		if err := json.NewDecoder(req.Body).Decode(&createVar); err != nil {
+			res.WriteHeader(http.StatusInternalServerError)
+			t.Logf("unmarshal failed: %v", err)
+			_, _ = res.Write([]byte(`{"error":"unmarshal failed"}`))
+			return
+		}
+
+		key := req.PathValue("key")
+		if key == "" {
+			res.WriteHeader(http.StatusBadRequest)
+			_, _ = res.Write([]byte(`{"error":"key is required"}`))
+			return
+		}
+
+		varsMux.Lock()
+		oVar, ok := vars[key]
+		if !ok {
+			res.WriteHeader(http.StatusNotFound)
+			_, _ = res.Write([]byte(`{"error":"404 not found"}`))
+			varsMux.Unlock()
+			return
+		}
+		defer varsMux.Unlock()
+		nVar := gitlab.ProjectVariable{
+			Key:              key,
+			Value:            ptr.Deref(createVar.Value, oVar.Value),
+			VariableType:     ptr.Deref(createVar.VariableType, oVar.VariableType),
+			Protected:        ptr.Deref(createVar.Protected, oVar.Protected),
+			Masked:           ptr.Deref(createVar.Masked, oVar.Masked),
+			Raw:              ptr.Deref(createVar.Raw, oVar.Raw),
+			EnvironmentScope: ptr.Deref(createVar.EnvironmentScope, oVar.EnvironmentScope),
+			Description:      ptr.Deref(createVar.Description, oVar.Description),
+		}
+		vars[key] = nVar
+		_ = json.NewEncoder(res).Encode(nVar)
+	})
+
+	mux.HandleFunc("DELETE /api/v4/projects/3/variables/{key}", func(res http.ResponseWriter, req *http.Request) {
+		key := req.PathValue("key")
+		if key == "" {
+			res.WriteHeader(http.StatusBadRequest)
+			_, _ = res.Write([]byte(`{"error":"key is required"}`))
+			return
+		}
+
+		varsMux.Lock()
+		oVar, ok := vars[key]
+		if !ok {
+			res.WriteHeader(http.StatusNotFound)
+			_, _ = res.Write([]byte(`{"error":"404 not found"}`))
+			varsMux.Unlock()
+			return
+		}
+		defer varsMux.Unlock()
+		delete(vars, key)
+		_ = json.NewEncoder(res).Encode(oVar)
 	})
 
 	mux.HandleFunc("/", testutils.LogNotFoundHandler(t))

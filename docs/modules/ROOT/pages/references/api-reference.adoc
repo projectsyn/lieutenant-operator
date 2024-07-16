@@ -250,6 +250,27 @@ EnvVar represents an environment added to the CI system of the Git repository.
 | *`name`* __string__ | Name of the environment variable
 | *`value`* __string__ | Value of the environment variable
 | *`valueFrom`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-envvarsource[$$EnvVarSource$$]__ | ValueFrom is a reference to an object that contains the value of the environment variable
+| *`gitlabOptions`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-envvargitlaboptions[$$EnvVarGitlabOptions$$]__ | GitlabOptions contains additional options for GitLab CI variables
+|===
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-envvargitlaboptions"]
+=== EnvVarGitlabOptions 
+
+
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-envvar[$$EnvVar$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`description`* __string__ | Description is a description of the CI variable.
+| *`protected`* __boolean__ | Protected will expose the variable only in protected branches and tags.
+| *`masked`* __boolean__ | Masked will mask the variable in the job logs.
+| *`raw`* __boolean__ | Raw will prevent the variable from being expanded.
 |===
 
 

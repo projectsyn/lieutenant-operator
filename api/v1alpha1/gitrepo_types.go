@@ -115,6 +115,25 @@ type EnvVar struct {
 	// ValueFrom is a reference to an object that contains the value of the environment variable
 	// +optional
 	ValueFrom *EnvVarSource `json:"valueFrom,omitempty"`
+
+	// GitlabOptions contains additional options for GitLab CI variables
+	// +optional
+	GitlabOptions EnvVarGitlabOptions `json:"gitlabOptions,omitempty"`
+}
+
+type EnvVarGitlabOptions struct {
+	// Description is a description of the CI variable.
+	// +optional
+	Description string `json:"description,omitempty"`
+	// Protected will expose the variable only in protected branches and tags.
+	// +optional
+	Protected bool `json:"protected,omitempty"`
+	// Masked will mask the variable in the job logs.
+	// +optional
+	Masked bool `json:"masked,omitempty"`
+	// Raw will prevent the variable from being expanded.
+	// +optional
+	Raw bool `json:"raw,omitempty"`
 }
 
 // EnvVarSource represents a source for the value of an EnvVar.
@@ -145,6 +164,8 @@ type GitRepoStatus struct {
 	URL string `json:"url,omitempty"`
 	// SSH HostKeys of the git server
 	HostKeys string `json:"hostKeys,omitempty"`
+	// LastAppliedCIVariables contains the last applied CI variables as a json string
+	LastAppliedCIVariables string `json:"lastAppliedCIVariables,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

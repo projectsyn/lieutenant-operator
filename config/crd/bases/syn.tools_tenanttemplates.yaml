@@ -126,6 +126,27 @@ spec:
                           description: EnvVar represents an environment added to the
                             CI system of the Git repository.
                           properties:
+                            gitlabOptions:
+                              description: GitlabOptions contains additional options
+                                for GitLab CI variables
+                              properties:
+                                description:
+                                  description: Description is a description of the
+                                    CI variable.
+                                  type: string
+                                masked:
+                                  description: Masked will mask the variable in the
+                                    job logs.
+                                  type: boolean
+                                protected:
+                                  description: Protected will expose the variable
+                                    only in protected branches and tags.
+                                  type: boolean
+                                raw:
+                                  description: Raw will prevent the variable from
+                                    being expanded.
+                                  type: boolean
+                              type: object
                             name:
                               description: Name of the environment variable
                               type: string
@@ -338,6 +359,27 @@ spec:
                       description: EnvVar represents an environment added to the CI
                         system of the Git repository.
                       properties:
+                        gitlabOptions:
+                          description: GitlabOptions contains additional options for
+                            GitLab CI variables
+                          properties:
+                            description:
+                              description: Description is a description of the CI
+                                variable.
+                              type: string
+                            masked:
+                              description: Masked will mask the variable in the job
+                                logs.
+                              type: boolean
+                            protected:
+                              description: Protected will expose the variable only
+                                in protected branches and tags.
+                              type: boolean
+                            raw:
+                              description: Raw will prevent the variable from being
+                                expanded.
+                              type: boolean
+                          type: object
                         name:
                           description: Name of the environment variable
                           type: string
