@@ -116,6 +116,28 @@ type Repo interface {
 	// If the token is expired or not set, a new token will be created.
 	// Depending on the implementation the token name might be used as a prefix.
 	EnsureProjectAccessToken(ctx context.Context, name string, opts EnsureProjectAccessTokenOptions) (ProjectAccessToken, error)
+	// EnsureCIVariables will ensure that the given variables are set in the CI/CD pipeline.
+	// The managedVariables is used to identify the variables that are managed by the operator.
+	// Variables that are not managed by the operator will be ignored.
+	// Variables that are managed but not in variables will be deleted.
+	EnsureCIVariables(ctx context.Context, managedVariables []string, variables []EnvVar) error
+}
+
+// EnvVar represents a CI/CD environment variable.
+// It can have manager specific options.
+// The manager specific options are ignored if the manager does not support them.
+type EnvVar struct {
+	Name  string
+	Value string
+
+	GitlabOptions EnvVarGitlabOptions
+}
+
+type EnvVarGitlabOptions struct {
+	Description *string
+	Protected   *bool
+	Masked      *bool
+	Raw         *bool
 }
 
 type EnsureProjectAccessTokenOptions struct {

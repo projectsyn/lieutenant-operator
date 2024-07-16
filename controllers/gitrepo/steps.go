@@ -1,14 +1,20 @@
 package gitrepo
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"time"
 
 	"github.com/go-logr/logr"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
+	"go.uber.org/multierr"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/json"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -84,7 +90,11 @@ func steps(obj pipeline.Object, data *pipeline.Context, getGitClient gitClientFa
 	}
 
 	if err := ensureAccessToken(data.Context, data.Client, instance, repo); err != nil {
-		return pipeline.Result{Err: fmt.Errorf("ensure access token: %w", err)}
+		return pipeline.Result{Err: handleRepoError(data.Context, fmt.Errorf("ensure access token: %w", err), instance, data.Client)}
+	}
+
+	if err := ensureCIVariables(data.Context, data.Client, instance, repo); err != nil {
+		return pipeline.Result{Err: handleRepoError(data.Context, fmt.Errorf("ensure ci variables: %w", err), instance, data.Client)}
 	}
 
 	err = repo.CommitTemplateFiles()
@@ -170,4 +180,93 @@ func ensureAccessToken(ctx context.Context, cli client.Client, instance *synv1al
 	log.FromContext(ctx).Info("Reconciled secret", "secret", secret, "op", op)
 
 	return nil
+}
+
+func ensureCIVariables(ctx context.Context, cli client.Client, instance *synv1alpha1.GitRepo, repo manager.Repo) error {
+	varsJSON, err := json.Marshal(instance.Spec.CIVariables)
+	if err != nil {
+		return fmt.Errorf("error marshalling ci variables: %w", err)
+	}
+	if bytes.Equal(varsJSON, []byte(instance.Status.LastAppliedCIVariables)) {
+		return nil
+	}
+	var prevVars []synv1alpha1.EnvVar
+	if instance.Status.LastAppliedCIVariables != "" {
+		if err := json.Unmarshal([]byte(instance.Status.LastAppliedCIVariables), &prevVars); err != nil {
+			return fmt.Errorf("error unmarshalling previous ci variables: %w", err)
+		}
+	}
+	managedVars := sets.New[string]()
+	for _, v := range instance.Spec.CIVariables {
+		managedVars.Insert(v.Name)
+	}
+	for _, v := range prevVars {
+		managedVars.Insert(v.Name)
+	}
+
+	vars := make([]manager.EnvVar, 0, len(instance.Spec.CIVariables))
+	valueFromErrs := make([]error, 0, len(instance.Spec.CIVariables))
+	for _, v := range instance.Spec.CIVariables {
+		val, err := valueFromEnvVar(ctx, cli, instance.Namespace, v)
+		if err != nil {
+			valueFromErrs = append(valueFromErrs, err)
+			continue
+		}
+		vars = append(vars, manager.EnvVar{
+			Name:  v.Name,
+			Value: val,
+
+			GitlabOptions: manager.EnvVarGitlabOptions{
+				Description: ptr.To(v.GitlabOptions.Description),
+				Protected:   ptr.To(v.GitlabOptions.Protected),
+				Masked:      ptr.To(v.GitlabOptions.Masked),
+				Raw:         ptr.To(v.GitlabOptions.Raw),
+			},
+		})
+	}
+	if err := multierr.Combine(valueFromErrs...); err != nil {
+		return fmt.Errorf("error collecting values for env vars: %w", err)
+	}
+
+	if err = repo.EnsureCIVariables(ctx, sets.List(managedVars), vars); err != nil {
+		return fmt.Errorf("error ensuring ci variables: %w", err)
+	}
+
+	instance.Status.LastAppliedCIVariables = string(varsJSON)
+	return nil
+}
+
+func valueFromEnvVar(ctx context.Context, cli client.Client, namespace string, envVar synv1alpha1.EnvVar) (string, error) {
+	if envVar.Value != "" {
+		if envVar.ValueFrom != nil {
+			return "", fmt.Errorf("envVar %q has both value and valueFrom", envVar.Name)
+		}
+		return envVar.Value, nil
+	}
+	if envVar.ValueFrom == nil {
+		return "", nil
+	}
+	if envVar.ValueFrom.SecretKeyRef == nil {
+		return "", fmt.Errorf("envVar %q has no secretKeyRef", envVar.Name)
+	}
+	if envVar.ValueFrom.SecretKeyRef.Name == "" || envVar.ValueFrom.SecretKeyRef.Key == "" {
+		return "", fmt.Errorf("envVar %q has incomplete secretKeyRef", envVar.Name)
+	}
+	optional := ptr.Deref(envVar.ValueFrom.SecretKeyRef.Optional, false)
+	secret := &corev1.Secret{}
+	err := cli.Get(ctx, client.ObjectKey{Namespace: namespace, Name: envVar.ValueFrom.SecretKeyRef.Name}, secret)
+	if err != nil {
+		if apierrors.IsNotFound(err) && optional {
+			return "", nil
+		}
+		return "", fmt.Errorf("error getting secret %q: %w", envVar.ValueFrom.SecretKeyRef.Name, err)
+	}
+	val, ok := secret.Data[envVar.ValueFrom.SecretKeyRef.Key]
+	if !ok {
+		if optional {
+			return "", nil
+		}
+		return "", fmt.Errorf("secret %q does not contain key %q", envVar.ValueFrom.SecretKeyRef.Name, envVar.ValueFrom.SecretKeyRef.Key)
+	}
+	return string(val), nil
 }

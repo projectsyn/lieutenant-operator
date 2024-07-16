@@ -12,12 +12,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 
@@ -363,10 +363,166 @@ func TestStepsCreationFailure(t *testing.T) {
 	}
 }
 
+func TestSteps_CIVariables(t *testing.T) {
+	scheme := runtime.NewScheme()
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(synv1alpha1.AddToScheme(scheme))
+
+	repo := &synv1alpha1.GitRepo{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "c-bar",
+			Namespace: "foo",
+		},
+		Spec: synv1alpha1.GitRepoSpec{
+			GitRepoTemplate: synv1alpha1.GitRepoTemplate{
+				CIVariables: []synv1alpha1.EnvVar{
+					{
+						Name:  "VALUE",
+						Value: "bar",
+					},
+					{
+						Name: "EMPTY_VALUE",
+					},
+					{
+						Name: "VALUE_FROM",
+						ValueFrom: &synv1alpha1.EnvVarSource{
+							SecretKeyRef: &corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "qux-var",
+								},
+								Key: "qux",
+							},
+						},
+					},
+					{
+						Name: "OPTIONAL_VALUE",
+						ValueFrom: &synv1alpha1.EnvVarSource{
+							SecretKeyRef: &corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "non-existing-secret",
+								},
+								Key:      "key",
+								Optional: ptr.To(true),
+							},
+						},
+					},
+					{
+						Name: "OPTIONAL_VALUE_KEY_MISSING",
+						ValueFrom: &synv1alpha1.EnvVarSource{
+							SecretKeyRef: &corev1.SecretKeySelector{
+								LocalObjectReference: corev1.LocalObjectReference{
+									Name: "qux-var",
+								},
+								Key:      "other-key",
+								Optional: ptr.To(true),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	varNames := make([]string, 0, len(repo.Spec.CIVariables))
+	for _, v := range repo.Spec.CIVariables {
+		varNames = append(varNames, v.Name)
+	}
+
+	secret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "qux-var",
+			Namespace: "foo",
+		},
+		Data: map[string][]byte{
+			"qux": []byte("qux value"),
+		},
+	}
+
+	c := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(repo, secret).
+		WithStatusSubresource(&synv1alpha1.GitRepo{}).
+		Build()
+	pContext := &pipeline.Context{
+		Context:       context.TODO(),
+		FinalizerName: "foo",
+		Client:        c,
+		Log:           testr.New(t),
+	}
+	fr := &fakeRepo{
+		exists: true,
+		url:    new(url.URL),
+	}
+	gc := fakeGitClientFactory(fr)
+	res := steps(repo, pContext, gc)
+	assert.NoError(t, res.Err)
+
+	require.Len(t, fr.ensureCIVariablesCalls, 1)
+	call := fr.ensureCIVariablesCalls[0]
+	assert.ElementsMatch(t, varNames, call.managed)
+	glo := manager.EnvVarGitlabOptions{
+		Description: ptr.To(""),
+		Protected:   ptr.To(false),
+		Masked:      ptr.To(false),
+		Raw:         ptr.To(false),
+	}
+	assert.ElementsMatch(t, []manager.EnvVar{
+		{
+			Name:  "VALUE",
+			Value: "bar",
+
+			GitlabOptions: glo,
+		},
+		{
+			Name: "EMPTY_VALUE",
+
+			GitlabOptions: glo,
+		},
+		{
+			Name:  "VALUE_FROM",
+			Value: "qux value",
+
+			GitlabOptions: glo,
+		},
+		{
+			Name: "OPTIONAL_VALUE",
+
+			GitlabOptions: glo,
+		},
+		{
+			Name: "OPTIONAL_VALUE_KEY_MISSING",
+
+			GitlabOptions: glo,
+		},
+	}, call.vars)
+
+	res2 := steps(repo, pContext, gc)
+	assert.NoError(t, res2.Err)
+	require.Len(t, fr.ensureCIVariablesCalls, 1, "ci variables should not be updated if they did not change")
+
+	// remove first variable. Removed variable should still appear in the managed variables because it was managed before.
+	// it should not appear in the variables to be set.
+	repo.Spec.GitRepoTemplate.CIVariables = repo.Spec.GitRepoTemplate.CIVariables[1:]
+	res3 := steps(repo, pContext, gc)
+	assert.NoError(t, res3.Err)
+	require.Len(t, fr.ensureCIVariablesCalls, 2)
+	call = fr.ensureCIVariablesCalls[1]
+	assert.ElementsMatch(t, varNames, call.managed, "managed variables should be remembered from previous run")
+	callVarNames := make([]string, 0, len(call.vars))
+	for _, v := range call.vars {
+		callVarNames = append(callVarNames, v.Name)
+	}
+	assert.ElementsMatch(t, varNames[1:], callVarNames)
+}
+
 func fakeGitClientFactory(r *fakeRepo) gitClientFactory {
 	return func(ctx context.Context, instance *synv1alpha1.GitRepoTemplate, namespace string, reqLogger logr.Logger, client client.Client) (manager.Repo, string, error) {
 		return r, "", nil
 	}
+}
+
+type ensureCIVariablesCall struct {
+	managed []string
+	vars    []manager.EnvVar
 }
 
 type fakeRepo struct {
@@ -384,6 +540,8 @@ type fakeRepo struct {
 	failCommit   bool
 
 	accessToken manager.ProjectAccessToken
+
+	ensureCIVariablesCalls []ensureCIVariablesCall
 }
 
 func (r fakeRepo) Type() string {
@@ -429,4 +587,11 @@ func (r *fakeRepo) CommitTemplateFiles() error {
 }
 func (r *fakeRepo) EnsureProjectAccessToken(ctx context.Context, name string, opts manager.EnsureProjectAccessTokenOptions) (manager.ProjectAccessToken, error) {
 	return r.accessToken, nil
+}
+func (r *fakeRepo) EnsureCIVariables(ctx context.Context, managed []string, vars []manager.EnvVar) error {
+	r.ensureCIVariablesCalls = append(r.ensureCIVariablesCalls, ensureCIVariablesCall{
+		managed: managed,
+		vars:    vars,
+	})
+	return nil
 }

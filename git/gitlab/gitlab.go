@@ -2,6 +2,7 @@ package gitlab
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"slices"
@@ -11,6 +12,8 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/xanzy/go-gitlab"
+	"go.uber.org/multierr"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/ptr"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
@@ -531,4 +534,65 @@ func (g *Gitlab) EnsureProjectAccessToken(ctx context.Context, name string, opts
 		Token:     token.Token,
 		ExpiresAt: time.Time(ptr.Deref(token.ExpiresAt, gitlab.ISOTime{})),
 	}, nil
+}
+
+// EnsureCIVariables ensures that the given variables are set in the CI/CD pipeline.
+// The managedVariables is used to identify the variables that are managed by the operator.
+// Variables that are not managed by the operator will be ignored.
+// Variables that are managed but not in variables will be deleted.
+func (g *Gitlab) EnsureCIVariables(ctx context.Context, managedVariables []string, variables []manager.EnvVar) error {
+	var errs []error
+	managed := sets.New(managedVariables...)
+	current := sets.New[string]()
+	for _, v := range variables {
+		current.Insert(v.Name)
+	}
+	toDelete := managed.Difference(current)
+	for _, v := range sets.List(toDelete) {
+		_, err := g.client.ProjectVariables.RemoveVariable(g.project.ID, v, &gitlab.RemoveProjectVariableOptions{}, gitlab.WithContext(ctx))
+		if err != nil && !errors.Is(err, gitlab.ErrNotFound) {
+			errs = append(errs, fmt.Errorf("error removing variable %s: %w", v, err))
+		}
+	}
+
+	for _, v := range variables {
+		if !managed.Has(v.Name) {
+			continue
+		}
+
+		err := g.updateOrCreateCIVariable(ctx, v)
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return multierr.Combine(errs...)
+}
+
+// updateOrCreateCIVariable updates or creates a CI variable in the Gitlab project.
+// It tries to update the variable first and creates it if it does not exist.
+func (g *Gitlab) updateOrCreateCIVariable(ctx context.Context, v manager.EnvVar) error {
+	_, _, err := g.client.ProjectVariables.UpdateVariable(g.project.ID, v.Name, &gitlab.UpdateProjectVariableOptions{
+		Value:     &v.Value,
+		Protected: v.GitlabOptions.Protected,
+		Masked:    v.GitlabOptions.Masked,
+		Raw:       v.GitlabOptions.Raw,
+	}, gitlab.WithContext(ctx))
+	if err == nil {
+		return nil
+	}
+	if !errors.Is(err, gitlab.ErrNotFound) {
+		return fmt.Errorf("error updating variable %s: %w", v.Name, err)
+	}
+	_, _, err = g.client.ProjectVariables.CreateVariable(g.project.ID, &gitlab.CreateProjectVariableOptions{
+		Key:       &v.Name,
+		Value:     &v.Value,
+		Protected: v.GitlabOptions.Protected,
+		Masked:    v.GitlabOptions.Masked,
+		Raw:       v.GitlabOptions.Raw,
+	}, gitlab.WithContext(ctx))
+	if err != nil {
+		return fmt.Errorf("error creating variable %s: %w", v.Name, err)
+	}
+	return nil
 }
