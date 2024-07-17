@@ -21,6 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/xanzy/go-gitlab"
+	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
 	"k8s.io/utils/ptr"
@@ -708,7 +709,7 @@ func TestGitlab_EnsureProjectAccessToken(t *testing.T) {
 func TestGitlab_EnsureCIVariables(t *testing.T) {
 	clock := &mockClock{now: time.Now()}
 
-	serv := testProjectProjectVariablesServer(t, clock.Now)
+	serv := newTestProjectProjectVariablesServer(t, clock.Now)
 	defer serv.Close()
 
 	url, err := url.Parse(serv.URL)
@@ -750,6 +751,11 @@ func TestGitlab_EnsureCIVariables(t *testing.T) {
 	assert.Equal(t, "KEY2", cvs[1].Key)
 	assert.Equal(t, "value2", cvs[1].Value)
 	assert.True(t, cvs[1].Protected)
+
+	// no changes should be write noops
+	prevCalls := serv.updateCount.Load()
+	require.NoError(t, g.EnsureCIVariables(context.Background(), []string{"KEY1", "KEY2"}, vars))
+	require.Equal(t, prevCalls, serv.updateCount.Load(), "no changes should be write noops")
 
 	// Update variable value
 	vars[0].Value = "value1.1"
@@ -824,16 +830,28 @@ func testProjectAccessTokenServer(t *testing.T, clock func() time.Time) *httptes
 	return httptest.NewServer(mux)
 }
 
-func testProjectProjectVariablesServer(t *testing.T, clock func() time.Time) *httptest.Server {
+type testProjectProjectVariablesServer struct {
+	*httptest.Server
+
+	varsMux sync.Mutex
+	vars    map[string]gitlab.ProjectVariable
+
+	createCount atomic.Int32
+	updateCount atomic.Int32
+	deleteCount atomic.Int32
+}
+
+func newTestProjectProjectVariablesServer(t *testing.T, clock func() time.Time) *testProjectProjectVariablesServer {
 	mux := http.NewServeMux()
 
-	var varsMux sync.Mutex
-	vars := make(map[string]gitlab.ProjectVariable)
+	s := &testProjectProjectVariablesServer{
+		vars: make(map[string]gitlab.ProjectVariable),
+	}
 
 	mux.HandleFunc("GET /api/v4/projects/3/variables", func(res http.ResponseWriter, req *http.Request) {
-		varsMux.Lock()
-		defer varsMux.Unlock()
-		vs := maps.Values(vars)
+		s.varsMux.Lock()
+		defer s.varsMux.Unlock()
+		vs := maps.Values(s.vars)
 		slices.SortFunc(vs, func(a, b gitlab.ProjectVariable) int {
 			return strings.Compare(a.Key, b.Key)
 		})
@@ -841,6 +859,8 @@ func testProjectProjectVariablesServer(t *testing.T, clock func() time.Time) *ht
 	})
 
 	mux.HandleFunc("POST /api/v4/projects/3/variables", func(res http.ResponseWriter, req *http.Request) {
+		s.createCount.Inc()
+
 		var createVar gitlab.CreateProjectVariableOptions
 		if err := json.NewDecoder(req.Body).Decode(&createVar); err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
@@ -856,14 +876,14 @@ func testProjectProjectVariablesServer(t *testing.T, clock func() time.Time) *ht
 		}
 		key := *createVar.Key
 
-		varsMux.Lock()
-		if _, ok := vars[key]; ok {
+		s.varsMux.Lock()
+		if _, ok := s.vars[key]; ok {
 			res.WriteHeader(http.StatusBadRequest)
 			_, _ = res.Write([]byte(`{"error":"variable already exists"}`))
-			varsMux.Unlock()
+			s.varsMux.Unlock()
 			return
 		}
-		defer varsMux.Unlock()
+		defer s.varsMux.Unlock()
 		nVar := gitlab.ProjectVariable{
 			Key:              key,
 			Value:            ptr.Deref(createVar.Value, ""),
@@ -874,11 +894,13 @@ func testProjectProjectVariablesServer(t *testing.T, clock func() time.Time) *ht
 			EnvironmentScope: ptr.Deref(createVar.EnvironmentScope, "*"),
 			Description:      ptr.Deref(createVar.Description, ""),
 		}
-		vars[key] = nVar
+		s.vars[key] = nVar
 		_ = json.NewEncoder(res).Encode(nVar)
 	})
 
 	mux.HandleFunc("PUT /api/v4/projects/3/variables/{key}", func(res http.ResponseWriter, req *http.Request) {
+		s.updateCount.Inc()
+
 		var createVar gitlab.UpdateProjectVariableOptions
 		if err := json.NewDecoder(req.Body).Decode(&createVar); err != nil {
 			res.WriteHeader(http.StatusInternalServerError)
@@ -894,15 +916,15 @@ func testProjectProjectVariablesServer(t *testing.T, clock func() time.Time) *ht
 			return
 		}
 
-		varsMux.Lock()
-		oVar, ok := vars[key]
+		s.varsMux.Lock()
+		oVar, ok := s.vars[key]
 		if !ok {
 			res.WriteHeader(http.StatusNotFound)
 			_, _ = res.Write([]byte(`{"error":"404 not found"}`))
-			varsMux.Unlock()
+			s.varsMux.Unlock()
 			return
 		}
-		defer varsMux.Unlock()
+		defer s.varsMux.Unlock()
 		nVar := gitlab.ProjectVariable{
 			Key:              key,
 			Value:            ptr.Deref(createVar.Value, oVar.Value),
@@ -913,11 +935,13 @@ func testProjectProjectVariablesServer(t *testing.T, clock func() time.Time) *ht
 			EnvironmentScope: ptr.Deref(createVar.EnvironmentScope, oVar.EnvironmentScope),
 			Description:      ptr.Deref(createVar.Description, oVar.Description),
 		}
-		vars[key] = nVar
+		s.vars[key] = nVar
 		_ = json.NewEncoder(res).Encode(nVar)
 	})
 
 	mux.HandleFunc("DELETE /api/v4/projects/3/variables/{key}", func(res http.ResponseWriter, req *http.Request) {
+		s.deleteCount.Inc()
+
 		key := req.PathValue("key")
 		if key == "" {
 			res.WriteHeader(http.StatusBadRequest)
@@ -925,20 +949,21 @@ func testProjectProjectVariablesServer(t *testing.T, clock func() time.Time) *ht
 			return
 		}
 
-		varsMux.Lock()
-		oVar, ok := vars[key]
+		s.varsMux.Lock()
+		oVar, ok := s.vars[key]
 		if !ok {
 			res.WriteHeader(http.StatusNotFound)
 			_, _ = res.Write([]byte(`{"error":"404 not found"}`))
-			varsMux.Unlock()
+			s.varsMux.Unlock()
 			return
 		}
-		defer varsMux.Unlock()
-		delete(vars, key)
+		defer s.varsMux.Unlock()
+		delete(s.vars, key)
 		_ = json.NewEncoder(res).Encode(oVar)
 	})
 
 	mux.HandleFunc("/", testutils.LogNotFoundHandler(t))
 
-	return httptest.NewServer(mux)
+	s.Server = httptest.NewServer(mux)
+	return s
 }

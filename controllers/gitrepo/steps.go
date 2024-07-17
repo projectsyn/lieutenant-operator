@@ -1,7 +1,6 @@
 package gitrepo
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"time"
@@ -183,13 +182,6 @@ func ensureAccessToken(ctx context.Context, cli client.Client, instance *synv1al
 }
 
 func ensureCIVariables(ctx context.Context, cli client.Client, instance *synv1alpha1.GitRepo, repo manager.Repo) error {
-	varsJSON, err := json.Marshal(instance.Spec.CIVariables)
-	if err != nil {
-		return fmt.Errorf("error marshalling ci variables: %w", err)
-	}
-	if bytes.Equal(varsJSON, []byte(instance.Status.LastAppliedCIVariables)) {
-		return nil
-	}
 	var prevVars []synv1alpha1.EnvVar
 	if instance.Status.LastAppliedCIVariables != "" {
 		if err := json.Unmarshal([]byte(instance.Status.LastAppliedCIVariables), &prevVars); err != nil {
@@ -228,8 +220,13 @@ func ensureCIVariables(ctx context.Context, cli client.Client, instance *synv1al
 		return fmt.Errorf("error collecting values for env vars: %w", err)
 	}
 
-	if err = repo.EnsureCIVariables(ctx, sets.List(managedVars), vars); err != nil {
+	if err := repo.EnsureCIVariables(ctx, sets.List(managedVars), vars); err != nil {
 		return fmt.Errorf("error ensuring ci variables: %w", err)
+	}
+
+	varsJSON, err := json.Marshal(instance.Spec.CIVariables)
+	if err != nil {
+		return fmt.Errorf("error marshalling ci variables: %w", err)
 	}
 
 	instance.Status.LastAppliedCIVariables = string(varsJSON)

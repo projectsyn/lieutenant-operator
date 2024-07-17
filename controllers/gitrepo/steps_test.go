@@ -495,15 +495,11 @@ func TestSteps_CIVariables(t *testing.T) {
 		},
 	}, call.vars)
 
-	res2 := steps(repo, pContext, gc)
-	assert.NoError(t, res2.Err)
-	require.Len(t, fr.ensureCIVariablesCalls, 1, "ci variables should not be updated if they did not change")
-
 	// remove first variable. Removed variable should still appear in the managed variables because it was managed before.
 	// it should not appear in the variables to be set.
 	repo.Spec.GitRepoTemplate.CIVariables = repo.Spec.GitRepoTemplate.CIVariables[1:]
-	res3 := steps(repo, pContext, gc)
-	assert.NoError(t, res3.Err)
+	res2 := steps(repo, pContext, gc)
+	assert.NoError(t, res2.Err)
 	require.Len(t, fr.ensureCIVariablesCalls, 2)
 	call = fr.ensureCIVariablesCalls[1]
 	assert.ElementsMatch(t, varNames, call.managed, "managed variables should be remembered from previous run")

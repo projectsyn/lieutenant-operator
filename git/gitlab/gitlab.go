@@ -15,6 +15,7 @@ import (
 	"go.uber.org/multierr"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/ptr"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/git/helpers"
@@ -541,12 +542,15 @@ func (g *Gitlab) EnsureProjectAccessToken(ctx context.Context, name string, opts
 // Variables that are not managed by the operator will be ignored.
 // Variables that are managed but not in variables will be deleted.
 func (g *Gitlab) EnsureCIVariables(ctx context.Context, managedVariables []string, variables []manager.EnvVar) error {
+	l := log.FromContext(ctx).WithName("EnsureCIVariables")
+
 	var errs []error
 	managed := sets.New(managedVariables...)
 	current := sets.New[string]()
 	for _, v := range variables {
 		current.Insert(v.Name)
 	}
+
 	toDelete := managed.Difference(current)
 	for _, v := range sets.List(toDelete) {
 		_, err := g.client.ProjectVariables.RemoveVariable(g.project.ID, v, &gitlab.RemoveProjectVariableOptions{}, gitlab.WithContext(ctx))
@@ -555,11 +559,35 @@ func (g *Gitlab) EnsureCIVariables(ctx context.Context, managedVariables []strin
 		}
 	}
 
+	remote, _, err := g.client.ProjectVariables.ListVariables(g.project.ID, &gitlab.ListProjectVariablesOptions{}, gitlab.WithContext(ctx))
+	if err != nil {
+		return fmt.Errorf("error listing variables: %w", err)
+	}
+	remoteByName := make(map[string]gitlab.ProjectVariable, len(remote))
+	for _, v := range remote {
+		if v == nil {
+			continue
+		}
+		remoteByName[v.Key] = *v
+	}
+
 	for _, v := range variables {
 		if !managed.Has(v.Name) {
 			continue
 		}
 
+		remote, ok := remoteByName[v.Name]
+		var changed bool
+		if ok {
+			changed = varNeedsUpdate(remote, v)
+		} else {
+			changed = true
+		}
+		if !changed {
+			continue
+		}
+
+		l.Info("updating changed variable", "name", v.Name)
 		err := g.updateOrCreateCIVariable(ctx, v)
 		if err != nil {
 			errs = append(errs, err)
@@ -567,6 +595,27 @@ func (g *Gitlab) EnsureCIVariables(ctx context.Context, managedVariables []strin
 	}
 
 	return multierr.Combine(errs...)
+}
+
+// varNeedsUpdate returns true if the remote variable needs to be updated.
+// Does not check the Key, as the key is not allowed to change.
+func varNeedsUpdate(remote gitlab.ProjectVariable, local manager.EnvVar) bool {
+	if remote.Value != local.Value {
+		return true
+	}
+	if local.GitlabOptions.Description != nil && remote.Description != *local.GitlabOptions.Description {
+		return true
+	}
+	if local.GitlabOptions.Protected != nil && remote.Protected != *local.GitlabOptions.Protected {
+		return true
+	}
+	if local.GitlabOptions.Masked != nil && remote.Masked != *local.GitlabOptions.Masked {
+		return true
+	}
+	if local.GitlabOptions.Raw != nil && remote.Raw != *local.GitlabOptions.Raw {
+		return true
+	}
+	return false
 }
 
 // updateOrCreateCIVariable updates or creates a CI variable in the Gitlab project.
