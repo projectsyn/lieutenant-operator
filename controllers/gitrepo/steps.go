@@ -138,6 +138,8 @@ const (
 	LieutenantAccessTokenExpiresAtAnnotation = "lieutenant.syn.tools/accessTokenExpiresAt"
 )
 
+// ensureAccessToken ensures that an up-to-date access token returned from the manager is stored in the referenced secret.
+// It passes the UID of the previous access token to the manager to ensure that the same access token is returned if it has not expired.
 func ensureAccessToken(ctx context.Context, cli client.Client, instance *synv1alpha1.GitRepo, repo manager.Repo) error {
 	name := instance.Spec.AccessToken.SecretRef
 	if name == "" {
@@ -181,6 +183,8 @@ func ensureAccessToken(ctx context.Context, cli client.Client, instance *synv1al
 	return nil
 }
 
+// ensureCIVariables ensures that the CI variables are set on the repository.
+// It calls the manager with the current variables from the CRD and a combination of the previous variables and the current variables as the managed variables.
 func ensureCIVariables(ctx context.Context, cli client.Client, instance *synv1alpha1.GitRepo, repo manager.Repo) error {
 	var prevVars []synv1alpha1.EnvVar
 	if instance.Status.LastAppliedCIVariables != "" {
@@ -233,6 +237,11 @@ func ensureCIVariables(ctx context.Context, cli client.Client, instance *synv1al
 	return nil
 }
 
+// valueFromEnvVar returns the value of an envVar. It returns an error if the envVar is invalid or the value cannot be retrieved.
+// EnvVars with both value and valueFrom are invalid.
+// An envVar with no value and no valueFrom returns an empty string.
+// If valueFrom is set but the secret reference is not valid, an error is returned.
+// If the secret does not exist and the secretKeyRef is optional, an empty string is returned. Otherwise, an error is returned.
 func valueFromEnvVar(ctx context.Context, cli client.Client, namespace string, envVar synv1alpha1.EnvVar) (string, error) {
 	if envVar.Value != "" {
 		if envVar.ValueFrom != nil {
