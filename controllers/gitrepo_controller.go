@@ -2,17 +2,20 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/controllers/gitrepo"
+	"github.com/projectsyn/lieutenant-operator/controllers/gitrepo/watchers"
 	"github.com/projectsyn/lieutenant-operator/pipeline"
 )
 
@@ -71,9 +74,23 @@ func (r *GitRepoReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *GitRepoReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *GitRepoReconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager) error {
+	err := mgr.GetFieldIndexer().IndexField(
+		ctx,
+		&synv1alpha1.GitRepo{},
+		watchers.GitRepoCIVariableValueFromSecretKeyRefNameIndex,
+		watchers.GitRepoCIVariableValueFromSecretKeyRefNameIndexFunc,
+	)
+	if err != nil {
+		return fmt.Errorf("unable to create index for GitRepo: %w", err)
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&synv1alpha1.GitRepo{}).
 		Owns(&corev1.Secret{}).
+		Watches(
+			&corev1.Secret{},
+			handler.EnqueueRequestsFromMapFunc(watchers.SecretGitRepoCIVariablesMapFunc(mgr.GetClient())),
+		).
 		Complete(r)
 }
