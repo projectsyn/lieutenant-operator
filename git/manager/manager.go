@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"time"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
@@ -69,6 +70,20 @@ type RepoOptions struct {
 	DisplayName    string
 	TemplateFiles  map[string]string
 	DeletionPolicy synv1alpha1.DeletionPolicy
+
+	// Clock is used to get the current time. It is used to mock the time in tests.
+	// If not set, time.Now() will be used.
+	Clock interface {
+		Now() time.Time
+	}
+}
+
+// Now returns the current time. If the clock is not set, time.Now() will be used.
+func (r RepoOptions) Now() time.Time {
+	if r.Clock == nil {
+		return time.Now()
+	}
+	return r.Clock.Now()
 }
 
 // Credentials holds the authentication information for the API. Most of the times this
@@ -97,6 +112,50 @@ type Repo interface {
 	// files that contain exactly the deletion magic string should be removed
 	// when calling this function. TODO: will be replaced with something better in the future.
 	CommitTemplateFiles() error
+	// EnsureProjectAccessToken will ensure that the project access token is set in the repository.
+	// If the token is expired or not set, a new token will be created.
+	// Depending on the implementation the token name might be used as a prefix.
+	EnsureProjectAccessToken(ctx context.Context, name string, opts EnsureProjectAccessTokenOptions) (ProjectAccessToken, error)
+	// EnsureCIVariables will ensure that the given variables are set in the CI/CD pipeline.
+	// The managedVariables is used to identify the variables that are managed by the operator.
+	// Variables that are not managed by the operator will be ignored.
+	// Variables that are managed but not in variables will be deleted.
+	EnsureCIVariables(ctx context.Context, managedVariables []string, variables []EnvVar) error
+}
+
+// EnvVar represents a CI/CD environment variable.
+// It can have manager specific options.
+// The manager specific options are ignored if the manager does not support them.
+type EnvVar struct {
+	Name  string
+	Value string
+
+	GitlabOptions EnvVarGitlabOptions
+}
+
+type EnvVarGitlabOptions struct {
+	Description *string
+	Protected   *bool
+	Masked      *bool
+	Raw         *bool
+}
+
+type EnsureProjectAccessTokenOptions struct {
+	// UID is a unique identifier for the token.
+	// If set, the given UID will be compared with the UID of the existing token.
+	// The token will be force updated if the UIDs do not match.
+	UID string
+}
+
+type ProjectAccessToken struct {
+	UID       string
+	Token     string
+	ExpiresAt time.Time
+}
+
+// Updated returns true if the token was updated
+func (p ProjectAccessToken) Updated() bool {
+	return p.Token != ""
 }
 
 // Implementation is a set of functions needed to get the right git implementation

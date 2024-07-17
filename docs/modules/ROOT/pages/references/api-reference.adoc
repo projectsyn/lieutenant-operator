@@ -22,6 +22,24 @@ TIP: A more sophisticated documentation is available under https://doc.crds.dev/
 
 
 
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-accesstoken"]
+=== AccessToken 
+
+
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepospec[$$GitRepoSpec$$]
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`secretRef`* __string__ | SecretRef references the secret the access token is stored in
+|===
+
+
 [id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-bootstraptoken"]
 === BootstrapToken 
 
@@ -215,6 +233,64 @@ DeployKey defines an SSH key to be used for git operations.
 |===
 
 
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-envvar"]
+=== EnvVar 
+
+EnvVar represents an environment added to the CI system of the Git repository.
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepospec[$$GitRepoSpec$$]
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`name`* __string__ | Name of the environment variable
+| *`value`* __string__ | Value of the environment variable
+| *`valueFrom`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-envvarsource[$$EnvVarSource$$]__ | ValueFrom is a reference to an object that contains the value of the environment variable
+| *`gitlabOptions`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-envvargitlaboptions[$$EnvVarGitlabOptions$$]__ | GitlabOptions contains additional options for GitLab CI variables
+|===
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-envvargitlaboptions"]
+=== EnvVarGitlabOptions 
+
+
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-envvar[$$EnvVar$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`description`* __string__ | Description is a description of the CI variable.
+| *`protected`* __boolean__ | Protected will expose the variable only in protected branches and tags.
+| *`masked`* __boolean__ | Masked will mask the variable in the job logs.
+| *`raw`* __boolean__ | Raw will prevent the variable from being expanded.
+|===
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-envvarsource"]
+=== EnvVarSource 
+
+EnvVarSource represents a source for the value of an EnvVar.
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-envvar[$$EnvVar$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`secretKeyRef`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#secretkeyselector-v1-core[$$SecretKeySelector$$]__ | Selects a key of a secret in the pod's namespace
+|===
+
+
 [id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-facts"]
 === Facts (object) 
 
@@ -289,6 +365,14 @@ Archive: will archive the external resources, if it supports that
 | *`creationPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-creationpolicy[$$CreationPolicy$$]__ | CreationPolicy defines how the external resources should be treated upon CR creation.
 Create: will only create a new external resource and will not manage already existing resources
 Adopt:  will create a new external resource or will adopt and manage an already existing resource
+| *`accessToken`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-accesstoken[$$AccessToken$$]__ | AccessToken contains configuration for storing an access token in a secret.
+If set, the Lieutenant operator will store an access token into this secret, which can be used to access the Git repository.
+The token is stored under the key "token".
+In the case of GitLab, this would be a Project Access Token with read-write access to the repository.
+| *`ciVariables`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-envvar[$$EnvVar$$] array__ | CIVariables is a list of key-value pairs that will be set as CI variables in the Git repository.
+
+
+The variables are not expanded like PodSpec environment variables.
 | *`tenantRef`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#localobjectreference-v1-core[$$LocalObjectReference$$]__ | TenantRef references the tenant this repo belongs to
 |===
 
@@ -326,6 +410,14 @@ Archive: will archive the external resources, if it supports that
 | *`creationPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-creationpolicy[$$CreationPolicy$$]__ | CreationPolicy defines how the external resources should be treated upon CR creation.
 Create: will only create a new external resource and will not manage already existing resources
 Adopt:  will create a new external resource or will adopt and manage an already existing resource
+| *`accessToken`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-accesstoken[$$AccessToken$$]__ | AccessToken contains configuration for storing an access token in a secret.
+If set, the Lieutenant operator will store an access token into this secret, which can be used to access the Git repository.
+The token is stored under the key "token".
+In the case of GitLab, this would be a Project Access Token with read-write access to the repository.
+| *`ciVariables`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-envvar[$$EnvVar$$] array__ | CIVariables is a list of key-value pairs that will be set as CI variables in the Git repository.
+
+
+The variables are not expanded like PodSpec environment variables.
 |===
 
 

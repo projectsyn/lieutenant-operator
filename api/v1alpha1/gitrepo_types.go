@@ -87,6 +87,60 @@ type GitRepoTemplate struct {
 	// Adopt:  will create a new external resource or will adopt and manage an already existing resource
 	// +kubebuilder:validation:Enum=Create;Adopt
 	CreationPolicy CreationPolicy `json:"creationPolicy,omitempty"`
+	// AccessToken contains configuration for storing an access token in a secret.
+	// If set, the Lieutenant operator will store an access token into this secret, which can be used to access the Git repository.
+	// The token is stored under the key "token".
+	// In the case of GitLab, this would be a Project Access Token with read-write access to the repository.
+	AccessToken AccessToken `json:"accessToken,omitempty"`
+	// CIVariables is a list of key-value pairs that will be set as CI variables in the Git repository.
+	//
+	// The variables are not expanded like PodSpec environment variables.
+	CIVariables []EnvVar `json:"ciVariables,omitempty"`
+}
+
+type AccessToken struct {
+	// SecretRef references the secret the access token is stored in
+	SecretRef string `json:"secretRef,omitempty"`
+}
+
+// EnvVar represents an environment added to the CI system of the Git repository.
+type EnvVar struct {
+	// Name of the environment variable
+	// +required
+	Name string `json:"name"`
+	// Value of the environment variable
+	// +optional
+	Value string `json:"value,omitempty"`
+
+	// ValueFrom is a reference to an object that contains the value of the environment variable
+	// +optional
+	ValueFrom *EnvVarSource `json:"valueFrom,omitempty"`
+
+	// GitlabOptions contains additional options for GitLab CI variables
+	// +optional
+	GitlabOptions EnvVarGitlabOptions `json:"gitlabOptions,omitempty"`
+}
+
+type EnvVarGitlabOptions struct {
+	// Description is a description of the CI variable.
+	// +optional
+	Description string `json:"description,omitempty"`
+	// Protected will expose the variable only in protected branches and tags.
+	// +optional
+	Protected bool `json:"protected,omitempty"`
+	// Masked will mask the variable in the job logs.
+	// +optional
+	Masked bool `json:"masked,omitempty"`
+	// Raw will prevent the variable from being expanded.
+	// +optional
+	Raw bool `json:"raw,omitempty"`
+}
+
+// EnvVarSource represents a source for the value of an EnvVar.
+type EnvVarSource struct {
+	// Selects a key of a secret in the pod's namespace
+	// +optional
+	SecretKeyRef *corev1.SecretKeySelector `json:"secretKeyRef,omitempty"`
 }
 
 // DeployKey defines an SSH key to be used for git operations.
@@ -110,6 +164,8 @@ type GitRepoStatus struct {
 	URL string `json:"url,omitempty"`
 	// SSH HostKeys of the git server
 	HostKeys string `json:"hostKeys,omitempty"`
+	// LastAppliedCIVariables contains the last applied CI variables as a json string
+	LastAppliedCIVariables string `json:"lastAppliedCIVariables,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

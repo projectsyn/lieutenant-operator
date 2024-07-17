@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -82,5 +83,33 @@ func (r *TenantReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Owns(&corev1.Secret{}).
 		Owns(&rbacv1.Role{}).
 		Owns(&rbacv1.RoleBinding{}).
+		// Reconcile all tenants when a TenantTemplate changes to ensure that all tenants are up to date
+		Watches(&synv1alpha1.TenantTemplate{}, handler.EnqueueRequestsFromMapFunc(enqueueAllTenantsMapFunc(mgr.GetClient()))).
 		Complete(r)
+}
+
+// enqueueAllTenantsMapFunc returns a function that lists all tenants in the namespace of the given object and returns a list of reconcile.Requests for all of them.
+func enqueueAllTenantsMapFunc(cli client.Client) func(ctx context.Context, o client.Object) []reconcile.Request {
+	return func(ctx context.Context, o client.Object) []reconcile.Request {
+		l := log.FromContext(ctx).WithName("enqueueAllTenantsMapFunc")
+		l.Info("Enqueue all tenants")
+
+		tenants := &synv1alpha1.TenantList{}
+		err := cli.List(ctx, tenants, client.InNamespace(o.GetNamespace()))
+		if err != nil {
+			l.Error(err, "Failed to list tenants")
+			return []reconcile.Request{}
+		}
+
+		requests := make([]reconcile.Request, len(tenants.Items))
+		for i, tenant := range tenants.Items {
+			requests[i] = reconcile.Request{
+				NamespacedName: client.ObjectKey{
+					Namespace: tenant.Namespace,
+					Name:      tenant.Name,
+				},
+			}
+		}
+		return requests
+	}
 }
