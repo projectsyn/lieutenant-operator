@@ -243,6 +243,8 @@ func ensureCIVariables(ctx context.Context, cli client.Client, instance *synv1al
 // If valueFrom is set but the secret reference is not valid, an error is returned.
 // If the secret does not exist and the secretKeyRef is optional, an empty string is returned. Otherwise, an error is returned.
 func valueFromEnvVar(ctx context.Context, cli client.Client, namespace string, envVar synv1alpha1.EnvVar) (string, error) {
+	l := log.FromContext(ctx).WithName("valueFromEnvVar")
+
 	if envVar.Value != "" {
 		if envVar.ValueFrom != nil {
 			return "", fmt.Errorf("envVar %q has both value and valueFrom", envVar.Name)
@@ -263,6 +265,7 @@ func valueFromEnvVar(ctx context.Context, cli client.Client, namespace string, e
 	err := cli.Get(ctx, client.ObjectKey{Namespace: namespace, Name: envVar.ValueFrom.SecretKeyRef.Name}, secret)
 	if err != nil {
 		if apierrors.IsNotFound(err) && optional {
+			l.Info("secret not found but is optional, returning empty string", "secret", envVar.ValueFrom.SecretKeyRef.Name)
 			return "", nil
 		}
 		return "", fmt.Errorf("error getting secret %q: %w", envVar.ValueFrom.SecretKeyRef.Name, err)
@@ -270,6 +273,7 @@ func valueFromEnvVar(ctx context.Context, cli client.Client, namespace string, e
 	val, ok := secret.Data[envVar.ValueFrom.SecretKeyRef.Key]
 	if !ok {
 		if optional {
+			l.Info("key not found but secret is optional, returning empty string", "key", envVar.ValueFrom.SecretKeyRef.Key, "secret", envVar.ValueFrom.SecretKeyRef.Name)
 			return "", nil
 		}
 		return "", fmt.Errorf("secret %q does not contain key %q", envVar.ValueFrom.SecretKeyRef.Name, envVar.ValueFrom.SecretKeyRef.Key)
