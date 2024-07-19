@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -25,6 +26,9 @@ type GitRepoReconciler struct {
 	Scheme *runtime.Scheme
 
 	DefaultCreationPolicy synv1alpha1.CreationPolicy
+
+	// MaxReconcileInterval is the maximum time between two reconciliations.
+	MaxReconcileInterval time.Duration
 }
 
 //+kubebuilder:rbac:groups=syn.tools,resources=gitrepos,verbs=get;list;watch;create;update;patch;delete
@@ -70,7 +74,15 @@ func (r *GitRepoReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 
 	res := pipeline.RunPipeline(instance, data, steps)
 
-	return reconcile.Result{Requeue: res.Requeue}, res.Err
+	// Immediately requeue if the result says so
+	if res.Requeue {
+		return reconcile.Result{Requeue: true}, res.Err
+	}
+
+	// Requeue after the maximum interval
+	return reconcile.Result{
+		RequeueAfter: r.MaxReconcileInterval,
+	}, res.Err
 }
 
 // SetupWithManager sets up the controller with the Manager.
