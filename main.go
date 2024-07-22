@@ -139,6 +139,13 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Cluster")
 		os.Exit(1)
 	}
+	if err = (&controllers.ClusterCompilePipelineReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ClusterCompilePipeline")
+		os.Exit(1)
+	}
 	if err = (&controllers.GitRepoReconciler{
 		Client:                mgr.GetClient(),
 		Scheme:                mgr.GetScheme(),

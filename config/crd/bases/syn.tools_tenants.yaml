@@ -77,6 +77,10 @@ spec:
                     description: DisplayName of cluster which could be different from
                       metadata.name. Allows cluster renaming should it be needed.
                     type: string
+                  enableCompilePipeline:
+                    description: EnableCompilePipeline determines whether the gitops
+                      compile pipeline should be set up for this cluster
+                    type: boolean
                   facts:
                     additionalProperties:
                       type: string
@@ -291,6 +295,18 @@ spec:
                     description: TokenLifetime set the token lifetime
                     type: string
                 type: object
+              compilePipeline:
+                description: CompilePipeline contains the configuration for the automatically
+                  configured compile pipelines on this tenant
+                properties:
+                  pipelineFiles:
+                    additionalProperties:
+                      type: string
+                    description: Pipelines contains a map of filenames and file contents,
+                      specifying files which are added to the GitRepoTemplate in order
+                      to set up the automatically configured compile pipeline
+                    type: object
+                type: object
               creationPolicy:
                 description: |-
                   CreationPolicy defines how the external resources should be treated upon CR creation.
@@ -501,6 +517,18 @@ spec:
             type: object
           status:
             description: TenantStatus defines the observed state of Tenant
+            properties:
+              compilePipeline:
+                description: CompilePipeline contains the status of the automatically
+                  configured compile pipelines on this tenant
+                properties:
+                  clusters:
+                    description: Clusters contains the list of all clusters for which
+                      the automatically configured compile pipeline is enabled
+                    items:
+                      type: string
+                    type: array
+                type: object
             type: object
         type: object
     served: true

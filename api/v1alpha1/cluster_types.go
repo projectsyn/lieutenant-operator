@@ -39,6 +39,8 @@ type ClusterSpec struct {
 	// Adopt:  will create a new external resource or will adopt and manage an already existing resource
 	// +kubebuilder:validation:Enum=Create;Adopt
 	CreationPolicy CreationPolicy `json:"creationPolicy,omitempty"`
+	// EnableCompilePipeline determines whether the gitops compile pipeline should be set up for this cluster
+	EnableCompilePipeline bool `json:"enableCompilePipeline,omitempty"`
 }
 
 // BootstrapToken this key is used only once for Steward to register.

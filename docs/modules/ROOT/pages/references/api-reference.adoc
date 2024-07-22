@@ -111,6 +111,7 @@ Archive: will archive the external resources, if it supports that
 | *`creationPolicy`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-creationpolicy[$$CreationPolicy$$]__ | CreationPolicy defines how the external resources should be treated upon CR creation.
 Create: will only create a new external resource and will not manage already existing resources
 Adopt:  will create a new external resource or will adopt and manage an already existing resource
+| *`enableCompilePipeline`* __boolean__ | EnableCompilePipeline determines whether the gitops compile pipeline should be set up for this cluster
 |===
 
 
@@ -180,6 +181,40 @@ CompileMetaVersionInfo contains information about the version of a configuration
 | *`version`* __string__ | Version is the version of the configuration.
 Can point to a tag, branch or any other git reference.
 | *`path`* __string__ | Path is the path inside the git repository where the configuration is stored.
+|===
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-compilepipelinespec"]
+=== CompilePipelineSpec 
+
+
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenantspec[$$TenantSpec$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`pipelineFiles`* __object (keys:string, values:string)__ | Pipelines contains a map of filenames and file contents, specifying files which are added to the GitRepoTemplate in order to set up the automatically configured compile pipeline
+|===
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-compilepipelinestatus"]
+=== CompilePipelineStatus 
+
+
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-tenantstatus[$$TenantStatus$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`clusters`* __string array__ | Clusters contains the list of all clusters for which the automatically configured compile pipeline is enabled
 |===
 
 
@@ -497,6 +532,7 @@ Adopt:  will create a new external resource or will adopt and manage an already 
 | *`clusterTemplate`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-clusterspec[$$ClusterSpec$$]__ | ClusterTemplate defines a template which will be used to set defaults for the clusters of this tenant.
 The fields within this can use Go templating.
 See https://syn.tools/lieutenant-operator/explanations/templating.html for details.
+| *`compilePipeline`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-compilepipelinespec[$$CompilePipelineSpec$$]__ | CompilePipeline contains the configuration for the automatically configured compile pipelines on this tenant
 |===
 
 

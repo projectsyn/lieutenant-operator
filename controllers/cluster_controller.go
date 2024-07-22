@@ -30,6 +30,7 @@ type ClusterReconciler struct {
 //+kubebuilder:rbac:groups=syn.tools,resources=clusters,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=syn.tools,resources=clusters/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=syn.tools,resources=clusters/finalizers,verbs=update
+//+kubebuilder:rbac:groups=syn.tools,resources=tenants/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups="",resources=secrets;serviceaccounts,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=rbac.authorization.k8s.io,resources=rolebindings;roles,verbs=get;list;watch;create;update;patch;delete
 

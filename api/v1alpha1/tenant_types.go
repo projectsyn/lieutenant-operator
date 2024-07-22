@@ -37,11 +37,14 @@ type TenantSpec struct {
 	// The fields within this can use Go templating.
 	// See https://syn.tools/lieutenant-operator/explanations/templating.html for details.
 	ClusterTemplate *ClusterSpec `json:"clusterTemplate,omitempty"`
+	// CompilePipeline contains the configuration for the automatically configured compile pipelines on this tenant
+	CompilePipeline *CompilePipelineSpec `json:"compilePipeline,omitempty"`
 }
 
 // TenantStatus defines the observed state of Tenant
 type TenantStatus struct {
-	// TBD
+	// CompilePipeline contains the status of the automatically configured compile pipelines on this tenant
+	CompilePipeline *CompilePipelineStatus `json:"compilePipeline,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -66,6 +69,16 @@ type TenantList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []Tenant `json:"items"`
+}
+
+type CompilePipelineSpec struct {
+	// Pipelines contains a map of filenames and file contents, specifying files which are added to the GitRepoTemplate in order to set up the automatically configured compile pipeline
+	PipelineFiles map[string]string `json:"pipelineFiles,omitempty"`
+}
+
+type CompilePipelineStatus struct {
+	// Clusters contains the list of all clusters for which the automatically configured compile pipeline is enabled
+	Clusters []string `json:"clusters,omitempty"`
 }
 
 func init() {
