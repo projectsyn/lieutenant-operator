@@ -72,6 +72,8 @@ type TenantList struct {
 }
 
 type CompilePipelineSpec struct {
+	// Enabled enables or disables the compile pipeline for this tenant
+	Enabled bool `json:"enabled,omitempty"`
 	// Pipelines contains a map of filenames and file contents, specifying files which are added to the GitRepoTemplate in order to set up the automatically configured compile pipeline
 	PipelineFiles map[string]string `json:"pipelineFiles,omitempty"`
 }
@@ -91,6 +93,22 @@ func (t *Tenant) GetGitTemplate() *GitRepoTemplate {
 		t.Spec.GitRepoTemplate = &GitRepoTemplate{}
 	}
 	return t.Spec.GitRepoTemplate
+}
+
+// GetCompilePipelineStatus returns the compile pipeline status
+func (t *Tenant) GetCompilePipelineStatus() *CompilePipelineStatus {
+	if t.Status.CompilePipeline == nil {
+		t.Status.CompilePipeline = &CompilePipelineStatus{}
+	}
+	return t.Status.CompilePipeline
+}
+
+// GetCompilePipelineSpec returns the compile pipeline spec
+func (t *Tenant) GetCompilePipelineSpec() *CompilePipelineSpec {
+	if t.Spec.CompilePipeline == nil {
+		t.Spec.CompilePipeline = &CompilePipelineSpec{}
+	}
+	return t.Spec.CompilePipeline
 }
 
 // GetTenantRef returns the tenant of this CR

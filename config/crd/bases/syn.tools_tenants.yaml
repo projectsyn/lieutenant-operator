@@ -299,6 +299,10 @@ spec:
                 description: CompilePipeline contains the configuration for the automatically
                   configured compile pipelines on this tenant
                 properties:
+                  enabled:
+                    description: Enabled enables or disables the compile pipeline
+                      for this tenant
+                    type: boolean
                   pipelineFiles:
                     additionalProperties:
                       type: string

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,8 +29,6 @@ type ClusterCompilePipelineReconciler struct {
 func (r *ClusterCompilePipelineReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	reqLogger := log.FromContext(ctx)
 	reqLogger.Info("Reconciling Cluster Compile Pipeline")
-	fmt.Println("RECONCILE")
-	fmt.Println(request.NamespacedName)
 
 	instance := &synv1alpha1.Cluster{}
 
@@ -47,27 +46,68 @@ func (r *ClusterCompilePipelineReconciler) Reconcile(ctx context.Context, reques
 		return reconcile.Result{}, fmt.Errorf("couldn't find tenant: %w", err)
 	}
 
-	pipelineStatus := tenant.Status.CompilePipeline
-	if pipelineStatus == nil {
-		pipelineStatus = &synv1alpha1.CompilePipelineStatus{}
-	}
-	clusterInList := slices.Contains(pipelineStatus.Clusters, instance.Name)
-
-	if instance.Spec.EnableCompilePipeline && !clusterInList {
-		pipelineStatus.Clusters = append(pipelineStatus.Clusters, instance.Name)
-	}
-	if !instance.Spec.EnableCompilePipeline && clusterInList {
-		ind := slices.Index(pipelineStatus.Clusters, instance.Name)
-		pipelineStatus.Clusters = slices.Delete(pipelineStatus.Clusters, ind, ind+1)
-	}
-
-	if instance.Spec.EnableCompilePipeline != clusterInList {
-		fmt.Println("Updating!")
-		tenant.Status.CompilePipeline = pipelineStatus
+	if ensureTenantStatus(tenant, instance) {
 		err = r.Client.Status().Update(ctx, tenant)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+	}
+
+	if ensureClusterCiVariable(tenant, instance) {
+		err = r.Client.Update(ctx, tenant)
 		return reconcile.Result{}, err
 	}
+
 	return reconcile.Result{}, nil
+}
+
+func ensureTenantStatus(t *synv1alpha1.Tenant, c *synv1alpha1.Cluster) bool {
+	deleted := !c.GetDeletionTimestamp().IsZero()
+	pipelineStatus := t.GetCompilePipelineStatus()
+	clusterInList := slices.Contains(pipelineStatus.Clusters, c.Name)
+	if deleted && clusterInList {
+		ind := slices.Index(pipelineStatus.Clusters, c.Name)
+		pipelineStatus.Clusters = slices.Delete(pipelineStatus.Clusters, ind, ind+1)
+		return true
+	}
+	if c.GetEnableCompilePipeline() && !clusterInList {
+		pipelineStatus.Clusters = append(pipelineStatus.Clusters, c.Name)
+		slices.Sort(pipelineStatus.Clusters)
+		return true
+	}
+	if !c.GetEnableCompilePipeline() && clusterInList {
+		ind := slices.Index(pipelineStatus.Clusters, c.Name)
+		pipelineStatus.Clusters = slices.Delete(pipelineStatus.Clusters, ind, ind+1)
+		return true
+	}
+	return false
+}
+
+func ensureClusterCiVariable(t *synv1alpha1.Tenant, c *synv1alpha1.Cluster) bool {
+	remove := !c.GetDeletionTimestamp().IsZero() ||
+		c.GetGitTemplate().AccessToken.SecretRef == "" ||
+		!t.GetCompilePipelineSpec().Enabled ||
+		!c.GetEnableCompilePipeline()
+
+	template := t.GetGitTemplate()
+	envVarName := fmt.Sprintf("%s%s", CI_VARIABLE_PREFIX_CLUSTER_ACCESS_TOKEN, strings.Replace(c.GetName(), "-", "_", -1))
+
+	var list []synv1alpha1.EnvVar
+	var changed bool
+
+	if remove {
+		list, changed = removeEnvVar(envVarName, template.CIVariables)
+	} else {
+		list, changed = updateEnvVarValueFrom(envVarName, c.Spec.GitRepoTemplate.AccessToken.SecretRef, SECRET_KEY_GITLAB_TOKEN, true, template.CIVariables)
+	}
+
+	if changed {
+		template.CIVariables = list
+		t.Spec.GitRepoTemplate = template
+	}
+
+	return changed
+
 }
 
 // SetupWithManager sets up the controller with the Manager.

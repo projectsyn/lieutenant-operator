@@ -197,6 +197,7 @@ Can point to a tag, branch or any other git reference.
 [cols="25a,75a", options="header"]
 |===
 | Field | Description
+| *`enabled`* __boolean__ | Enabled enables or disables the compile pipeline for this tenant
 | *`pipelineFiles`* __object (keys:string, values:string)__ | Pipelines contains a map of filenames and file contents, specifying files which are added to the GitRepoTemplate in order to set up the automatically configured compile pipeline
 |===
 

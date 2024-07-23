@@ -133,6 +133,9 @@ func init() {
 
 // GetGitTemplate returns the git repository template
 func (c *Cluster) GetGitTemplate() *GitRepoTemplate {
+	if c.Spec.GitRepoTemplate == nil {
+		c.Spec.GitRepoTemplate = &GitRepoTemplate{}
+	}
 	return c.Spec.GitRepoTemplate
 }
 
@@ -172,4 +175,8 @@ func (c *Cluster) GetMeta() metav1.ObjectMeta {
 
 func (c *Cluster) GetStatus() interface{} {
 	return c.Status
+}
+
+func (c *Cluster) GetEnableCompilePipeline() bool {
+	return c.Spec.EnableCompilePipeline
 }

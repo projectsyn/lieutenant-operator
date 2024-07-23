@@ -47,6 +47,13 @@ func updateTenantGitRepo(obj pipeline.Object, data *pipeline.Context) pipeline.R
 		delete(oldFiles, fileName)
 	}
 
+	if tenantCR.GetCompilePipelineSpec().Enabled {
+		for pipelineFile, content := range tenantCR.GetCompilePipelineSpec().PipelineFiles {
+			tenantCR.Spec.GitRepoTemplate.TemplateFiles[pipelineFile] = content
+			delete(oldFiles, pipelineFile)
+		}
+	}
+
 	for fileName := range oldFiles {
 		if fileName == CommonClassName+".yml" {
 			tenantCR.Spec.GitRepoTemplate.TemplateFiles[CommonClassName+".yml"] = ""
