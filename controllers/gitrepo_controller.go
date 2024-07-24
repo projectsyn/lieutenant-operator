@@ -29,6 +29,8 @@ type GitRepoReconciler struct {
 
 	// MaxReconcileInterval is the maximum time between two reconciliations.
 	MaxReconcileInterval time.Duration
+
+	DeleteProtection bool
 }
 
 //+kubebuilder:rbac:groups=syn.tools,resources=gitrepos,verbs=get;list;watch;create;update;patch;delete
@@ -62,6 +64,7 @@ func (r *GitRepoReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		FinalizerName:         synv1alpha1.FinalizerName,
 		Reconciler:            r,
 		DefaultCreationPolicy: r.DefaultCreationPolicy,
+		UseDeletionProtection: r.DeleteProtection,
 	}
 
 	steps := []pipeline.Step{

@@ -2,7 +2,6 @@ package pipeline
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 
 	"errors"
@@ -15,27 +14,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
-func GetDefaultDeletionPolicy() synv1alpha1.DeletionPolicy {
-	policy := synv1alpha1.DeletionPolicy(os.Getenv("DEFAULT_DELETION_POLICY"))
-	switch policy {
-	case synv1alpha1.ArchivePolicy, synv1alpha1.DeletePolicy, synv1alpha1.RetainPolicy:
-		return policy
-	default:
-		return synv1alpha1.ArchivePolicy
-	}
-}
-
 func addDeletionProtection(instance Object, data *Context) Result {
 	if data.Deleted {
 		return Result{}
 	}
 
-	config := os.Getenv(protectionSettingEnvVar)
-
-	protected, err := strconv.ParseBool(config)
-	if err != nil {
-		protected = true
-	}
+	protected := data.UseDeletionProtection
 
 	if protected {
 		annotations := instance.GetAnnotations()

@@ -25,6 +25,9 @@ type ClusterReconciler struct {
 
 	CreateSATokenSecret   bool
 	DefaultCreationPolicy synv1alpha1.CreationPolicy
+	DefaultDeletionPolicy synv1alpha1.DeletionPolicy
+	UseVault              bool
+	DeleteProtection      bool
 }
 
 //+kubebuilder:rbac:groups=syn.tools,resources=clusters,verbs=get;list;watch;create;update;patch;delete
@@ -55,6 +58,9 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 		Reconciler:            r,
 		CreateSATokenSecret:   r.CreateSATokenSecret,
 		DefaultCreationPolicy: r.DefaultCreationPolicy,
+		DefaultDeletionPolicy: r.DefaultDeletionPolicy,
+		UseVault:              r.UseVault,
+		UseDeletionProtection: r.DeleteProtection,
 	}
 
 	steps := []pipeline.Step{

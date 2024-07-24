@@ -26,6 +26,10 @@ type TenantReconciler struct {
 
 	CreateSATokenSecret   bool
 	DefaultCreationPolicy synv1alpha1.CreationPolicy
+	DefaultDeletionPolicy synv1alpha1.DeletionPolicy
+
+	DefaultGlobalGitRepoUrl string
+	DeleteProtection        bool
 }
 
 //+kubebuilder:rbac:groups=syn.tools,resources=tenants,verbs=get;list;watch;create;update;patch;delete
@@ -52,13 +56,16 @@ func (r *TenantReconciler) Reconcile(ctx context.Context, request ctrl.Request) 
 	}
 
 	data := &pipeline.Context{
-		Context:               ctx,
-		Client:                r.Client,
-		Log:                   reqLogger,
-		FinalizerName:         "",
-		Reconciler:            r,
-		CreateSATokenSecret:   r.CreateSATokenSecret,
-		DefaultCreationPolicy: r.DefaultCreationPolicy,
+		Context:                 ctx,
+		Client:                  r.Client,
+		Log:                     reqLogger,
+		FinalizerName:           "",
+		Reconciler:              r,
+		CreateSATokenSecret:     r.CreateSATokenSecret,
+		DefaultCreationPolicy:   r.DefaultCreationPolicy,
+		DefaultDeletionPolicy:   r.DefaultDeletionPolicy,
+		DefaultGlobalGitRepoUrl: r.DefaultGlobalGitRepoUrl,
+		UseDeletionProtection:   r.DeleteProtection,
 	}
 
 	steps := []pipeline.Step{

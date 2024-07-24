@@ -90,6 +90,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/kouhin/envflag v0.0.0-20150818174321-0e9a86061649 // indirect
 	github.com/leosayous21/go-azure-msi v0.0.0-20210509193526-19353bedcfc8 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect

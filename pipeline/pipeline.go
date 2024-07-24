@@ -36,15 +36,19 @@ type Object interface {
 
 // Context contains additional data about the CRD being processed.
 type Context struct {
-	Context               context.Context
-	FinalizerName         string
-	Client                client.Client
-	Log                   logr.Logger
-	Deleted               bool
-	originalObject        Object
-	Reconciler            reconcile.Reconciler
-	CreateSATokenSecret   bool
-	DefaultCreationPolicy synv1alpha1.CreationPolicy
+	Context                 context.Context
+	FinalizerName           string
+	Client                  client.Client
+	Log                     logr.Logger
+	Deleted                 bool
+	originalObject          Object
+	Reconciler              reconcile.Reconciler
+	CreateSATokenSecret     bool
+	DefaultCreationPolicy   synv1alpha1.CreationPolicy
+	DefaultDeletionPolicy   synv1alpha1.DeletionPolicy
+	DefaultGlobalGitRepoUrl string
+	UseVault                bool
+	UseDeletionProtection   bool
 }
 
 // Result indicates whether the current execution should be aborted and

@@ -34,7 +34,7 @@ func CreateOrUpdate(obj pipeline.Object, data *pipeline.Context) pipeline.Result
 
 	if template.DeletionPolicy == "" {
 		if obj.GetDeletionPolicy() == "" {
-			template.DeletionPolicy = pipeline.GetDefaultDeletionPolicy()
+			template.DeletionPolicy = data.DefaultDeletionPolicy
 		} else {
 			template.DeletionPolicy = obj.GetDeletionPolicy()
 		}

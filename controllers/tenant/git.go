@@ -2,7 +2,6 @@ package tenant
 
 import (
 	"fmt"
-	"os"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/git/manager"
@@ -59,15 +58,14 @@ func updateTenantGitRepo(obj pipeline.Object, data *pipeline.Context) pipeline.R
 	return pipeline.Result{}
 }
 
-func setGlobalGitRepoURL(obj pipeline.Object, _ *pipeline.Context) pipeline.Result {
+func setGlobalGitRepoURL(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	instance, ok := obj.(*synv1alpha1.Tenant)
 	if !ok {
 		return pipeline.Result{Err: fmt.Errorf("object is not a tenant")}
 	}
 
-	defaultGlobalGitRepoURL := os.Getenv(DefaultGlobalGitRepoURL)
-	if len(instance.Spec.GlobalGitRepoURL) == 0 && len(defaultGlobalGitRepoURL) > 0 {
-		instance.Spec.GlobalGitRepoURL = defaultGlobalGitRepoURL
+	if len(instance.Spec.GlobalGitRepoURL) == 0 && len(data.DefaultGlobalGitRepoUrl) > 0 {
+		instance.Spec.GlobalGitRepoURL = data.DefaultGlobalGitRepoUrl
 	}
 	return pipeline.Result{}
 }

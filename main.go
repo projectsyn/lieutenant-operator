@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strconv"
 	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -23,6 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/server"
 
+	"github.com/kouhin/envflag"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/controllers"
 	operatorMetrics "github.com/projectsyn/lieutenant-operator/metrics"
@@ -32,19 +32,6 @@ import (
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
-)
-
-const (
-	// WatchNamespaceEnvVar is the constant for env variable WATCH_NAMESPACE
-	// which specifies the Namespace to watch.
-	// An empty value means the operator is running with cluster scope.
-	watchNamespaceEnvVar = "WATCH_NAMESPACE"
-	// createSAEnvVar is the constant for the env variable which indicates
-	// whether to create ServiceAccount token secrets
-	createSATokenEnvVar = "LIEUTENANT_CREATE_SERVICEACCOUNT_TOKEN_SECRET"
-	// createSAEnvVar is the constant for the env variable which indicates
-	// the default creation policy for git repositories
-	defaultCreationPolicy = "DEFAULT_CREATION_POLICY"
 )
 
 func init() {
@@ -61,33 +48,42 @@ func main() {
 	var enableLeaderElection bool
 	var probeAddr string
 	var gitRepoMaxReconcileInterval time.Duration
+
+	var skipVaultSetup bool
+	var defaultDeletionPolicy string
+	var defaultCreationPolicy string
+	var useDeleteProtection bool
+	var defGlobalGitRepoUrl string
+	var watchNamespace string
+	var createSaTokenSecret bool
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.DurationVar(&gitRepoMaxReconcileInterval, "git-repo-max-reconcile-interval", 3*time.Hour, "The maximum time between reconciliations of GitRepos.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.BoolVar(&skipVaultSetup, "skip-vault-setup", false, "Set to `true` in order to skip vault setup.")
+	flag.StringVar(&defaultDeletionPolicy, "default-deletion-policy", "Archive", "Default deletion policy for git repos. Can be `Delete`, `Retain` or `Archive`.")
+	flag.StringVar(&defaultCreationPolicy, "default-creation-policy", "Create", "Default creation policy for git repos. Can be `Create` or `Adopt`.")
+	flag.BoolVar(&useDeleteProtection, "lieutenant-delete-protection", false, "Whether to enable deletion protection.")
+	flag.StringVar(&defGlobalGitRepoUrl, "default-global-git-repo-url", "", "Default URL for global git repo; used if global git repo isn't explicitly configured.")
+	flag.StringVar(&watchNamespace, "watch-namespace", "default", "The namespace which should be watched by the operator")
+	flag.BoolVar(&createSaTokenSecret, "lieutenant-create-serviceaccount-token-secret", false, "Whether Lieutenant should create ServiceAccount token secrets")
 	opts := zap.Options{
 		Development: true,
 	}
 	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
+	err := envflag.Parse()
+	if err != nil {
+		// The setupLog is not working yet at this point; resort to fmt.Printf
+		fmt.Printf("unable to parse flags and environment variables: %s", err.Error())
+		os.Exit(1)
+	}
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	watchNamespace, err := getWatchNamespace()
-	if err != nil {
-		setupLog.Error(err, "unable to get WatchNamespace, "+
-			"the manager will watch and manage resources in all namespaces")
-	}
-
-	createSATokenSecret, err := getCreateSATokenSecret()
-	if err != nil {
-		setupLog.Error(err, "unable to get TokenSecret flag, "+
-			"the operator won't manage ServiceAccount token secrets.")
-	}
-
-	creationPolicy := getDefaultCreationPolicy()
+	creationPolicy := getDefaultCreationPolicy(defaultCreationPolicy)
+	deletionPolicy := getDefaultDeletionPolicy(defaultDeletionPolicy)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme: scheme,
@@ -133,8 +129,11 @@ func main() {
 	if err = (&controllers.ClusterReconciler{
 		Client:                mgr.GetClient(),
 		Scheme:                mgr.GetScheme(),
-		CreateSATokenSecret:   createSATokenSecret,
+		CreateSATokenSecret:   createSaTokenSecret,
 		DefaultCreationPolicy: creationPolicy,
+		DefaultDeletionPolicy: deletionPolicy,
+		DeleteProtection:      useDeleteProtection,
+		UseVault:              !skipVaultSetup,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Cluster")
 		os.Exit(1)
@@ -143,17 +142,20 @@ func main() {
 		Client:                mgr.GetClient(),
 		Scheme:                mgr.GetScheme(),
 		DefaultCreationPolicy: creationPolicy,
-
-		MaxReconcileInterval: gitRepoMaxReconcileInterval,
+		DeleteProtection:      useDeleteProtection,
+		MaxReconcileInterval:  gitRepoMaxReconcileInterval,
 	}).SetupWithManager(ctx, mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "GitRepo")
 		os.Exit(1)
 	}
 	if err = (&controllers.TenantReconciler{
-		Client:                mgr.GetClient(),
-		Scheme:                mgr.GetScheme(),
-		CreateSATokenSecret:   createSATokenSecret,
-		DefaultCreationPolicy: creationPolicy,
+		Client:                  mgr.GetClient(),
+		Scheme:                  mgr.GetScheme(),
+		CreateSATokenSecret:     createSaTokenSecret,
+		DefaultCreationPolicy:   creationPolicy,
+		DefaultDeletionPolicy:   deletionPolicy,
+		DefaultGlobalGitRepoUrl: defGlobalGitRepoUrl,
+		DeleteProtection:        useDeleteProtection,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Tenant")
 		os.Exit(1)
@@ -176,40 +178,23 @@ func main() {
 	}
 }
 
-// getWatchNamespace returns the Namespace the operator should be watching for changes
-func getWatchNamespace() (string, error) {
-
-	ns, found := os.LookupEnv(watchNamespaceEnvVar)
-	if !found {
-		return "", fmt.Errorf("environment variable '%s' not found", watchNamespaceEnvVar)
-	}
-	return ns, nil
-}
-
-// getCreateSATokenSecret returns a boolean indicating whether the operator should manage ServiceAccount token secrets
-func getCreateSATokenSecret() (bool, error) {
-	value, found := os.LookupEnv(createSATokenEnvVar)
-	if !found {
-		return false, fmt.Errorf("environment variable '%s' not found", createSATokenEnvVar)
-	}
-	create, err := strconv.ParseBool(value)
-	if err != nil {
-		return false, fmt.Errorf("unable to parse '%s': %v", value, err)
-	}
-	return create, nil
-}
-
 // getDefaultCreationPolicy returns to fallback creation policy for git repositories
-func getDefaultCreationPolicy() synv1alpha1.CreationPolicy {
-	p, found := os.LookupEnv(defaultCreationPolicy)
-	if !found {
-		return synv1alpha1.CreatePolicy
-	}
-	cp := synv1alpha1.CreationPolicy(p)
+func getDefaultCreationPolicy(stringArg string) synv1alpha1.CreationPolicy {
+	cp := synv1alpha1.CreationPolicy(stringArg)
 	switch cp {
 	case synv1alpha1.CreatePolicy, synv1alpha1.AdoptPolicy:
 		return cp
 	default:
 		return synv1alpha1.CreatePolicy
+	}
+}
+
+func getDefaultDeletionPolicy(stringArg string) synv1alpha1.DeletionPolicy {
+	cp := synv1alpha1.DeletionPolicy(stringArg)
+	switch cp {
+	case synv1alpha1.DeletePolicy, synv1alpha1.RetainPolicy, synv1alpha1.ArchivePolicy:
+		return cp
+	default:
+		return synv1alpha1.ArchivePolicy
 	}
 }
