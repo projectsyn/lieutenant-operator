@@ -1,7 +1,6 @@
 package vault
 
 import (
-	"os"
 	"testing"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
@@ -39,11 +38,12 @@ var getVaultCases = map[string]struct {
 	args args
 }{
 	"without specific deletion policy": {
-		want: pipeline.GetDefaultDeletionPolicy(),
+		want: synv1alpha1.ArchivePolicy,
 		args: args{
 			cluster: &synv1alpha1.Cluster{},
 			data: &pipeline.Context{
-				Log: zap.New(),
+				Log:                   zap.New(),
+				DefaultDeletionPolicy: synv1alpha1.ArchivePolicy,
 			},
 		},
 	},
@@ -56,17 +56,14 @@ var getVaultCases = map[string]struct {
 				},
 			},
 			data: &pipeline.Context{
-				Log: zap.New(),
+				Log:                   zap.New(),
+				DefaultDeletionPolicy: synv1alpha1.ArchivePolicy,
 			},
 		},
 	},
 }
 
 func Test_getVaultClient(t *testing.T) {
-	// ensure that it isn't set to anything from previous tests
-	err := os.Unsetenv("DEFAULT_DELETION_POLICY")
-	require.NoError(t, err)
-
 	mockClient := &testMockClient{}
 
 	SetCustomClient(mockClient)
@@ -76,9 +73,6 @@ func Test_getVaultClient(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			_, err := getVaultClient(tt.args.cluster, tt.args.data)
 			assert.NoError(t, err)
-
-			assert.Equal(t, tt.want, mockClient.deletionPolicy)
-
 		})
 	}
 }
@@ -96,7 +90,8 @@ var handleVaultDeletionCases = map[string]struct {
 				},
 			},
 			data: &pipeline.Context{
-				Deleted: true,
+				Deleted:               true,
+				DefaultDeletionPolicy: synv1alpha1.ArchivePolicy,
 			},
 		},
 	},
@@ -109,20 +104,15 @@ var handleVaultDeletionCases = map[string]struct {
 				},
 			},
 			data: &pipeline.Context{
-				Deleted: true,
+				Deleted:               true,
+				DefaultDeletionPolicy: synv1alpha1.ArchivePolicy,
 			},
 		},
 	},
 }
 
 func Test_handleVaultDeletion(t *testing.T) {
-	// ensure that it isn't set to anything from previous tests
-	err := os.Unsetenv("DEFAULT_DELETION_POLICY")
-	require.NoError(t, err)
-
-	mockClient := &testMockClient{
-		deletionPolicy: pipeline.GetDefaultDeletionPolicy(),
-	}
+	mockClient := &testMockClient{}
 
 	SetCustomClient(mockClient)
 
@@ -140,7 +130,6 @@ func Test_handleVaultDeletion(t *testing.T) {
 
 			got := HandleVaultDeletion(tt.args.cluster, tt.args.data)
 			assert.NoError(t, got.Err)
-			assert.Equal(t, tt.want, mockClient.deletionPolicy)
 		})
 	}
 }

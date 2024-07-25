@@ -2,10 +2,8 @@ package vault
 
 import (
 	"fmt"
-	"os"
 	"path"
 	"sort"
-	"strings"
 
 	"github.com/projectsyn/lieutenant-operator/collection"
 	"github.com/projectsyn/lieutenant-operator/pipeline"
@@ -15,16 +13,13 @@ import (
 )
 
 func getVaultClient(obj pipeline.Object, data *pipeline.Context) (VaultClient, error) {
-	deletionPolicy := obj.GetDeletionPolicy()
-	if deletionPolicy == "" {
-		deletionPolicy = pipeline.GetDefaultDeletionPolicy()
-	}
+	deletionPolicy := data.DefaultDeletionPolicy
 
 	return NewClient(deletionPolicy, data.Log)
 }
 
 func CreateOrUpdateVault(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
-	if strings.ToLower(os.Getenv("SKIP_VAULT_SETUP")) == "true" {
+	if !data.UseVault {
 		return pipeline.Result{}
 	}
 
@@ -79,7 +74,7 @@ func GetServiceAccountToken(instance metav1.Object, data *pipeline.Context) (str
 }
 
 func HandleVaultDeletion(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
-	if strings.ToLower(os.Getenv("SKIP_VAULT_SETUP")) == "true" {
+	if !data.UseVault {
 		return pipeline.Result{}
 	}
 

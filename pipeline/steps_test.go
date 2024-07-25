@@ -3,7 +3,6 @@ package pipeline
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
@@ -43,19 +42,6 @@ func testSetupClient(objs ...client.Object) (client.Client, *runtime.Scheme) {
 	return fake.NewClientBuilder().WithScheme(s).WithObjects(objs...).WithStatusSubresource(
 		&synv1alpha1.Cluster{}, &synv1alpha1.Tenant{}, &synv1alpha1.GitRepo{},
 	).Build(), s
-}
-
-func TestGetDeletionPolicyDefault(t *testing.T) {
-	policy := GetDefaultDeletionPolicy()
-	assert.Equal(t, synv1alpha1.ArchivePolicy, policy)
-}
-
-func TestGetDeletionPolicyNonDefault(t *testing.T) {
-	err := os.Setenv("DEFAULT_DELETION_POLICY", "Retain")
-	require.NoError(t, err)
-
-	policy := GetDefaultDeletionPolicy()
-	assert.Equal(t, synv1alpha1.RetainPolicy, policy)
 }
 
 var addTenantLabelCases = genericCases{
@@ -157,7 +143,7 @@ func TestHandleDeletion(t *testing.T) {
 
 type addDeletionProtectionArgs struct {
 	instance *synv1alpha1.Cluster
-	enable   string
+	enable   bool
 	result   string
 }
 
@@ -168,22 +154,15 @@ var addDeletionProtectionCases = map[string]struct {
 	"Add deletion protection": {
 		args: addDeletionProtectionArgs{
 			instance: &synv1alpha1.Cluster{},
-			enable:   "true",
+			enable:   true,
 			result:   "true",
 		},
 	},
 	"Don't add deletion protection": {
 		args: addDeletionProtectionArgs{
 			instance: &synv1alpha1.Cluster{},
-			enable:   "false",
+			enable:   false,
 			result:   "",
-		},
-	},
-	"Invalid setting": {
-		args: addDeletionProtectionArgs{
-			instance: &synv1alpha1.Cluster{},
-			enable:   "gaga",
-			result:   "true",
 		},
 	},
 }
@@ -191,10 +170,9 @@ var addDeletionProtectionCases = map[string]struct {
 func TestAddDeletionProtection(t *testing.T) {
 	for name, tt := range addDeletionProtectionCases {
 		t.Run(name, func(t *testing.T) {
-			err := os.Setenv(protectionSettingEnvVar, tt.args.enable)
-			require.NoError(t, err)
-
-			addDeletionProtection(tt.args.instance, addLogger(&Context{}))
+			addDeletionProtection(tt.args.instance, addLogger(&Context{
+				UseDeletionProtection: tt.args.enable,
+			}))
 
 			result := tt.args.instance.GetAnnotations()[DeleteProtectionAnnotation]
 			if result != tt.args.result {
