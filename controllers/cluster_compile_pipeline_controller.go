@@ -74,8 +74,7 @@ func (r *ClusterCompilePipelineReconciler) Reconcile(ctx context.Context, reques
 	// We can only get here if the cluster list and CI variables were successfully updated on the tenant.
 	// So in the case of deletion, we can clean up the finalizer here, because that update involves removing them.
 	if !instance.GetDeletionTimestamp().IsZero() {
-		if controllerutil.ContainsFinalizer(instance, synv1alpha1.PipelineFinalizerName) {
-			controllerutil.RemoveFinalizer(instance, synv1alpha1.PipelineFinalizerName)
+		if controllerutil.RemoveFinalizer(instance, synv1alpha1.PipelineFinalizerName) {
 			return ctrl.Result{}, r.Client.Update(ctx, instance)
 		}
 	}

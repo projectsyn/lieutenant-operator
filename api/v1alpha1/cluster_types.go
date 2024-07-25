@@ -134,7 +134,7 @@ func init() {
 // GetGitTemplate returns the git repository template
 func (c *Cluster) GetGitTemplate() *GitRepoTemplate {
 	if c.Spec.GitRepoTemplate == nil {
-		c.Spec.GitRepoTemplate = &GitRepoTemplate{}
+		return &GitRepoTemplate{}
 	}
 	return c.Spec.GitRepoTemplate
 }

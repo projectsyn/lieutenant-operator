@@ -7,12 +7,12 @@ import (
 	v1 "k8s.io/api/core/v1"
 )
 
-func envVarIndex(name string, list *[]synv1alpha1.EnvVar) int {
-	return slices.IndexFunc(*list, func(e synv1alpha1.EnvVar) bool { return e.Name == name })
+func envVarIndex(name string, list []synv1alpha1.EnvVar) int {
+	return slices.IndexFunc(list, func(e synv1alpha1.EnvVar) bool { return e.Name == name })
 }
 
 func updateEnvVarValue(name string, value string, envVars []synv1alpha1.EnvVar) ([]synv1alpha1.EnvVar, bool) {
-	index := envVarIndex(name, &envVars)
+	index := envVarIndex(name, envVars)
 	changed := false
 	if index < 0 {
 		changed = true
@@ -30,7 +30,7 @@ func updateEnvVarValue(name string, value string, envVars []synv1alpha1.EnvVar) 
 	return envVars, changed
 }
 func updateEnvVarValueFrom(name string, secret string, key string, protected bool, envVars []synv1alpha1.EnvVar) ([]synv1alpha1.EnvVar, bool) {
-	index := envVarIndex(name, &envVars)
+	index := envVarIndex(name, envVars)
 	changed := false
 	if index < 0 {
 		changed = true
@@ -65,7 +65,7 @@ func updateEnvVarValueFrom(name string, secret string, key string, protected boo
 }
 
 func removeEnvVar(name string, envVars []synv1alpha1.EnvVar) ([]synv1alpha1.EnvVar, bool) {
-	index := envVarIndex(name, &envVars)
+	index := envVarIndex(name, envVars)
 	if index >= 0 {
 		return slices.Delete(envVars, index, index+1), true
 
