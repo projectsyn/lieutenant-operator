@@ -24,8 +24,9 @@ func Test_AddClusterToPipelineStatus(t *testing.T) {
 	}
 	cluster := &synv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "c-cluster",
-			Namespace: "lieutenant",
+			Name:       "c-cluster",
+			Namespace:  "lieutenant",
+			Finalizers: []string{synv1alpha1.PipelineFinalizerName},
 		},
 		Spec: synv1alpha1.ClusterSpec{
 			TenantRef: corev1.LocalObjectReference{
@@ -63,8 +64,9 @@ func Test_RemoveClusterFromPipelineStatus(t *testing.T) {
 	}
 	cluster := &synv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "c-cluster",
-			Namespace: "lieutenant",
+			Name:       "c-cluster",
+			Namespace:  "lieutenant",
+			Finalizers: []string{synv1alpha1.PipelineFinalizerName},
 		},
 		Spec: synv1alpha1.ClusterSpec{
 			TenantRef: corev1.LocalObjectReference{
@@ -106,7 +108,7 @@ func Test_RemoveClusterFromPipelineStatus_WhenDeleting(t *testing.T) {
 			Name:              "c-cluster",
 			Namespace:         "lieutenant",
 			DeletionTimestamp: &now,
-			Finalizers:        []string{"foo"},
+			Finalizers:        []string{synv1alpha1.PipelineFinalizerName},
 		},
 		Spec: synv1alpha1.ClusterSpec{
 			TenantRef: corev1.LocalObjectReference{
@@ -128,6 +130,34 @@ func Test_RemoveClusterFromPipelineStatus_WhenDeleting(t *testing.T) {
 
 	assert.NotNil(t, mod_tenant.Status.CompilePipeline)
 	assert.NotContains(t, mod_tenant.Status.CompilePipeline.Clusters, "c-cluster")
+	assert.NotContains(t, mod_tenant.Finalizers, synv1alpha1.PipelineFinalizerName)
+}
+
+func Test_FinalizerAdded(t *testing.T) {
+	cluster := &synv1alpha1.Cluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "c-cluster",
+			Namespace: "lieutenant",
+		},
+		Spec: synv1alpha1.ClusterSpec{
+			TenantRef: corev1.LocalObjectReference{
+				Name: "t-tenant",
+			},
+			EnableCompilePipeline: false,
+		},
+	}
+	c := preparePipelineTestClient(t, cluster)
+	r := clusterCompilePipelineReconciler(c)
+	ctx := context.Background()
+
+	_, err := r.Reconcile(ctx, requestFor(cluster))
+	assert.NoError(t, err)
+
+	mod_cluster := &synv1alpha1.Cluster{}
+	err = c.Get(ctx, types.NamespacedName{Name: "c-cluster", Namespace: "lieutenant"}, mod_cluster)
+	assert.NoError(t, err)
+
+	assert.Contains(t, mod_cluster.Finalizers, synv1alpha1.PipelineFinalizerName)
 }
 
 func Test_RemoveClusterFromPipelineStatus_EnableUnset(t *testing.T) {
@@ -144,8 +174,9 @@ func Test_RemoveClusterFromPipelineStatus_EnableUnset(t *testing.T) {
 	}
 	cluster := &synv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "c-cluster",
-			Namespace: "lieutenant",
+			Name:       "c-cluster",
+			Namespace:  "lieutenant",
+			Finalizers: []string{synv1alpha1.PipelineFinalizerName},
 		},
 		Spec: synv1alpha1.ClusterSpec{
 			TenantRef: corev1.LocalObjectReference{
@@ -182,8 +213,9 @@ func Test_NoChangeIfClusterInList(t *testing.T) {
 	}
 	cluster := &synv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "c-cluster",
-			Namespace: "lieutenant",
+			Name:       "c-cluster",
+			Namespace:  "lieutenant",
+			Finalizers: []string{synv1alpha1.PipelineFinalizerName},
 		},
 		Spec: synv1alpha1.ClusterSpec{
 			TenantRef: corev1.LocalObjectReference{
@@ -221,8 +253,9 @@ func Test_LeaveOtherListEntriesBe_WhenRemoving(t *testing.T) {
 	}
 	cluster := &synv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "c-cluster",
-			Namespace: "lieutenant",
+			Name:       "c-cluster",
+			Namespace:  "lieutenant",
+			Finalizers: []string{synv1alpha1.PipelineFinalizerName},
 		},
 		Spec: synv1alpha1.ClusterSpec{
 			TenantRef: corev1.LocalObjectReference{
@@ -261,8 +294,9 @@ func Test_LeaveOtherListEntriesBe_WhenAdding(t *testing.T) {
 	}
 	cluster := &synv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "c-cluster",
-			Namespace: "lieutenant",
+			Name:       "c-cluster",
+			Namespace:  "lieutenant",
+			Finalizers: []string{synv1alpha1.PipelineFinalizerName},
 		},
 		Spec: synv1alpha1.ClusterSpec{
 			TenantRef: corev1.LocalObjectReference{
@@ -300,8 +334,9 @@ func Test_CiVariableNotUpdated_IfNotEnabled(t *testing.T) {
 	}
 	cluster := &synv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "c-cluster",
-			Namespace: "lieutenant",
+			Name:       "c-cluster",
+			Namespace:  "lieutenant",
+			Finalizers: []string{synv1alpha1.PipelineFinalizerName},
 		},
 		Spec: synv1alpha1.ClusterSpec{
 			GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
@@ -343,8 +378,9 @@ func Test_CiVariableNotUpdated_IfNoToken(t *testing.T) {
 	}
 	cluster := &synv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "c-cluster",
-			Namespace: "lieutenant",
+			Name:       "c-cluster",
+			Namespace:  "lieutenant",
+			Finalizers: []string{synv1alpha1.PipelineFinalizerName},
 		},
 		Spec: synv1alpha1.ClusterSpec{
 			TenantRef: corev1.LocalObjectReference{
@@ -386,8 +422,9 @@ func Test_CiVariableUpdated_IfEnabled(t *testing.T) {
 	}
 	cluster := &synv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "c-cluster",
-			Namespace: "lieutenant",
+			Name:       "c-cluster",
+			Namespace:  "lieutenant",
+			Finalizers: []string{synv1alpha1.PipelineFinalizerName},
 		},
 		Spec: synv1alpha1.ClusterSpec{
 			GitRepoTemplate: &synv1alpha1.GitRepoTemplate{
@@ -434,8 +471,9 @@ func Test_KeepListInAlphabeticalOrder(t *testing.T) {
 	}
 	clusterA := &synv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "c-a",
-			Namespace: "lieutenant",
+			Name:       "c-a",
+			Namespace:  "lieutenant",
+			Finalizers: []string{synv1alpha1.PipelineFinalizerName},
 		},
 		Spec: synv1alpha1.ClusterSpec{
 			TenantRef: corev1.LocalObjectReference{
@@ -446,8 +484,9 @@ func Test_KeepListInAlphabeticalOrder(t *testing.T) {
 	}
 	clusterB := &synv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "c-b",
-			Namespace: "lieutenant",
+			Name:       "c-b",
+			Namespace:  "lieutenant",
+			Finalizers: []string{synv1alpha1.PipelineFinalizerName},
 		},
 		Spec: synv1alpha1.ClusterSpec{
 			TenantRef: corev1.LocalObjectReference{
@@ -458,8 +497,9 @@ func Test_KeepListInAlphabeticalOrder(t *testing.T) {
 	}
 	clusterC := &synv1alpha1.Cluster{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "c-c",
-			Namespace: "lieutenant",
+			Name:       "c-c",
+			Namespace:  "lieutenant",
+			Finalizers: []string{synv1alpha1.PipelineFinalizerName},
 		},
 		Spec: synv1alpha1.ClusterSpec{
 			TenantRef: corev1.LocalObjectReference{

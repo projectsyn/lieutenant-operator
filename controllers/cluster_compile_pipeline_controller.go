@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -25,6 +26,7 @@ type ClusterCompilePipelineReconciler struct {
 
 //+kubebuilder:rbac:groups=syn.tools,resources=clusters,verbs=get;list;watch;
 //+kubebuilder:rbac:groups=syn.tools,resources=tenants/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=syn.tools,resources=clusters/finalizers,verbs=update
 
 func (r *ClusterCompilePipelineReconciler) Reconcile(ctx context.Context, request ctrl.Request) (ctrl.Result, error) {
 	reqLogger := log.FromContext(ctx)
@@ -38,6 +40,15 @@ func (r *ClusterCompilePipelineReconciler) Reconcile(ctx context.Context, reques
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
+	}
+
+	if !controllerutil.ContainsFinalizer(instance, synv1alpha1.PipelineFinalizerName) {
+		if instance.GetDeletionTimestamp().IsZero() {
+			controllerutil.AddFinalizer(instance, synv1alpha1.PipelineFinalizerName)
+			return reconcile.Result{}, r.Client.Update(ctx, instance)
+		} else {
+			return reconcile.Result{}, nil
+		}
 	}
 
 	nsName := types.NamespacedName{Name: instance.GetTenantRef().Name, Namespace: instance.GetNamespace()}
@@ -55,7 +66,18 @@ func (r *ClusterCompilePipelineReconciler) Reconcile(ctx context.Context, reques
 
 	if ensureClusterCiVariable(tenant, instance) {
 		err = r.Client.Update(ctx, tenant)
-		return reconcile.Result{}, err
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+	}
+
+	// We can only get here if the cluster list and CI variables were successfully updated on the tenant.
+	// So in the case of deletion, we can clean up the finalizer here, because that update involves removing them.
+	if !instance.GetDeletionTimestamp().IsZero() {
+		if controllerutil.ContainsFinalizer(instance, synv1alpha1.PipelineFinalizerName) {
+			controllerutil.RemoveFinalizer(instance, synv1alpha1.PipelineFinalizerName)
+			return ctrl.Result{}, r.Client.Update(ctx, instance)
+		}
 	}
 
 	return reconcile.Result{}, nil
@@ -68,16 +90,19 @@ func ensureTenantStatus(t *synv1alpha1.Tenant, c *synv1alpha1.Cluster) bool {
 	if deleted && clusterInList {
 		ind := slices.Index(pipelineStatus.Clusters, c.Name)
 		pipelineStatus.Clusters = slices.Delete(pipelineStatus.Clusters, ind, ind+1)
+		t.Status.CompilePipeline = pipelineStatus
 		return true
 	}
 	if c.GetEnableCompilePipeline() && !clusterInList {
 		pipelineStatus.Clusters = append(pipelineStatus.Clusters, c.Name)
 		slices.Sort(pipelineStatus.Clusters)
+		t.Status.CompilePipeline = pipelineStatus
 		return true
 	}
 	if !c.GetEnableCompilePipeline() && clusterInList {
 		ind := slices.Index(pipelineStatus.Clusters, c.Name)
 		pipelineStatus.Clusters = slices.Delete(pipelineStatus.Clusters, ind, ind+1)
+		t.Status.CompilePipeline = pipelineStatus
 		return true
 	}
 	return false

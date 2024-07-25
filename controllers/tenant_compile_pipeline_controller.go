@@ -67,6 +67,9 @@ func (r *TenantCompilePipelineReconciler) Reconcile(ctx context.Context, request
 		if err != nil && !errors.IsNotFound(err) {
 			return reconcile.Result{}, fmt.Errorf("while reconciling CI variables for clusters: %w", err)
 		}
+		if err != nil && errors.IsNotFound(err) {
+			reqLogger.Info("Could not find cluster from list in .Status.CompilePipeline.Clusters", "clusterName", clusterName)
+		}
 
 		if err == nil {
 			changed = ensureClusterCiVariable(tenant, cluster) || changed

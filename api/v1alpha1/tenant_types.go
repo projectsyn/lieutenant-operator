@@ -98,7 +98,7 @@ func (t *Tenant) GetGitTemplate() *GitRepoTemplate {
 // GetCompilePipelineStatus returns the compile pipeline status
 func (t *Tenant) GetCompilePipelineStatus() *CompilePipelineStatus {
 	if t.Status.CompilePipeline == nil {
-		t.Status.CompilePipeline = &CompilePipelineStatus{}
+		return &CompilePipelineStatus{}
 	}
 	return t.Status.CompilePipeline
 }
@@ -106,7 +106,7 @@ func (t *Tenant) GetCompilePipelineStatus() *CompilePipelineStatus {
 // GetCompilePipelineSpec returns the compile pipeline spec
 func (t *Tenant) GetCompilePipelineSpec() *CompilePipelineSpec {
 	if t.Spec.CompilePipeline == nil {
-		t.Spec.CompilePipeline = &CompilePipelineSpec{}
+		return &CompilePipelineSpec{}
 	}
 	return t.Spec.CompilePipeline
 }

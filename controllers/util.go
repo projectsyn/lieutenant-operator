@@ -8,12 +8,7 @@ import (
 )
 
 func envVarIndex(name string, list *[]synv1alpha1.EnvVar) int {
-	for i, envvar := range *list {
-		if envvar.Name == name {
-			return i
-		}
-	}
-	return -1
+	return slices.IndexFunc(*list, func(e synv1alpha1.EnvVar) bool { return e.Name == name })
 }
 
 func updateEnvVarValue(name string, value string, envVars []synv1alpha1.EnvVar) ([]synv1alpha1.EnvVar, bool) {
