@@ -122,7 +122,7 @@ func ensureClusterCiVariable(t *synv1alpha1.Tenant, c *synv1alpha1.Cluster) bool
 	if remove {
 		list, changed = removeEnvVar(envVarName, template.CIVariables)
 	} else {
-		list, changed = updateEnvVarValueFrom(envVarName, c.Spec.GitRepoTemplate.AccessToken.SecretRef, SECRET_KEY_GITLAB_TOKEN, true, template.CIVariables)
+		list, changed = updateEnvVarValueFrom(envVarName, c.Spec.GitRepoTemplate.AccessToken.SecretRef, SECRET_KEY_GITLAB_TOKEN, template.CIVariables)
 	}
 
 	if changed {

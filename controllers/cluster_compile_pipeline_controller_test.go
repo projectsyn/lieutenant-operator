@@ -454,7 +454,7 @@ func Test_CiVariableUpdated_IfEnabled(t *testing.T) {
 	assert.Equal(t, mod_tenant.Spec.GitRepoTemplate.CIVariables[0].ValueFrom.SecretKeyRef.Name, "my-secret")
 	assert.Equal(t, mod_tenant.Spec.GitRepoTemplate.CIVariables[0].ValueFrom.SecretKeyRef.Key, "token")
 	assert.Equal(t, mod_tenant.Spec.GitRepoTemplate.CIVariables[0].GitlabOptions.Masked, true)
-	assert.Equal(t, mod_tenant.Spec.GitRepoTemplate.CIVariables[0].GitlabOptions.Protected, true)
+	assert.Equal(t, mod_tenant.Spec.GitRepoTemplate.CIVariables[0].GitlabOptions.Protected, false)
 	assert.Equal(t, mod_tenant.Spec.GitRepoTemplate.CIVariables[0].GitlabOptions.Raw, true)
 }
 func Test_KeepListInAlphabeticalOrder(t *testing.T) {
