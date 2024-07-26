@@ -29,7 +29,7 @@ func updateEnvVarValue(name string, value string, envVars []synv1alpha1.EnvVar) 
 	}
 	return envVars, changed
 }
-func updateEnvVarValueFrom(name string, secret string, key string, protected bool, envVars []synv1alpha1.EnvVar) ([]synv1alpha1.EnvVar, bool) {
+func updateEnvVarValueFrom(name string, secret string, key string, envVars []synv1alpha1.EnvVar) ([]synv1alpha1.EnvVar, bool) {
 	index := envVarIndex(name, envVars)
 	changed := false
 	if index < 0 {
@@ -37,9 +37,8 @@ func updateEnvVarValueFrom(name string, secret string, key string, protected boo
 		envVars = append(envVars, synv1alpha1.EnvVar{
 			Name: name,
 			GitlabOptions: synv1alpha1.EnvVarGitlabOptions{
-				Masked:    true,
-				Raw:       true,
-				Protected: protected,
+				Masked: true,
+				Raw:    true,
 			},
 			ValueFrom: &synv1alpha1.EnvVarSource{
 				SecretKeyRef: &v1.SecretKeySelector{

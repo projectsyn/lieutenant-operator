@@ -108,7 +108,7 @@ func (r *TenantCompilePipelineReconciler) ensureCiVariables(t *synv1alpha1.Tenan
 	changed = ch
 	list, ch = updateEnvVarValue(CI_VARIABLE_CLUSTERS, clusterList, list)
 	changed = changed || ch
-	list, ch = updateEnvVarValueFrom(CI_VARIABLE_API_TOKEN, t.Name, SECRET_KEY_API_TOKEN, false, list)
+	list, ch = updateEnvVarValueFrom(CI_VARIABLE_API_TOKEN, t.Name, SECRET_KEY_API_TOKEN, list)
 	changed = changed || ch
 
 	if changed {
