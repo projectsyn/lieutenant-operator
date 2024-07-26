@@ -64,16 +64,15 @@ func (r *TenantCompilePipelineReconciler) Reconcile(ctx context.Context, request
 
 		nsName := types.NamespacedName{Name: clusterName, Namespace: tenant.GetNamespace()}
 		err := r.Client.Get(ctx, nsName, cluster)
-		if err != nil && !errors.IsNotFound(err) {
+		if err != nil {
+			if errors.IsNotFound(err) {
+				reqLogger.Info("Could not find cluster from list in .Status.CompilePipeline.Clusters", "clusterName", clusterName)
+				continue
+			}
 			return reconcile.Result{}, fmt.Errorf("while reconciling CI variables for clusters: %w", err)
 		}
-		if err != nil && errors.IsNotFound(err) {
-			reqLogger.Info("Could not find cluster from list in .Status.CompilePipeline.Clusters", "clusterName", clusterName)
-		}
 
-		if err == nil {
-			changed = ensureClusterCiVariable(tenant, cluster) || changed
-		}
+		changed = ensureClusterCiVariable(tenant, cluster) || changed
 	}
 	if changed {
 		err = r.Client.Update(ctx, tenant)
