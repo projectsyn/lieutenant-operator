@@ -77,6 +77,10 @@ spec:
                     description: DisplayName of cluster which could be different from
                       metadata.name. Allows cluster renaming should it be needed.
                     type: string
+                  enableCompilePipeline:
+                    description: EnableCompilePipeline determines whether the gitops
+                      compile pipeline should be set up for this cluster
+                    type: boolean
                   facts:
                     additionalProperties:
                       type: string
@@ -290,6 +294,22 @@ spec:
                   tokenLifeTime:
                     description: TokenLifetime set the token lifetime
                     type: string
+                type: object
+              compilePipeline:
+                description: CompilePipeline contains the configuration for the automatically
+                  configured compile pipelines on this tenant
+                properties:
+                  enabled:
+                    description: Enabled enables or disables the compile pipeline
+                      for this tenant
+                    type: boolean
+                  pipelineFiles:
+                    additionalProperties:
+                      type: string
+                    description: Pipelines contains a map of filenames and file contents,
+                      specifying files which are added to the GitRepoTemplate in order
+                      to set up the automatically configured compile pipeline
+                    type: object
                 type: object
               creationPolicy:
                 description: |-

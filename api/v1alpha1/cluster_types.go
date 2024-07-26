@@ -39,6 +39,8 @@ type ClusterSpec struct {
 	// Adopt:  will create a new external resource or will adopt and manage an already existing resource
 	// +kubebuilder:validation:Enum=Create;Adopt
 	CreationPolicy CreationPolicy `json:"creationPolicy,omitempty"`
+	// EnableCompilePipeline determines whether the gitops compile pipeline should be set up for this cluster
+	EnableCompilePipeline bool `json:"enableCompilePipeline,omitempty"`
 }
 
 // BootstrapToken this key is used only once for Steward to register.
@@ -131,6 +133,9 @@ func init() {
 
 // GetGitTemplate returns the git repository template
 func (c *Cluster) GetGitTemplate() *GitRepoTemplate {
+	if c.Spec.GitRepoTemplate == nil {
+		return &GitRepoTemplate{}
+	}
 	return c.Spec.GitRepoTemplate
 }
 
@@ -170,4 +175,8 @@ func (c *Cluster) GetMeta() metav1.ObjectMeta {
 
 func (c *Cluster) GetStatus() interface{} {
 	return c.Status
+}
+
+func (c *Cluster) GetEnableCompilePipeline() bool {
+	return c.Spec.EnableCompilePipeline
 }

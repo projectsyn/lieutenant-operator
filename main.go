@@ -46,6 +46,7 @@ func main() {
 
 	var metricsAddr string
 	var enableLeaderElection bool
+	var apiUrl string
 	var probeAddr string
 	var gitRepoMaxReconcileInterval time.Duration
 
@@ -58,6 +59,10 @@ func main() {
 	var createSaTokenSecret bool
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flag.StringVar(&apiUrl, "lieutenant-api-url", "localhost",
+		"The URL at which the Lieutenant API is available externally. "+
+			"This is provided to tenant git repositories where the Compile Pipeline is enabled.",
+	)
 	flag.DurationVar(&gitRepoMaxReconcileInterval, "git-repo-max-reconcile-interval", 3*time.Hour, "The maximum time between reconciliations of GitRepos.")
 	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
@@ -138,6 +143,13 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "Cluster")
 		os.Exit(1)
 	}
+	if err = (&controllers.ClusterCompilePipelineReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "ClusterCompilePipeline")
+		os.Exit(1)
+	}
 	if err = (&controllers.GitRepoReconciler{
 		Client:                mgr.GetClient(),
 		Scheme:                mgr.GetScheme(),
@@ -158,6 +170,14 @@ func main() {
 		DeleteProtection:        useDeleteProtection,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "Tenant")
+		os.Exit(1)
+	}
+	if err = (&controllers.TenantCompilePipelineReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+		ApiUrl: apiUrl,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "TenantCompilePipeline")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
