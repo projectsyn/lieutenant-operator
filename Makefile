@@ -38,7 +38,7 @@ build: generate fmt vet $(BIN_FILENAME) ## Build manager binary
 
 .PHONY: run
 run: fmt vet ## Run against the configured Kubernetes cluster in ~/.kube/config
-	go run ./main.go
+	go run ./main.go -skip-vault-setup -watch-namespace lieutenant
 
 .PHONY: install
 install: generate ## Install CRDs into a cluster
