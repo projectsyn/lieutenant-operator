@@ -435,7 +435,7 @@ func testGetCommitServer(t *testing.T, files []string) *httptest.Server {
 
 	mux.HandleFunc("/api/v4/projects/3/repository/tree", func(res http.ResponseWriter, req *http.Request) {
 		if len(files) == 0 {
-			_, _ = res.Write([]byte(`[]`))
+			res.WriteHeader(http.StatusNotFound)
 			return
 		}
 

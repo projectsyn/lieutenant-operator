@@ -401,7 +401,8 @@ func (g *Gitlab) compareFiles() ([]manager.CommitFile, error) {
 		if err != nil {
 			// if the tree is not found it's probably just because there are no files at all currently...
 			// So we have to apply all pending ones.
-			if strings.Contains(err.Error(), "Tree Not Found") {
+			if errors.Is(err, gitlab.ErrNotFound) {
+				g.log.Info("ListTree got 404; most likely no files found in repository, applying all pending files")
 
 				for name, content := range g.ops.TemplateFiles {
 					if content != manager.DeletionMagicString {
