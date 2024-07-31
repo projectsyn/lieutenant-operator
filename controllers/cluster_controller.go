@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -82,10 +83,41 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, request ctrl.Request)
 func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&synv1alpha1.Cluster{}).
+		Watches(&synv1alpha1.Tenant{}, handler.EnqueueRequestsFromMapFunc(enqueueClustersForTenantMapFunc(mgr.GetClient()))).
 		Owns(&synv1alpha1.GitRepo{}).
 		Owns(&corev1.ServiceAccount{}).
 		Owns(&corev1.Secret{}).
 		Owns(&rbacv1.Role{}).
 		Owns(&rbacv1.RoleBinding{}).
 		Complete(r)
+}
+
+// enqueueClustersForTenantMapFunc returns a function that lists all clusters for a tenant and returns a list of reconcile requests for them.
+// It does select clusters by the synv1alpha1.LabelNameTenant label.
+func enqueueClustersForTenantMapFunc(cli client.Client) func(ctx context.Context, o client.Object) []reconcile.Request {
+	return func(ctx context.Context, o client.Object) []reconcile.Request {
+		l := log.FromContext(ctx).WithName("enqueueClustersForTenantMapFunc")
+
+		var clusters synv1alpha1.ClusterList
+		err := cli.List(ctx, &clusters,
+			client.InNamespace(o.GetNamespace()),
+			client.MatchingLabels{
+				synv1alpha1.LabelNameTenant: o.GetName(),
+			})
+		if err != nil {
+			l.Error(err, "Failed to list clusters")
+			return []reconcile.Request{}
+		}
+
+		requests := make([]reconcile.Request, len(clusters.Items))
+		for i, tenant := range clusters.Items {
+			requests[i] = reconcile.Request{
+				NamespacedName: client.ObjectKey{
+					Namespace: tenant.Namespace,
+					Name:      tenant.Name,
+				},
+			}
+		}
+		return requests
+	}
 }
