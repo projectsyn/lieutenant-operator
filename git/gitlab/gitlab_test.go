@@ -676,7 +676,7 @@ func TestGitlab_EnsureProjectAccessToken(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "token101", pat.Token)
 
-	for _, uid := range []string{"", pat.UID} {
+	for _, uid := range []*string{nil, &pat.UID} {
 		opts := manager.EnsureProjectAccessTokenOptions{UID: uid}
 		samepat, err := g.EnsureProjectAccessToken(context.Background(), "test", opts)
 		require.NoError(t, err)
@@ -684,14 +684,18 @@ func TestGitlab_EnsureProjectAccessToken(t *testing.T) {
 		assert.Equal(t, pat.ExpiresAt, samepat.ExpiresAt)
 	}
 
-	newPat, err := g.EnsureProjectAccessToken(context.Background(), "test", manager.EnsureProjectAccessTokenOptions{UID: "other id"})
-	require.NoError(t, err)
-	assert.NotEqual(t, pat.UID, newPat.UID, "Should return new token if UID does not match")
+	newPat := pat
+	for _, uid := range []string{"", "other id"} {
+		p, err := g.EnsureProjectAccessToken(context.Background(), "test", manager.EnsureProjectAccessTokenOptions{UID: &uid})
+		require.NoError(t, err)
+		assert.NotEqual(t, p.UID, newPat.UID, "Should return new token if UID does not match")
+		newPat = p
+	}
 
 	// Access token expiry are floored to the nearest day
 	// Check that newest token is returned
 	clock.Advance(24 * time.Hour)
-	newerPat, err := g.EnsureProjectAccessToken(context.Background(), "test", manager.EnsureProjectAccessTokenOptions{UID: "other id"})
+	newerPat, err := g.EnsureProjectAccessToken(context.Background(), "test", manager.EnsureProjectAccessTokenOptions{UID: ptr.To("other id")})
 	require.NoError(t, err)
 	assert.NotEqual(t, newPat.UID, newerPat.UID, "Should return new token if UID does not match")
 	newerPat2, err := g.EnsureProjectAccessToken(context.Background(), "test", manager.EnsureProjectAccessTokenOptions{})
@@ -700,7 +704,7 @@ func TestGitlab_EnsureProjectAccessToken(t *testing.T) {
 
 	clock.Advance(time.Hour * 24 * 90)
 
-	renewedPat, err := g.EnsureProjectAccessToken(context.Background(), "test", manager.EnsureProjectAccessTokenOptions{UID: pat.UID})
+	renewedPat, err := g.EnsureProjectAccessToken(context.Background(), "test", manager.EnsureProjectAccessTokenOptions{UID: &pat.UID})
 	require.NoError(t, err)
 	assert.NotEmpty(t, renewedPat.Token, "Should return new token if old token is expired")
 	assert.NotEqual(t, pat.UID, renewedPat.UID, "Should return new token if old token is expired")

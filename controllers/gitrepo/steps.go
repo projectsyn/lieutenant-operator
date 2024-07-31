@@ -156,7 +156,7 @@ func ensureAccessToken(ctx context.Context, cli client.Client, instance *synv1al
 		uid := secret.Annotations[LieutenantAccessTokenUIDAnnotation]
 
 		pat, err := repo.EnsureProjectAccessToken(ctx, instance.GetName(), manager.EnsureProjectAccessTokenOptions{
-			UID: uid,
+			UID: &uid,
 		})
 		if err != nil {
 			return fmt.Errorf("error ensuring project access token: %w", err)

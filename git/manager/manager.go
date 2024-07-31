@@ -144,7 +144,7 @@ type EnsureProjectAccessTokenOptions struct {
 	// UID is a unique identifier for the token.
 	// If set, the given UID will be compared with the UID of the existing token.
 	// The token will be force updated if the UIDs do not match.
-	UID string
+	UID *string
 }
 
 type ProjectAccessToken struct {
