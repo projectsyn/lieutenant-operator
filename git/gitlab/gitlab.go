@@ -497,7 +497,7 @@ func (g *Gitlab) EnsureProjectAccessToken(ctx context.Context, name string, opts
 		return 0
 	})
 
-	if opts.UID == "" {
+	if opts.UID == nil {
 		if len(validATs) > 0 {
 			return manager.ProjectAccessToken{
 				UID:       strconv.Itoa(validATs[0].ID),
@@ -505,10 +505,11 @@ func (g *Gitlab) EnsureProjectAccessToken(ctx context.Context, name string, opts
 			}, nil
 		}
 	} else {
+		uid := *opts.UID
 		for _, token := range validATs {
-			if strconv.Itoa(token.ID) == opts.UID {
+			if strconv.Itoa(token.ID) == uid {
 				return manager.ProjectAccessToken{
-					UID:       opts.UID,
+					UID:       uid,
 					ExpiresAt: time.Time(*token.ExpiresAt),
 				}, nil
 			}
