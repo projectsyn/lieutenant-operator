@@ -2,6 +2,7 @@ package tenant
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/projectsyn/lieutenant-operator/api/v1alpha1"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
@@ -29,6 +30,7 @@ func reconcileRole(obj pipeline.Object, data *pipeline.Context) pipeline.Result 
 	for _, c := range cls.Items {
 		clusterNames = append(clusterNames, c.Name)
 	}
+	slices.Sort(clusterNames)
 
 	role := rbacv1.Role{
 		ObjectMeta: metav1.ObjectMeta{
