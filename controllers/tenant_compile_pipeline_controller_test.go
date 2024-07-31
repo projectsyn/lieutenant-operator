@@ -52,7 +52,7 @@ func Test_AddBasicPipelineStatus(t *testing.T) {
 	assert.Equal(t, "token", mod_tenant.GetGitTemplate().CIVariables[i].ValueFrom.SecretKeyRef.Key)
 	i = envVarIndex("CLUSTERS", &mod_tenant.GetGitTemplate().CIVariables)
 	assert.True(t, i >= 0)
-	assert.Equal(t, "c-cluster1,c-cluster2", mod_tenant.GetGitTemplate().CIVariables[i].Value)
+	assert.Equal(t, "c-cluster1 c-cluster2", mod_tenant.GetGitTemplate().CIVariables[i].Value)
 }
 func Test_RemoveBasicPipelineStatus(t *testing.T) {
 	tenant := &synv1alpha1.Tenant{
@@ -168,7 +168,7 @@ func Test_UpdateBasicPipelineStatus(t *testing.T) {
 	assert.Equal(t, "token", mod_tenant.GetGitTemplate().CIVariables[i].ValueFrom.SecretKeyRef.Key)
 	i = envVarIndex("CLUSTERS", &mod_tenant.GetGitTemplate().CIVariables)
 	assert.True(t, i >= 0)
-	assert.Equal(t, "c-cluster1,c-cluster2", mod_tenant.GetGitTemplate().CIVariables[i].Value)
+	assert.Equal(t, "c-cluster1 c-cluster2", mod_tenant.GetGitTemplate().CIVariables[i].Value)
 }
 
 func Test_UpdateBasicPipelineStatus_NoUpdate_IfNoChanges(t *testing.T) {
@@ -200,7 +200,7 @@ func Test_UpdateBasicPipelineStatus_NoUpdate_IfNoChanges(t *testing.T) {
 					},
 					{
 						Name:  "CLUSTERS",
-						Value: "c-cluster1,c-cluster2",
+						Value: "c-cluster1 c-cluster2",
 					},
 				},
 			},

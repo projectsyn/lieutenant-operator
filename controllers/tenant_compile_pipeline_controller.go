@@ -102,7 +102,7 @@ func (r *TenantCompilePipelineReconciler) ensureCiVariables(t *synv1alpha1.Tenan
 	if pipelineStatus == nil {
 		pipelineStatus = &synv1alpha1.CompilePipelineStatus{}
 	}
-	clusterList := strings.Join(pipelineStatus.Clusters, ",")
+	clusterList := strings.Join(pipelineStatus.Clusters, " ")
 
 	list, ch := updateEnvVarValue(CI_VARIABLE_API_URL, r.ApiUrl, template.CIVariables)
 	changed = ch
