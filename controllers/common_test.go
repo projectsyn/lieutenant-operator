@@ -36,11 +36,11 @@ func requestFor(obj client.Object) ctrl.Request {
 	}
 }
 
-func envVarIndex(name string, list *[]synv1alpha1.EnvVar) int {
-	for i, envvar := range *list {
+func findEnvVar(name string, list []synv1alpha1.EnvVar) (v synv1alpha1.EnvVar, found bool) {
+	for _, envvar := range list {
 		if envvar.Name == name {
-			return i
+			return envvar, true
 		}
 	}
-	return -1
+	return synv1alpha1.EnvVar{}, false
 }

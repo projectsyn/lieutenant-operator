@@ -3,13 +3,15 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"slices"
+	"sort"
 	"strings"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
@@ -52,34 +54,84 @@ func (r *TenantCompilePipelineReconciler) Reconcile(ctx context.Context, request
 
 	changed := false
 
+	var clusters synv1alpha1.ClusterList
+	if err := r.Client.List(ctx, &clusters,
+		client.InNamespace(tenant.GetNamespace()),
+		client.MatchingLabels{synv1alpha1.LabelNameTenant: tenant.Name},
+	); err != nil {
+		return reconcile.Result{}, fmt.Errorf("error listing clusters: %w", err)
+	}
+	clustersWithPipelineEnabled := make([]synv1alpha1.Cluster, 0, len(clusters.Items))
+	for _, cluster := range clusters.Items {
+		if cluster.GetEnableCompilePipeline() {
+			clustersWithPipelineEnabled = append(clustersWithPipelineEnabled, cluster)
+		}
+	}
+
 	if !tenant.GetCompilePipelineSpec().Enabled {
 		changed = ensureCiVariablesAbsent(tenant)
 	} else {
-		changed = r.ensureCiVariables(tenant) || changed
+		changed = r.ensureCiVariables(tenant, filterDeletedClusters(clustersWithPipelineEnabled)) || changed
 	}
 
-	cluster := &synv1alpha1.Cluster{}
-	pipelineStatus := tenant.GetCompilePipelineStatus()
-	for _, clusterName := range pipelineStatus.Clusters {
-
-		nsName := types.NamespacedName{Name: clusterName, Namespace: tenant.GetNamespace()}
-		err := r.Client.Get(ctx, nsName, cluster)
-		if err != nil {
-			if errors.IsNotFound(err) {
-				reqLogger.Info("Could not find cluster from list in .Status.CompilePipeline.Clusters", "clusterName", clusterName)
-				continue
+	for _, cluster := range clusters.Items {
+		if cluster.DeletionTimestamp.IsZero() && controllerutil.AddFinalizer(&cluster, synv1alpha1.PipelineFinalizerName) {
+			if err := r.Client.Update(ctx, &cluster); err != nil {
+				return reconcile.Result{}, fmt.Errorf("error adding finalizer to cluster %s: %w", cluster.Name, err)
 			}
-			return reconcile.Result{}, fmt.Errorf("while reconciling CI variables for clusters: %w", err)
+		}
+
+		if cluster.GetGitTemplate().RepoType == synv1alpha1.UnmanagedRepoType {
+			reqLogger.Info("Skipping cluster with unmanaged repo", "cluster", cluster.Name)
+			continue
 		}
 
 		changed = ensureClusterCiVariable(tenant, cluster) || changed
 	}
-	if changed {
-		err = r.Client.Update(ctx, tenant)
-		return reconcile.Result{}, err
-	}
-	return reconcile.Result{}, nil
 
+	if changed {
+		if err := r.Client.Update(ctx, tenant); err != nil {
+			return reconcile.Result{}, fmt.Errorf("error updating tenant: %w", err)
+		}
+	}
+
+	cs := clustersWithPipelineEnabled
+	if !tenant.GetCompilePipelineSpec().Enabled {
+		cs = []synv1alpha1.Cluster{}
+	}
+	if ensureStatus(tenant, cs) {
+		if err := r.Client.Status().Update(ctx, tenant); err != nil {
+			return reconcile.Result{}, fmt.Errorf("error updating tenant status: %w", err)
+		}
+	}
+
+	// Explicitly remove finalizers from ALL clusters that are being deleted to not block their deletion if the pipeline is disabled.
+	// At this point the tenant has been updated and we can safely remove the finalizers.
+	for _, cluster := range clusters.Items {
+		if cluster.GetDeletionTimestamp().IsZero() {
+			continue
+		}
+		if controllerutil.RemoveFinalizer(&cluster, synv1alpha1.PipelineFinalizerName) {
+			if err := r.Client.Update(ctx, &cluster); err != nil {
+				return reconcile.Result{}, fmt.Errorf("error removing finalizer from cluster %s: %w", cluster.Name, err)
+			}
+		}
+	}
+
+	return reconcile.Result{}, nil
+}
+
+func ensureStatus(tenant *synv1alpha1.Tenant, clustersWithPipelineEnabled []synv1alpha1.Cluster) bool {
+	sc := sortedClusterNames(filterDeletedClusters(clustersWithPipelineEnabled))
+	if slices.Equal(tenant.GetCompilePipelineStatus().Clusters, sc) {
+		return false
+	}
+
+	if tenant.Status.CompilePipeline == nil {
+		tenant.Status.CompilePipeline = &synv1alpha1.CompilePipelineStatus{}
+	}
+	tenant.Status.CompilePipeline.Clusters = sc
+	return true
 }
 
 func ensureCiVariablesAbsent(t *synv1alpha1.Tenant) bool {
@@ -94,15 +146,11 @@ func ensureCiVariablesAbsent(t *synv1alpha1.Tenant) bool {
 	return changed
 }
 
-func (r *TenantCompilePipelineReconciler) ensureCiVariables(t *synv1alpha1.Tenant) bool {
+func (r *TenantCompilePipelineReconciler) ensureCiVariables(t *synv1alpha1.Tenant, clusters []synv1alpha1.Cluster) bool {
 	template := t.GetGitTemplate()
 	changed := false
 
-	pipelineStatus := t.Status.CompilePipeline
-	if pipelineStatus == nil {
-		pipelineStatus = &synv1alpha1.CompilePipelineStatus{}
-	}
-	clusterList := strings.Join(pipelineStatus.Clusters, " ")
+	clusterList := strings.Join(sortedClusterNames(clusters), " ")
 
 	list, ch := updateEnvVarValue(CI_VARIABLE_API_URL, r.ApiUrl, template.CIVariables)
 	changed = ch
@@ -122,5 +170,52 @@ func (r *TenantCompilePipelineReconciler) ensureCiVariables(t *synv1alpha1.Tenan
 func (r *TenantCompilePipelineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&synv1alpha1.Tenant{}).
+		Owns(&synv1alpha1.Cluster{}).
 		Complete(r)
+}
+
+func filterDeletedClusters(clusters []synv1alpha1.Cluster) []synv1alpha1.Cluster {
+	filtered := make([]synv1alpha1.Cluster, 0, len(clusters))
+	for _, c := range clusters {
+		if c.GetDeletionTimestamp().IsZero() {
+			filtered = append(filtered, c)
+		}
+	}
+	return filtered
+}
+
+func sortedClusterNames(clusters []synv1alpha1.Cluster) []string {
+	names := make([]string, len(clusters))
+	for i, cluster := range clusters {
+		names[i] = cluster.Name
+	}
+	sort.Strings(names)
+	return names
+}
+
+func ensureClusterCiVariable(t *synv1alpha1.Tenant, c synv1alpha1.Cluster) bool {
+	remove :=
+		!c.GetDeletionTimestamp().IsZero() ||
+			c.GetGitTemplate().AccessToken.SecretRef == "" ||
+			!t.GetCompilePipelineSpec().Enabled ||
+			!c.GetEnableCompilePipeline()
+
+	template := t.GetGitTemplate()
+	envVarName := fmt.Sprintf("%s%s", CI_VARIABLE_PREFIX_CLUSTER_ACCESS_TOKEN, strings.Replace(c.GetName(), "-", "_", -1))
+
+	var list []synv1alpha1.EnvVar
+	var changed bool
+
+	if remove {
+		list, changed = removeEnvVar(envVarName, template.CIVariables)
+	} else {
+		list, changed = updateEnvVarValueFrom(envVarName, c.Spec.GitRepoTemplate.AccessToken.SecretRef, SECRET_KEY_GITLAB_TOKEN, template.CIVariables)
+	}
+
+	if changed {
+		template.CIVariables = list
+		t.Spec.GitRepoTemplate = template
+	}
+
+	return changed
 }
