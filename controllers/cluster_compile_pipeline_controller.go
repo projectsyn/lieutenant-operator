@@ -64,10 +64,11 @@ func (r *ClusterCompilePipelineReconciler) Reconcile(ctx context.Context, reques
 		}
 	}
 
-	if ensureClusterCiVariable(tenant, instance) {
-		err = r.Client.Update(ctx, tenant)
-		if err != nil {
-			return reconcile.Result{}, err
+	if instance.GetGitTemplate().RepoType != synv1alpha1.UnmanagedRepoType {
+		if ensureClusterCiVariable(tenant, instance) {
+			if err := r.Client.Update(ctx, tenant); err != nil {
+				return reconcile.Result{}, err
+			}
 		}
 	}
 
