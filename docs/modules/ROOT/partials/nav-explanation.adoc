@@ -2,3 +2,4 @@
 * xref:lieutenant-operator:ROOT:explanations/deletion.adoc[Object Deletion]
 * xref:lieutenant-operator:ROOT:explanations/templating.adoc[Templating]
 * xref:lieutenant-operator:ROOT:explanations/rbac-access.adoc[Multi tenant access]
+* xref:lieutenant-operator:ROOT:explanations/cicd-support.adoc[CI/CD support]

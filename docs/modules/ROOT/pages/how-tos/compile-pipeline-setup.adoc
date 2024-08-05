@@ -1,0 +1,92 @@
+= Compile Pipeline Setup
+
+Lieutenant can automatically configure CI/CD tooling on your Git repositories.
+This page explains how to set up the https://github.com/projectsyn/commodore-compile-pipelines[Commodore Compile Pipeline].
+
+[NOTE]
+--
+Automatic configuration of CI/CD tooling is so far only supported on GitLab.
+
+To allow the Lieutenant Operator to connect to GitLab, refer to xref:how-tos/gitlab-connection.adoc[Connection to GitLab].
+--
+
+== Enabling the Compile Pipeline for individual tenants and clusters
+
+The `compilePipelineSpec` field on a Tenant object governs how CI/CD tooling is managed.
+To enable the Commodore Compile Pipeline on a tenant, configure it as follows:
+
+[source,bash]
+....
+kubectl patch tenant my-tenant --type merge -p '
+spec:
+  compilePipeline:
+    enabled: true <1>
+    pipelineFiles:
+      .gitlab-ci.yml: | <2>
+        include:
+          - https://raw.githubusercontent.com/projectsyn/commodore-compile-pipelines/main/gitlab/commodore-pipeline.yml
+'
+....
+<1> This field enables the compile pipeline for this tenant.
+If it is `false` or unset, no CI/CD tooling will be managed, regardless of other configuration options on the tenant or its clusters.
+<2> This example causes Lieutenant to create a file `.gitlab-ci.yml` in the tenant repository, which references the open-source https://github.com/projectsyn/commodore-compile-pipelines[Commodore Compile Pipeline].
+It is possible to customize this file, or create different files.
+
+In addition, the Compile Pipeline must be enabled for each cluster where CI/CD is desired:
+[source,bash]
+....
+kubectl patch cluster my-cluster --type merge -p '
+spec:
+  enableCompilePipeline: true <1>
+  gitRepoTemplate:
+    accessToken:
+      secretRef: my-cluster-api-token <2>
+'
+....
+<1> This field enables the compile pipeline for this cluster.
+If it is `false` or unset, the tenant's CI/CD configuration will disregard this cluster.
+<2> For the compile pipeline to work, an access token for the Git repository is required.
+Lieutenant creates this access token and will store it in the secret specified here.
+
+
+== Enabling the Compile Pipeline for all clusters of a tenant
+
+We can leverage templating to configure and enable the Compile Pipeline for all clusters on a tenant.
+For more information on templating, refer to xref:explanations/templating.adoc[Templating].
+
+The following example configures a tenant such that its clusters automatically include the correct configuration for the Compile Pipeline:
+[source,bash]
+....
+kubectl patch tenant my-tenant --type merge -p '
+spec:
+  clusterTemplate:
+    enableCompilePipeline: true
+    gitRepoTemplate:
+      accessToken:
+        secretRef: '{{ .Name }}-api-token'
+'
+....
+
+
+== Enabling the Compile Pipeline for all tenants
+
+We can leverage tenant templating to configure and enable the Compile Pipeline for all clusters on a tenant.
+For more information on templating, refer to xref:how-tos/create-tenant.adoc#_tenant_templating[Tenant Templating].
+
+[source,bash]
+....
+kubectl patch tenanttemplate my-template --type merge -p '
+spec:
+  clusterTemplate:
+    enableCompilePipeline: true
+    gitRepoTemplate:
+      accessToken:
+        secretRef: '{{ .Name }}-api-token'
+  compilePipeline:
+    enabled: true
+    pipelineFiles:
+      .gitlab-ci.yml: |
+        include:
+          - https://raw.githubusercontent.com/projectsyn/commodore-compile-pipelines/main/gitlab/commodore-pipeline.yml
+'
+....

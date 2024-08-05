@@ -13,10 +13,10 @@ asciidoctor_epub3_cmd  ?= $(docker_cmd) run $(docker_opts) --volume "$${PWD}":/d
 asciidoctor_opts ?= --destination-dir=$(out_dir)
 asciidoctor_kindle_opts ?= --attribute ebook-format=kf8
 
-vale_cmd ?= $(docker_cmd) run $(docker_opts) --volume "$${PWD}"/src/modules/ROOT/pages:/pages vshn/vale:2.6.1 --minAlertLevel=error /pages
+vale_cmd ?= $(docker_cmd) run $(docker_opts) --volume "$${PWD}"/src/modules/ROOT/pages:/pages ghcr.io/vshn/vale:2.27.0 --minAlertLevel=error /pages
 hunspell_cmd ?= $(docker_cmd) run $(docker_opts) --volume "$${PWD}":/spell vshn/hunspell:1.7.0 -d en,vshn -l -H _public/**/**/*.html
 htmltest_cmd ?= $(docker_cmd) run $(docker_opts) --volume "$${PWD}"/_public:/test wjdp/htmltest:v0.12.0
-preview_img ?= vshn/antora-preview:3.0.1.1
+preview_img ?= ghcr.io/vshn/antora-preview:3.1.2.3
 preview_cmd ?= $(docker_cmd) run --rm --publish 35729:35729 --publish 2020:2020 --volume "${PWD}":/preview/antora $(preview_img) --antora=docs --style=syn
 
 .PHONY: docs-all
