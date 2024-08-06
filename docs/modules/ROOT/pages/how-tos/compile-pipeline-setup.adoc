@@ -5,7 +5,7 @@ This page explains how to set up the https://github.com/projectsyn/commodore-com
 
 [NOTE]
 --
-Automatic configuration of CI/CD tooling is so far only supported on GitLab.
+Currently, automatic configuration of CI/CD tooling is only supported on GitLab.
 
 To allow the Lieutenant Operator to connect to GitLab, refer to xref:how-tos/gitlab-connection.adoc[Connection to GitLab].
 --

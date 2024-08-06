@@ -6,7 +6,7 @@ This feature is designed to support the https://github.com/projectsyn/commodore-
 
 [NOTE]
 --
-Automatic configuration of CI/CD tooling is so far only supported on GitLab.
+Currently, automatic configuration of CI/CD tooling is only supported on GitLab.
 
 To allow the Lieutenant Operator to connect to GitLab, refer to xref:how-tos/gitlab-connection.adoc[Connection to GitLab].
 --
@@ -36,5 +36,6 @@ In particular, the following parameters are provided on a tenant where `spec.com
 
 The CI/CD pipeline can use these parameters to compile cluster catalogs with Commodore, and push them to the corresponding catalog repositories.
 The https://github.com/projectsyn/commodore-compile-pipelines[Commodore Compile Pipeline] is a GitLab CI pipeline definition which accomplishes that.
-However, it is possible to use other CI/CD systems.
+If the available CI pipeline definition isn't suitable for your use case, you can deploy an arbitrary valid `.gitlab-ci.yml` through the `pipelineFiles` mechanism.
+Please note that Lieutenant doesn't check the validity of the files provided in `pipelineFiles`.
 
