@@ -1,0 +1,41 @@
+= CI/CD Support
+
+Lieutenant can configure Git repositories to enable CI/CD for tenant repositories.
+This feature is designed to support the https://github.com/projectsyn/commodore-compile-pipelines[Commodore Compile Pipeline], but can be used independently.
+
+
+[NOTE]
+--
+Currently, automatic configuration of CI/CD tooling is only supported on GitLab.
+
+To allow the Lieutenant Operator to connect to GitLab, refer to xref:how-tos/gitlab-connection.adoc[Connection to GitLab].
+--
+
+== CI/CD pipeline configuration
+Lieutenant configures the CI/CD pipeline by managing files in the tenant repository, such as the `.gitlab-ci.yml` file.
+These files are configured in the tenant's `spec.compilePipeline.pipelineFiles`, where arbitrary files can be defined that are added to the tenant repository if the compile pipeline is enabled.
+
+The system assumes that the CI/CD system (for example GitLab CI) can be fully configured using files in the repository.
+
+== CI/CD parameters
+Lieutenant ensures that the CI/CD pipeline can access the Lieutenant API as well as the necessary cluster catalog repositories.
+This is achieved by passing a number of parameters to the CI/CD pipeline.
+
+The mechanism by which these parameters are provided is specific to a Git host.
+Currently, only GitLab is supported, where this information is provided through CI/CD variables on the tenant repository.
+
+
+In particular, the following parameters are provided on a tenant where `spec.compilePipeline.enabled` is set to `true`:
+
+* `ACCESS_TOKEN_CLUSTERNAME`, where `CLUSTERNAME` is the name of a specific cluster, with `-` replaced by `_`.
+  This contains an access token, which has read-write access the corresponding cluster's catalog repository.
+  The access token is created automatically for each cluster where `spec.enableCompilePipeline` is set to `true` and `spec.gitRepoTemplate.accessToken` contains a valid secret reference.
+* `COMMODORE_API_URL`. This contains the URL at which the Lieutenant API can be accessed.
+* `COMMODORE_API_TOKEN`. This contains an access token for the Lieutenant API.
+* `CLUSTERS`. This contains a space-separated list of cluster IDs for which the CI/CD pipeline should run; that is, the list of clusters where `spec.enableCompilePipeline` is `true`.
+
+The CI/CD pipeline can use these parameters to compile cluster catalogs with Commodore, and push them to the corresponding catalog repositories.
+The https://github.com/projectsyn/commodore-compile-pipelines[Commodore Compile Pipeline] is a GitLab CI pipeline definition which accomplishes that.
+If the available CI pipeline definition isn't suitable for your use case, you can deploy an arbitrary valid `.gitlab-ci.yml` through the `pipelineFiles` mechanism.
+Please note that Lieutenant doesn't check the validity of the files provided in `pipelineFiles`.
+
