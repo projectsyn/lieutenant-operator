@@ -5,7 +5,7 @@ go 1.22.0
 toolchain go1.22.5
 
 require (
-	dario.cat/mergo v1.0.0
+	dario.cat/mergo v1.0.1
 	github.com/banzaicloud/bank-vaults/pkg/sdk v0.8.3
 	github.com/elastic/crd-ref-docs v0.1.0
 	github.com/go-logr/logr v1.4.2
