@@ -169,6 +169,7 @@ func (r *TenantCompilePipelineReconciler) ensureCiVariables(t *synv1alpha1.Tenan
 // SetupWithManager sets up the controller with the Manager.
 func (r *TenantCompilePipelineReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
+		Named("tenant_compile_pipeline").
 		For(&synv1alpha1.Tenant{}).
 		Owns(&synv1alpha1.Cluster{}).
 		Complete(r)
