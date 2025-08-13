@@ -2,6 +2,7 @@ package gitrepo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -53,7 +54,11 @@ func steps(obj pipeline.Object, data *pipeline.Context, getGitClient gitClientFa
 
 	instance.Status.HostKeys = hostKeys
 
-	if !repoExists(repo) {
+	exists, err := repoExists(repo)
+	if err != nil {
+		return pipeline.Result{Err: fmt.Errorf("failed to check if repo exists: %w", err)}
+	}
+	if !exists {
 		data.Log.Info("creating git repo", manager.SecretEndpointName, repo.FullURL())
 		instance.Status.URL = repo.FullURL().String()
 		phase := synv1alpha1.Creating
@@ -118,9 +123,15 @@ func steps(obj pipeline.Object, data *pipeline.Context, getGitClient gitClientFa
 	return pipeline.Result{}
 }
 
-func repoExists(repo manager.Repo) bool {
+func repoExists(repo manager.Repo) (bool, error) {
 	err := repo.Read()
-	return err == nil
+	if err != nil {
+		if errors.Is(err, manager.ErrRepoNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
 
 }
 

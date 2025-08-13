@@ -563,7 +563,7 @@ func (r *fakeRepo) Update() (bool, error) {
 }
 func (r fakeRepo) Read() error {
 	if !r.exists {
-		return errors.New("Repos does not exist")
+		return manager.ErrRepoNotFound
 	}
 	return nil
 }

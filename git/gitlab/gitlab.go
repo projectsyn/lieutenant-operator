@@ -206,6 +206,9 @@ func (g *Gitlab) delete() error {
 func (g *Gitlab) getProject() error {
 	project, _, err := g.client.Projects.GetProject(g.ops.Path+"/"+g.ops.RepoName, &gitlab.GetProjectOptions{})
 	if err != nil {
+		if errors.Is(err, gitlab.ErrNotFound) {
+			return manager.ErrRepoNotFound
+		}
 		return err
 	}
 

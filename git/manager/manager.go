@@ -2,6 +2,7 @@ package manager
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -92,6 +93,9 @@ type Credentials struct {
 	Token string
 }
 
+// ErrRepoNotFound is returned when a repository is not found
+var ErrRepoNotFound = errors.New("repository not found")
+
 // Repo represents a repository that lives on some git server
 type Repo interface {
 	// Type returns the type of the repo
@@ -102,8 +106,8 @@ type Repo interface {
 	// Update will enforce the defined keys to be deployed to the repository, it will return true if an actual change
 	// happened
 	Update() (bool, error)
-	// Read will read the repository and populate it with the deployed keys. It will throw an
-	// error if the repo is not found on the server.
+	// Read will read the repository and populate it with the deployed keys.
+	// Implementations MUST return ErrRepoNotFound if the repository does not exist.
 	Read() error
 	// Remove will remove the git project according to the recycle policy
 	Remove() error
