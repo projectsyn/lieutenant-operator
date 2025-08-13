@@ -8,7 +8,7 @@ require (
 	dario.cat/mergo v1.0.0
 	github.com/banzaicloud/bank-vaults/pkg/sdk v0.8.3
 	github.com/elastic/crd-ref-docs v0.1.0
-	github.com/go-logr/logr v1.4.2
+	github.com/go-logr/logr v1.4.3
 	github.com/go-logr/zapr v1.3.0
 	github.com/hashicorp/vault/api v1.14.0
 	github.com/kouhin/envflag v0.0.0-20150818174321-0e9a86061649
