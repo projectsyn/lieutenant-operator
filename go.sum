@@ -479,8 +479,8 @@ github.com/stretchr/testify v1.10.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf
 github.com/tv42/httpunix v0.0.0-20150427012821-b75d8614f926/go.mod h1:9ESjWnEqriFuLhtthL60Sar/7RFoluCcXsuvEwTV5KM=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
 github.com/x448/float16 v0.8.4/go.mod h1:14CWIYCyZA/cWjXOioeEpHeN/83MdbZDRQHoFcYsOfg=
-github.com/xanzy/go-gitlab v0.107.0 h1:P2CT9Uy9yN9lJo3FLxpMZ4xj6uWcpnigXsjvqJ6nd2Y=
-github.com/xanzy/go-gitlab v0.107.0/go.mod h1:wKNKh3GkYDMOsGmnfuX+ITCmDuSDWFO0G+C4AygL9RY=
+github.com/xanzy/go-gitlab v0.115.0 h1:6DmtItNcVe+At/liXSgfE/DZNZrGfalQmBRmOcJjOn8=
+github.com/xanzy/go-gitlab v0.115.0/go.mod h1:5XCDtM7AM6WMKmfDdOiEpyRWUqui2iS9ILfvCZ2gJ5M=
 github.com/xlab/treeprint v1.2.0 h1:HzHnuAF1plUN2zGlAFHbSQP2qJ0ZAD3XF5XD7OesXRQ=
 github.com/xlab/treeprint v1.2.0/go.mod h1:gj5Gd3gPdKtR1ikdDK6fnFLdmIS0X30kTTuNd/WEJu0=
 github.com/yuin/goldmark v1.1.25/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9decYSb74=
