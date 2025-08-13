@@ -189,7 +189,11 @@ func ensureAccessToken(ctx context.Context, cli client.Client, instance *synv1al
 	if err != nil {
 		return fmt.Errorf("error creating or updating access token secret: %w", err)
 	}
-	log.FromContext(ctx).Info("Reconciled secret", "secret", secret, "op", op)
+	log.FromContext(ctx).Info("Reconciled secret",
+		"secret", secret.Name,
+		"pat_uid", secret.Annotations[LieutenantAccessTokenUIDAnnotation],
+		"pat_expires_at", secret.Annotations[LieutenantAccessTokenExpiresAtAnnotation],
+		"op", op)
 
 	return nil
 }
