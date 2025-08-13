@@ -12,7 +12,7 @@ require (
 	github.com/go-logr/zapr v1.3.0
 	github.com/hashicorp/vault/api v1.14.0
 	github.com/kouhin/envflag v0.0.0-20150818174321-0e9a86061649
-	github.com/prometheus/client_golang v1.19.1
+	github.com/prometheus/client_golang v1.23.0
 	github.com/ryankurte/go-structparse v1.2.0
 	github.com/stretchr/testify v1.9.0
 	github.com/xanzy/go-gitlab v0.107.0
