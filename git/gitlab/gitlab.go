@@ -229,7 +229,7 @@ func (g *Gitlab) FullURL() *url.URL {
 	sshURL.User = url.User("git")
 	if g.ops.SSHHost != "" {
 		sshURL.Host = g.ops.SSHHost
-		// If the original URL had no host (for example "git.example.com/foo/bar"),
+		// If the original URL had no scheme (for example "git.example.com/foo/bar"),
 		// the host ends up in Path. Strip it when overriding the host.
 		if g.ops.URL.Host == "" {
 			trimmed := strings.TrimPrefix(sshURL.Path, "/")
