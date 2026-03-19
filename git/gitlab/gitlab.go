@@ -26,9 +26,7 @@ func init() {
 	manager.Register(&Gitlab{})
 }
 
-var (
-	ListItemsPerPage = 100
-)
+var ListItemsPerPage = 100
 
 // Gitlab holds the necessary information to communincate with a Gitlab server.
 // Each Gitlab instance will handle exactly one project.
@@ -43,7 +41,6 @@ type Gitlab struct {
 
 // Create will create a new Gitlab project
 func (g *Gitlab) Create() error {
-
 	nsID, err := g.getNamespaceID()
 	if err != nil {
 		return err
@@ -136,7 +133,6 @@ func (g *Gitlab) updateDisplayName() (bool, error) {
 
 func (g *Gitlab) removeDeployKeys(deleteKeys map[string]synv1alpha1.DeployKey) error {
 	existingKeys, _, err := g.client.DeployKeys.ListProjectDeployKeys(g.project.ID, &gitlab.ListProjectDeployKeysOptions{})
-
 	if err != nil {
 		return err
 	}
@@ -227,11 +223,21 @@ func (g *Gitlab) Connect() error {
 
 // FullURL returns the complete url of this git repository
 func (g *Gitlab) FullURL() *url.URL {
-
 	sshURL := *g.ops.URL
 
 	sshURL.Scheme = "ssh"
 	sshURL.User = url.User("git")
+	if g.ops.SSHHost != "" {
+		sshURL.Host = g.ops.SSHHost
+		// If the original URL had no scheme (for example "git.example.com/foo/bar"),
+		// the host ends up in Path. Strip it when overriding the host.
+		if g.ops.URL.Host == "" {
+			trimmed := strings.TrimPrefix(sshURL.Path, "/")
+			if parts := strings.SplitN(trimmed, "/", 2); len(parts) == 2 {
+				sshURL.Path = "/" + parts[1]
+			}
+		}
+	}
 	sshURL.Path = sshURL.Path + ".git"
 
 	return &sshURL
@@ -260,7 +266,6 @@ func (g *Gitlab) New(options manager.RepoOptions) (manager.Repo, error) {
 }
 
 func (g *Gitlab) getNamespaceID() (*int, error) {
-
 	fetchedNamespace, _, err := g.client.Namespaces.GetNamespace(g.ops.Path)
 	if err != nil {
 		return nil, err
@@ -338,7 +343,6 @@ func (g *Gitlab) getDeployKeys() (map[string]synv1alpha1.DeployKey, error) {
 
 // CommitTemplateFiles uploads all defined template files onto the repository.
 func (g *Gitlab) CommitTemplateFiles() error {
-
 	if len(g.ops.TemplateFiles) == 0 {
 		return nil
 	}
@@ -386,7 +390,6 @@ func (g *Gitlab) CommitTemplateFiles() error {
 // files that should be created. If there are existing files they will be
 // dropped.
 func (g *Gitlab) compareFiles() ([]manager.CommitFile, error) {
-
 	files := make([]manager.CommitFile, 0)
 	resp := &gitlab.Response{NextPage: 1}
 	var trees []*gitlab.TreeNode
@@ -438,14 +441,12 @@ func (g *Gitlab) compareFiles() ([]manager.CommitFile, error) {
 				Content:  content,
 			})
 		}
-
 	}
 
 	return files, nil
 }
 
 func (g *Gitlab) getCommitOptions() *gitlab.CreateCommitOptions {
-
 	co := &gitlab.CreateCommitOptions{
 		AuthorEmail:   ptr.To("lieutenant-operator@syn.local"),
 		AuthorName:    ptr.To("Lieutenant Operator"),
@@ -530,7 +531,6 @@ func (g *Gitlab) EnsureProjectAccessToken(ctx context.Context, name string, opts
 		Scopes:      ptr.To([]string{"write_repository"}),
 		AccessLevel: ptr.To(gitlab.MaintainerPermissions),
 	}, gitlab.WithContext(ctx))
-
 	if err != nil {
 		return manager.ProjectAccessToken{}, fmt.Errorf("error response from gitlab when creating ProjectAccessToken: %w", err)
 	}

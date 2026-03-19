@@ -14,9 +14,16 @@ image::gitlab_settings.png[]
 
 Before any other things can be created we need to specify the Git repository API endpoint first:
 
+[NOTE]
+====
+`sshEndpoint` is optional. If omitted, the operator uses the same host as `endpoint` for SSH.
+Provide a full SSH URL (for example `ssh://gitlab-ssh.example.com`) or just a host name.
+====
+
 [source,shell]
 ....
 kubectl -n lieutenant create secret generic lieutenant-secret \
   --from-literal endpoint=http://10.144.1.197:8080 \
+  --from-literal sshEndpoint=ssh://gitlab-ssh.example.com \
   --from-literal token=<token>
 ....

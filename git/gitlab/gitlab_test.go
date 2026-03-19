@@ -69,7 +69,6 @@ func TestGitlab_Read(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			defer tt.httpServer.Close()
 
 			serverURL, _ := url.Parse(tt.httpServer.URL)
@@ -176,7 +175,6 @@ func TestGitlab_Create(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			defer tt.httpServer.Close()
 
 			serverURL, _ := url.Parse(tt.httpServer.URL)
@@ -234,7 +232,6 @@ func TestGitlab_Delete(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			defer tt.httpServer.Close()
 
 			serverURL, _ := url.Parse(tt.httpServer.URL)
@@ -270,7 +267,6 @@ func testGetUpdateServer(t *testing.T, fail bool) *httptest.Server {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/v4/projects/3/deploy_keys", func(res http.ResponseWriter, req *http.Request) {
-
 		respH := http.StatusOK
 		if fail {
 			respH = http.StatusInternalServerError
@@ -329,7 +325,6 @@ func testGetUpdateServer(t *testing.T, fail bool) *httptest.Server {
 	mux.HandleFunc("/", testutils.LogNotFoundHandler(t))
 
 	return httptest.NewServer(mux)
-
 }
 
 func TestGitlab_Update(t *testing.T) {
@@ -377,7 +372,6 @@ func TestGitlab_Update(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-
 			defer tt.httpServer.Close()
 
 			serverURL, _ := url.Parse(tt.httpServer.URL)
@@ -601,7 +595,6 @@ func TestGitlab_CommitTemplateFiles(t *testing.T) {
 	ListItemsPerPage = 1 // simulate pagination
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
-
 			tt.fields.ops.URL, _ = url.Parse(tt.httpServer.URL)
 
 			g := &Gitlab{
@@ -635,6 +628,15 @@ func TestGitlab_FullURL(t *testing.T) {
 	assert.Equal(t, expectedFullURL, g.FullURL().String())
 	assert.Equal(t, expectedFullURL, g.FullURL().String())
 	assert.Equal(t, expectedFullURL, g.FullURL().String())
+
+	sshHostExpected := "ssh://git@ssh.example.com/foo/bar.git"
+	g = &Gitlab{
+		ops: manager.RepoOptions{
+			URL:     serverURL,
+			SSHHost: "ssh.example.com",
+		},
+	}
+	assert.Equal(t, sshHostExpected, g.FullURL().String())
 }
 
 type mockClock struct {

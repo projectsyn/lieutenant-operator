@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
@@ -23,15 +24,15 @@ const (
 	SecretHostKeysName = "hostKeys"
 	// SecretEndpointName is the name of the secret entry containing the api endpoint
 	SecretEndpointName = "endpoint"
+	// SecretSSHEndpointName is the name of the secret entry containing the ssh endpoint (optional)
+	SecretSSHEndpointName = "sshEndpoint"
 	// DeletionMagicString defines when a file should be deleted from the repository
-	//TODO it will be replaced with something better in the future TODO
+	// TODO it will be replaced with something better in the future TODO
 	DeletionMagicString = "{delete}"
 )
 
-var (
-	// implementations holds each a copy of the registered Git implementation
-	implementations []Implementation
-)
+// implementations holds each a copy of the registered Git implementation
+var implementations []Implementation
 
 // Register adds a type to the list of supported Git implementations.
 func Register(i Implementation) {
@@ -40,7 +41,6 @@ func Register(i Implementation) {
 
 // NewRepo returns a Repo object that can handle the specific URL
 func NewRepo(opts RepoOptions) (Repo, error) {
-
 	for _, imp := range implementations {
 		if exists, err := imp.IsType(opts.URL); exists {
 			newImp, err := imp.New(opts)
@@ -66,6 +66,7 @@ type RepoOptions struct {
 	DeployKeys     map[string]synv1alpha1.DeployKey
 	Logger         logr.Logger
 	URL            *url.URL
+	SSHHost        string
 	Path           string
 	RepoName       string
 	DisplayName    string
@@ -212,9 +213,17 @@ func GetGitClient(ctx context.Context, instance *synv1alpha1.GitRepoTemplate, na
 	}
 
 	repoURL, err := url.Parse(string(secret.Data[SecretEndpointName]) + "/" + instance.Path + "/" + instance.RepoName)
-
 	if err != nil {
 		return nil, "", err
+	}
+
+	sshHost := ""
+	if raw, ok := secret.Data[SecretSSHEndpointName]; ok {
+		parsed, err := parseSSHEndpoint(string(raw))
+		if err != nil {
+			return nil, "", fmt.Errorf("invalid ssh endpoint in secret %s: %w", secret.GetName(), err)
+		}
+		sshHost = parsed
 	}
 
 	repoOptions := RepoOptions{
@@ -227,6 +236,7 @@ func GetGitClient(ctx context.Context, instance *synv1alpha1.GitRepoTemplate, na
 		RepoName:       instance.RepoName,
 		DisplayName:    instance.DisplayName,
 		URL:            repoURL,
+		SSHHost:        sshHost,
 		TemplateFiles:  instance.TemplateFiles,
 		DeletionPolicy: instance.DeletionPolicy,
 	}
@@ -239,5 +249,39 @@ func GetGitClient(ctx context.Context, instance *synv1alpha1.GitRepoTemplate, na
 	err = repo.Connect()
 
 	return repo, hostKeysString, err
+}
 
+func parseSSHEndpoint(raw string) (string, error) {
+	trimmed := strings.TrimSpace(raw)
+	if trimmed == "" {
+		return "", nil
+	}
+
+	parsed, err := url.Parse(trimmed)
+	if err != nil {
+		return "", err
+	}
+
+	if parsed.Host != "" {
+		return parsed.Host, nil
+	}
+
+	host := strings.TrimSpace(parsed.Path)
+	if host == "" {
+		return "", fmt.Errorf("ssh endpoint has no host")
+	}
+
+	if at := strings.LastIndex(host, "@"); at >= 0 {
+		host = host[at+1:]
+	}
+
+	if slash := strings.Index(host, "/"); slash >= 0 {
+		host = host[:slash]
+	}
+
+	if host == "" {
+		return "", fmt.Errorf("ssh endpoint has no host")
+	}
+
+	return host, nil
 }
