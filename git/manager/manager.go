@@ -275,5 +275,13 @@ func parseSSHEndpoint(raw string) (string, error) {
 		host = host[at+1:]
 	}
 
+	if slash := strings.Index(host, "/"); slash >= 0 {
+		host = host[:slash]
+	}
+
+	if host == "" {
+		return "", fmt.Errorf("ssh endpoint has no host")
+	}
+
 	return host, nil
 }
