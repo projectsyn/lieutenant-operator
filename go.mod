@@ -2,7 +2,7 @@ module github.com/projectsyn/lieutenant-operator
 
 go 1.24.0
 
-toolchain go1.24.6
+toolchain go1.26.1
 
 require (
 	dario.cat/mergo v1.0.0
