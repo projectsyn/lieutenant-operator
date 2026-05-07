@@ -19,6 +19,7 @@ func Test_ClusterInfoCollector(t *testing.T) {
 	expectedMetricNames := []string{
 		"syn_lieutenant_cluster_info",
 		"syn_lieutenant_cluster_facts",
+		"syn_lieutenant_cluster_dynamic_facts",
 	}
 
 	c := prepareClient(t,
@@ -49,6 +50,11 @@ func Test_ClusterInfoCollector(t *testing.T) {
 					"tenant":                         "value",
 				},
 			},
+			Status: synv1alpha1.ClusterStatus{
+				Facts: map[string]string{
+					"test": "value",
+				},
+			},
 		},
 	)
 
@@ -58,7 +64,11 @@ func Test_ClusterInfoCollector(t *testing.T) {
 		Namespace: namespace,
 	}
 
-	metrics := `# HELP syn_lieutenant_cluster_facts Lieutenant cluster facts. Keys are normalized to be valid Prometheus labels.
+	metrics := `# HELP syn_lieutenant_cluster_dynamic_facts Lieutenant cluster dynamic facts. Keys are normalized to be valid Prometheus labels.
+# TYPE syn_lieutenant_cluster_dynamic_facts gauge
+syn_lieutenant_cluster_dynamic_facts{cluster="c-empty",tenant=""} 1
+syn_lieutenant_cluster_dynamic_facts{cluster="c2",tenant="t2",test="value"} 1
+# HELP syn_lieutenant_cluster_facts Lieutenant cluster facts. Keys are normalized to be valid Prometheus labels.
 # TYPE syn_lieutenant_cluster_facts gauge
 syn_lieutenant_cluster_facts{cluster="c-empty",tenant=""} 1
 syn_lieutenant_cluster_facts{cluster="c2",fact__key="value",fact__key_duplicate_after_normalize="value",fact__key_duplicate_after_normalize_1="value",fact__key_duplicate_after_normalize_2="value",key="value",key_with847_____invalid_chars="value",orig_cluster="value",orig_tenant="value",tenant="t2"} 1
