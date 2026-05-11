@@ -31,11 +31,28 @@ var clusterFactsDesc = prometheus.NewDesc(
 	nil,
 )
 
-// commodore build info has dynamic labels
+var clusterDynFactsDesc = prometheus.NewDesc(
+	"syn_lieutenant_cluster_dynamic_facts",
+	"Lieutenant cluster dynamic facts.",
+	[]string{"cluster", "tenant", "display_name"},
+	nil,
+)
+
+// cluster facts has dynamic labels
 func newClusterFactsDesc(lbls ...string) *prometheus.Desc {
 	return prometheus.NewDesc(
 		"syn_lieutenant_cluster_facts",
 		"Lieutenant cluster facts. Keys are normalized to be valid Prometheus labels.",
+		lbls,
+		nil,
+	)
+}
+
+// cluster dynamic facts has dynamic labels
+func newClusterDynFactsDesc(lbls ...string) *prometheus.Desc {
+	return prometheus.NewDesc(
+		"syn_lieutenant_cluster_dynamic_facts",
+		"Lieutenant cluster dynamic facts. Keys are normalized to be valid Prometheus labels.",
 		lbls,
 		nil,
 	)
@@ -73,8 +90,12 @@ func (m *ClusterInfoCollector) Collect(ch chan<- prometheus.Metric) {
 			cl.Name, cl.Spec.TenantRef.Name, cl.Spec.DisplayName,
 		)
 
-		if err := clusterFacts(cl, ch); err != nil {
+		if err := clusterFacts(newClusterFactsDesc, cl, cl.Spec.Facts, ch); err != nil {
 			log.Log.Info("failed to collect cluster facts", "error", err)
+		}
+
+		if err := clusterFacts(newClusterDynFactsDesc, cl, cl.Status.Facts, ch); err != nil {
+			log.Log.Info("failed to collect cluster dynamic facts", "error", err)
 		}
 	}
 }
@@ -85,8 +106,8 @@ func (m *ClusterInfoCollector) Collect(ch chan<- prometheus.Metric) {
 // If a key is empty it is replaced with "_empty".
 // If a key is in the protected list after normalizing it is prefixed with "orig_".
 // If a key is a duplicate after normalizing it is suffixed with "_<n>" where n is the number of duplicates.
-func clusterFacts(cl synv1alpha1.Cluster, ch chan<- prometheus.Metric) error {
-	rks, vs := pairs(cl.Spec.Facts)
+func clusterFacts(descfn func(lbls ...string) *prometheus.Desc, cl synv1alpha1.Cluster, facts synv1alpha1.Facts, ch chan<- prometheus.Metric) error {
+	rks, vs := pairs(facts)
 	ks := make([]string, len(rks))
 	for i, k := range rks {
 		ks[i] = normalizeLabelKey(k, []string{"cluster", "tenant"}, "fact_")
@@ -100,7 +121,7 @@ func clusterFacts(cl synv1alpha1.Cluster, ch chan<- prometheus.Metric) error {
 	}
 
 	m, err := prometheus.NewConstMetric(
-		newClusterFactsDesc(append([]string{"cluster", "tenant"}, ks...)...),
+		descfn(append([]string{"cluster", "tenant"}, ks...)...),
 		prometheus.GaugeValue,
 		1,
 		append([]string{cl.Name, cl.Spec.TenantRef.Name}, vs...)...,
