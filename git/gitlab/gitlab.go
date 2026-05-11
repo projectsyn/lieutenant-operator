@@ -26,7 +26,7 @@ func init() {
 	manager.Register(&Gitlab{})
 }
 
-var ListItemsPerPage = 100
+var ListItemsPerPage int64 = 100
 
 // Gitlab holds the necessary information to communincate with a Gitlab server.
 // Each Gitlab instance will handle exactly one project.
@@ -265,7 +265,7 @@ func (g *Gitlab) New(options manager.RepoOptions) (manager.Repo, error) {
 	}, nil
 }
 
-func (g *Gitlab) getNamespaceID() (*int, error) {
+func (g *Gitlab) getNamespaceID() (*int64, error) {
 	fetchedNamespace, _, err := g.client.Namespaces.GetNamespace(g.ops.Path)
 	if err != nil {
 		return nil, err
@@ -504,14 +504,14 @@ func (g *Gitlab) EnsureProjectAccessToken(ctx context.Context, name string, opts
 	if opts.UID == nil {
 		if len(validATs) > 0 {
 			return manager.ProjectAccessToken{
-				UID:       strconv.Itoa(validATs[0].ID),
+				UID:       strconv.FormatInt(validATs[0].ID, 10),
 				ExpiresAt: time.Time(*validATs[0].ExpiresAt),
 			}, nil
 		}
 	} else {
 		uid := *opts.UID
 		for _, token := range validATs {
-			if strconv.Itoa(token.ID) == uid {
+			if strconv.FormatInt(token.ID, 10) == uid {
 				return manager.ProjectAccessToken{
 					UID:       uid,
 					ExpiresAt: time.Time(*token.ExpiresAt),
@@ -536,7 +536,7 @@ func (g *Gitlab) EnsureProjectAccessToken(ctx context.Context, name string, opts
 	}
 
 	return manager.ProjectAccessToken{
-		UID:       strconv.Itoa(token.ID),
+		UID:       strconv.FormatInt(token.ID, 10),
 		Token:     token.Token,
 		ExpiresAt: time.Time(ptr.Deref(token.ExpiresAt, gitlab.ISOTime{})),
 	}, nil
