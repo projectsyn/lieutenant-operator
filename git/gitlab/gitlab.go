@@ -193,7 +193,7 @@ func (g *Gitlab) delete() error {
 		return fmt.Errorf("no project %v found, can't delete", g.ops.Path)
 	}
 
-	_, err = g.client.Projects.DeleteProject(g.project.ID)
+	_, err = g.client.Projects.DeleteProject(g.project.ID, &gitlab.DeleteProjectOptions{})
 
 	return err
 }
