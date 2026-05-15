@@ -20,7 +20,7 @@ import (
 	"github.com/go-logr/zapr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/xanzy/go-gitlab"
+	gitlab "gitlab.com/gitlab-org/api/client-go/v2"
 	"go.uber.org/atomic"
 	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
@@ -811,20 +811,22 @@ func testProjectAccessTokenServer(t *testing.T, clock func() time.Time) *httptes
 		}
 
 		patsMux.Lock()
-		id := 100 + len(pats) + 1
-		nPat := gitlab.ProjectAccessToken{
-			ID:          id,
-			UserID:      123,
-			Name:        *createPAT.Name,
-			Scopes:      *createPAT.Scopes,
-			CreatedAt:   ptr.To(clock()),
-			ExpiresAt:   createPAT.ExpiresAt,
-			Active:      true,
-			Revoked:     false,
-			Token:       "token" + strconv.Itoa(id),
-			AccessLevel: *createPAT.AccessLevel,
+		id := int64(100 + len(pats) + 1)
+		nPat := gitlab.PersonalAccessToken{
+			ID:        id,
+			UserID:    123,
+			Name:      *createPAT.Name,
+			Scopes:    *createPAT.Scopes,
+			CreatedAt: ptr.To(clock()),
+			ExpiresAt: createPAT.ExpiresAt,
+			Active:    true,
+			Revoked:   false,
+			Token:     "token" + strconv.FormatInt(id, 10),
 		}
-		pats = append(pats, nPat)
+		pats = append(pats, gitlab.ProjectAccessToken{
+			PersonalAccessToken: nPat,
+			AccessLevel:         *createPAT.AccessLevel,
+		})
 		patsMux.Unlock()
 		_ = json.NewEncoder(res).Encode(nPat)
 	})
