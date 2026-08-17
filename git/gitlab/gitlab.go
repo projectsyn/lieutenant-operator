@@ -68,8 +68,7 @@ func (g *Gitlab) Read() error {
 }
 
 // Update will update the Project Description and
-// will overwrite the deployment keys on the endpoint that differ from the local ones. Currently it will not
-// touch any additional keys that may have been added to the repository.
+// will overwrite the deployment keys on the endpoint that differ from the local ones.
 func (g *Gitlab) Update() (bool, error) {
 	deployKeysUpdated, err := g.updateDeployKeys()
 	if err != nil {
@@ -90,6 +89,7 @@ func (g *Gitlab) updateDeployKeys() (bool, error) {
 		return false, err
 	}
 
+	// First, any keys that are either absent or different in k8s are deleted in GitLab.
 	deleteKeys := helpers.CompareKeys(remoteKeys, g.deployKeys)
 
 	if len(deleteKeys) > 0 {
@@ -99,6 +99,9 @@ func (g *Gitlab) updateDeployKeys() (bool, error) {
 		}
 	}
 
+	// Then, any keys that are either absent or different in GitLab are created in GitLab.
+	// Keys that were different have already been deleted in step 1, so this effectively
+	// re-creates them with the new value.
 	deltaKeys := helpers.CompareKeys(g.deployKeys, remoteKeys)
 
 	if len(deltaKeys) > 0 {
