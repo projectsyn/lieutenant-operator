@@ -26,6 +26,7 @@ import (
 	"golang.org/x/exp/maps"
 	"k8s.io/utils/ptr"
 
+	"github.com/projectsyn/lieutenant-operator/api/v1alpha1"
 	"github.com/projectsyn/lieutenant-operator/git/manager"
 	"github.com/projectsyn/lieutenant-operator/testutils"
 )
@@ -262,18 +263,14 @@ var projectsPathResponse []byte
 //go:embed testdata/testGetUpdateServer/projects_id_response.json
 var projectsIDResponse []byte
 
-//goland:noinspection HttpUrlsUsage
-func testGetUpdateServer(t *testing.T, fail bool) *httptest.Server {
-	mux := http.NewServeMux()
+type deployKeyTracker struct {
+	keysDeleted []int
+	keysCreated []string
+}
 
-	mux.HandleFunc("/api/v4/projects/3/deploy_keys", func(res http.ResponseWriter, req *http.Request) {
-		respH := http.StatusOK
-		if fail {
-			respH = http.StatusInternalServerError
-		}
-		res.WriteHeader(respH)
-		_, _ = res.Write(keysResponse)
-	})
+//goland:noinspection HttpUrlsUsage
+func testGetUpdateServer(t *testing.T, fail bool, deployKeyTracker *deployKeyTracker) *httptest.Server {
+	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/v4/projects/updated%2Frepo", func(res http.ResponseWriter, req *http.Request) {
 		respH := http.StatusOK
@@ -313,14 +310,46 @@ func testGetUpdateServer(t *testing.T, fail bool) *httptest.Server {
 		_, _ = res.Write([]byte(projectBytes))
 	})
 
-	deleteOk := func(res http.ResponseWriter, req *http.Request) {
-		res.WriteHeader(http.StatusOK)
-		_, _ = res.Write([]byte(`{"message":"202 Accepted"}`))
+	trackDelete := func(keyID int) func(http.ResponseWriter, *http.Request) {
+		return func(res http.ResponseWriter, req *http.Request) {
+			deployKeyTracker.keysDeleted = append(deployKeyTracker.keysDeleted, keyID)
+			res.WriteHeader(http.StatusOK)
+			_, _ = res.Write([]byte(`{"message":"202 Accepted"}`))
+		}
 	}
 
-	mux.HandleFunc("/api/v4/projects/3/deploy_keys/1", deleteOk)
+	trackCreate := func(res http.ResponseWriter, req *http.Request) {
+		response := http.StatusOK
+		if req.Method == http.MethodPost {
+			deployKey := gitlab.ProjectDeployKey{}
+			buf := new(bytes.Buffer)
+			_, _ = buf.ReadFrom(req.Body)
+			err := json.Unmarshal(buf.Bytes(), &deployKey)
+			if err != nil {
+				t.Logf("Unmarshal error: %v", err)
+				response = http.StatusInternalServerError
+			}
+			deployKeyTracker.keysCreated = append(deployKeyTracker.keysCreated, deployKey.Title)
+			if fail {
+				response = http.StatusInternalServerError
+			}
+			dkr, err := json.Marshal(deployKey)
+			res.WriteHeader(response)
+			_, _ = res.Write(dkr)
+		} else {
+			if fail {
+				response = http.StatusInternalServerError
+			}
+			res.WriteHeader(response)
+			_, _ = res.Write(keysResponse)
+		}
+	}
 
-	mux.HandleFunc("/api/v4/projects/3/deploy_keys/3", deleteOk)
+	mux.HandleFunc("/api/v4/projects/3/deploy_keys", trackCreate)
+
+	mux.HandleFunc("/api/v4/projects/3/deploy_keys/1", trackDelete(1))
+
+	mux.HandleFunc("/api/v4/projects/3/deploy_keys/3", trackDelete(3))
 
 	mux.HandleFunc("/", testutils.LogNotFoundHandler(t))
 
@@ -328,14 +357,21 @@ func testGetUpdateServer(t *testing.T, fail bool) *httptest.Server {
 }
 
 func TestGitlab_Update(t *testing.T) {
+	type depKey struct {
+		name string
+		key  string
+	}
 	type fields struct {
-		project *gitlab.Project
+		project    *gitlab.Project
+		deployKeys []depKey
 	}
 	tests := []struct {
-		name       string
-		fields     fields
-		wantErr    bool
-		httpServer *httptest.Server
+		name                 string
+		fields               fields
+		wantErr              bool
+		expectedKeyDeletions []int
+		expectedKeyCreations []string
+		deployKeyTracker
 	}{
 		{
 			name: "update successful",
@@ -347,8 +383,96 @@ func TestGitlab_Update(t *testing.T) {
 					Description: "newDesc",
 				},
 			},
-			wantErr:    false,
-			httpServer: testGetUpdateServer(t, false),
+			wantErr:              false,
+			expectedKeyDeletions: []int{1, 3},
+			deployKeyTracker:     deployKeyTracker{},
+		},
+		{
+			name: "update successful with existing deploy key",
+			fields: fields{
+				project: &gitlab.Project{
+					ID:          3,
+					Path:        "updated",
+					Name:        "repo",
+					Description: "newDesc",
+				},
+				deployKeys: []depKey{{
+					name: "Public key",
+					key:  "AAAAB3NzaC1yc2EAAAABJQAAAIEAiPWx6WM4lhHNedGfBpPJNPpZ7yKu+dnn1SJejgt4596k6YjzGGphH2TUxwKzxcKDKKezwkpfnxPkSMkuEspGRt/aZZ9wa++Oi7Qkr8prgHc4soW6NUlfDzpvZK2H5E7eQaSeP3SAwGmQKUFHCddNaP0L+hM7zhFNzjFvpaMgJw0=",
+				}},
+			},
+			wantErr:              false,
+			expectedKeyDeletions: []int{3},
+			deployKeyTracker:     deployKeyTracker{},
+		},
+		{
+			name: "update successful with new deploy key",
+			fields: fields{
+				project: &gitlab.Project{
+					ID:          3,
+					Path:        "updated",
+					Name:        "repo",
+					Description: "newDesc",
+				},
+				deployKeys: []depKey{{
+					name: "New key",
+					key:  "AAAAB3NzaC1yc2EAAAABJQAAAIEAiPWx6WM4lhHNedGfBpPJNPpZ7yKu+dnn1SJejgt4596k6YjzGGphH2TUxwKzxcKDKKezwkpfnxPkSMkuEspGRt/aZZ9wa++Oi7Qkr8prgHc4soW6NUlfDzpvZK2H5E7eQaSeP3SAwGmQKUFHCddNaP0L+hM7zhFNzjFvpaMgJw0=",
+				}},
+			},
+			wantErr:              false,
+			expectedKeyDeletions: []int{1, 3},
+			expectedKeyCreations: []string{"New key"},
+			deployKeyTracker:     deployKeyTracker{},
+		},
+		{
+			name: "update successful with changed deploy key",
+			fields: fields{
+				project: &gitlab.Project{
+					ID:          3,
+					Path:        "updated",
+					Name:        "repo",
+					Description: "newDesc",
+				},
+				deployKeys: []depKey{
+					{
+						name: "Public key",
+						key:  "CHANGEDzaC1yc2EAAAABJQAAAIEAiPWx6WM4lhHNedGfBpPJNPpZ7yKu+dnn1SJejgt4596k6YjzGGphH2TUxwKzxcKDKKezwkpfnxPkSMkuEspGRt/aZZ9wa++Oi7Qkr8prgHc4soW6NUlfDzpvZK2H5E7eQaSeP3SAwGmQKUFHCddNaP0L+hM7zhFNzjFvpaMgJw0=",
+					},
+					{
+						name: "Another Public key",
+						key:  "AAAAB3NzaC1yc2EAAAABJQAAAIEAiPWx6WM4lhHNedGfBpPJNPpZ7yKu+dnn1SJejgt4596k6YjzGGphH2TUxwKzxcKDKKezwkpfnxPkSMkuEspGRt/aZZ9wa++Oi7Qkr8prgHc4soW6NUlfDzpvZK2H5E7eQaSeP3SAwGmQKUFHCddNaP0L+hM7zhFNzjFvpaMgJw0=",
+					},
+				},
+			},
+			wantErr:              false,
+			expectedKeyDeletions: []int{1},
+			expectedKeyCreations: []string{"Public key"},
+			deployKeyTracker:     deployKeyTracker{},
+		},
+		{
+			name: "update successful with changed, removed, and added deploy key",
+			fields: fields{
+				project: &gitlab.Project{
+					ID:          3,
+					Path:        "updated",
+					Name:        "repo",
+					Description: "newDesc",
+				},
+				deployKeys: []depKey{
+					{
+						name: "Public key",
+						key:  "CHANGEDzaC1yc2EAAAABJQAAAIEAiPWx6WM4lhHNedGfBpPJNPpZ7yKu+dnn1SJejgt4596k6YjzGGphH2TUxwKzxcKDKKezwkpfnxPkSMkuEspGRt/aZZ9wa++Oi7Qkr8prgHc4soW6NUlfDzpvZK2H5E7eQaSeP3SAwGmQKUFHCddNaP0L+hM7zhFNzjFvpaMgJw0=",
+					},
+					{
+						name: "New Public key",
+						key:  "AAAAB3NzaC1yc2EAAAABJQAAAIEAiPWx6WM4lhHNedGfBpPJNPpZ7yKu+dnn1SJejgt4596k6YjzGGphH2TUxwKzxcKDKKezwkpfnxPkSMkuEspGRt/aZZ9wa++Oi7Qkr8prgHc4soW6NUlfDzpvZK2H5E7eQaSeP3SAwGmQKUFHCddNaP0L+hM7zhFNzjFvpaMgJw0=",
+					},
+				},
+			},
+			wantErr:              false,
+			expectedKeyDeletions: []int{1, 3},
+			expectedKeyCreations: []string{"Public key", "New Public key"},
+			deployKeyTracker:     deployKeyTracker{},
 		},
 		{
 			name: "update failed",
@@ -360,8 +484,8 @@ func TestGitlab_Update(t *testing.T) {
 					Description: "newDesc",
 				},
 			},
-			wantErr:    true,
-			httpServer: testGetUpdateServer(t, true),
+			wantErr:          true,
+			deployKeyTracker: deployKeyTracker{},
 		},
 	}
 
@@ -372,9 +496,18 @@ func TestGitlab_Update(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			defer tt.httpServer.Close()
+			serv := testGetUpdateServer(t, tt.wantErr, &tt.deployKeyTracker)
+			defer serv.Close()
 
-			serverURL, _ := url.Parse(tt.httpServer.URL)
+			serverURL, _ := url.Parse(serv.URL)
+
+			dks := make(map[string]v1alpha1.DeployKey)
+			for i := 0; i < len(tt.fields.deployKeys); i++ {
+				dks[tt.fields.deployKeys[i].name] = v1alpha1.DeployKey{
+					Type: "ssh-rsa",
+					Key:  tt.fields.deployKeys[i].key,
+				}
+			}
 
 			g := &Gitlab{
 				ops: manager.RepoOptions{
@@ -383,8 +516,9 @@ func TestGitlab_Update(t *testing.T) {
 					RepoName:    tt.fields.project.Name,
 					DisplayName: tt.fields.project.Description,
 				},
-				project: tt.fields.project,
-				log:     zapr.NewLogger(zapLog),
+				project:    tt.fields.project,
+				log:        zapr.NewLogger(zapLog),
+				deployKeys: dks,
 			}
 
 			err := g.Connect()
@@ -397,6 +531,9 @@ func TestGitlab_Update(t *testing.T) {
 			if !tt.wantErr {
 				assert.Equal(t, tt.fields.project.Description, g.project.Description, "Description should have been updated")
 			}
+
+			assert.ElementsMatch(t, tt.expectedKeyDeletions, tt.deployKeyTracker.keysDeleted)
+			assert.ElementsMatch(t, tt.expectedKeyCreations, tt.deployKeyTracker.keysCreated)
 		})
 	}
 }

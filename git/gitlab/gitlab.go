@@ -59,7 +59,7 @@ func (g *Gitlab) Create() error {
 	}
 
 	g.project = project
-	return g.setDeployKeys(g.deployKeys, false)
+	return g.setDeployKeys(g.deployKeys)
 }
 
 // Read reads the repository from the gitlab server and sets the object's state accordingly
@@ -68,8 +68,7 @@ func (g *Gitlab) Read() error {
 }
 
 // Update will update the Project Description and
-// will overwrite the deployment keys on the endpoint that differ from the local ones. Currently it will not
-// touch any additional keys that may have been added to the repository.
+// will overwrite the deployment keys on the endpoint that differ from the local ones.
 func (g *Gitlab) Update() (bool, error) {
 	deployKeysUpdated, err := g.updateDeployKeys()
 	if err != nil {
@@ -90,19 +89,23 @@ func (g *Gitlab) updateDeployKeys() (bool, error) {
 		return false, err
 	}
 
-	deltaKeys := helpers.CompareKeys(g.deployKeys, remoteKeys)
+	// First, any keys that are either absent or different in k8s are deleted in GitLab.
+	deleteKeys := helpers.CompareKeys(remoteKeys, g.deployKeys)
 
-	if len(deltaKeys) > 0 {
-		err = g.setDeployKeys(deltaKeys, true)
+	if len(deleteKeys) > 0 {
+		err = g.removeDeployKeys(deleteKeys)
 		if err != nil {
 			return false, err
 		}
 	}
 
-	deleteKeys := helpers.CompareKeys(remoteKeys, g.deployKeys)
+	// Then, any keys that are either absent or different in GitLab are created in GitLab.
+	// Keys that were different have already been deleted in step 1, so this effectively
+	// re-creates them with the new value.
+	deltaKeys := helpers.CompareKeys(g.deployKeys, remoteKeys)
 
-	if len(deleteKeys) > 0 {
-		err = g.removeDeployKeys(deleteKeys)
+	if len(deltaKeys) > 0 {
+		err = g.setDeployKeys(deltaKeys)
 		if err != nil {
 			return false, err
 		}
@@ -275,12 +278,8 @@ func (g *Gitlab) getNamespaceID() (*int64, error) {
 }
 
 // setDeployKeys will update the keys on the gitlab instance. If force is set the key will be deleted beforehand.
-func (g *Gitlab) setDeployKeys(localKeys map[string]synv1alpha1.DeployKey, force bool) error {
+func (g *Gitlab) setDeployKeys(localKeys map[string]synv1alpha1.DeployKey) error {
 	errorCount := 0
-	existingKeys, _, err := g.client.DeployKeys.ListProjectDeployKeys(g.project.ID, &gitlab.ListProjectDeployKeysOptions{})
-	if err != nil {
-		return err
-	}
 	for k, v := range localKeys {
 		mergedKey := v.Type + " " + v.Key
 		keyOpts := &gitlab.AddDeployKeyOptions{
@@ -293,25 +292,12 @@ func (g *Gitlab) setDeployKeys(localKeys map[string]synv1alpha1.DeployKey, force
 		if err != nil {
 			g.log.Error(err, "failed adding key to repository "+g.project.Name)
 			errorCount++
-		} else if force {
-			g.overwriteKey(existingKeys, k)
 		}
 	}
 	if errorCount > 0 {
 		return fmt.Errorf("%v keys failed to be added", errorCount)
 	}
 	return nil
-}
-
-func (g *Gitlab) overwriteKey(existingKeys []*gitlab.ProjectDeployKey, key string) {
-	// unfortunately there's no way via the API to update a key, so we have to delete and recreate it, when it differs from
-	// the yaml in the k8s cluster.
-	for _, deleteKey := range existingKeys {
-		if deleteKey.Title == key {
-			g.log.Info("forcing re-creation of key " + key)
-			g.deleteKey(deleteKey)
-		}
-	}
 }
 
 func (g *Gitlab) deleteKey(deleteKey *gitlab.ProjectDeployKey) {
