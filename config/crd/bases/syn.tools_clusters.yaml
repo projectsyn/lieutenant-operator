@@ -227,6 +227,22 @@ spec:
                   displayName:
                     description: DisplayName of Git repository
                     type: string
+                  generatedDeployKeys:
+                    additionalProperties:
+                      description: DeployKeyTemplate defines an SSH key to be generated
+                        for git operations.
+                      properties:
+                        type:
+                          description: Type defines what type the key is. For key
+                            generation, currently only `ssh-rsa` and `ssh-ed25519`
+                            are supported.
+                          type: string
+                        writeAccess:
+                          description: WriteAccess if the key has RW access or not
+                          type: boolean
+                      type: object
+                    description: Path to Git repository
+                    type: object
                   path:
                     description: Path to Git repository
                     type: string
