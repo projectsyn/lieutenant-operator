@@ -65,6 +65,8 @@ type GitRepoTemplate struct {
 	// DeployKeys optional list of SSH deploy keys. If not set, not deploy keys will be configured
 	DeployKeys map[string]DeployKey `json:"deployKeys,omitempty"`
 	// Path to Git repository
+	GeneratedDeployKeys map[string]DeployKeyTemplate `json:"generatedDeployKeys,omitempty"`
+	// Path to Git repository
 	Path string `json:"path,omitempty"`
 	// RepoName name of Git repository
 	RepoName string `json:"repoName,omitempty"`
@@ -149,6 +151,14 @@ type DeployKey struct {
 	Type string `json:"type,omitempty"`
 	// Key is the actual key
 	Key string `json:"key,omitempty"`
+	// WriteAccess if the key has RW access or not
+	WriteAccess bool `json:"writeAccess,omitempty"`
+}
+
+// DeployKeyTemplate defines an SSH key to be generated for git operations.
+type DeployKeyTemplate struct {
+	// Type defines what type the key is. For key generation, currently only `ssh-rsa` and `ssh-ed25519` are supported.
+	Type string `json:"type,omitempty"`
 	// WriteAccess if the key has RW access or not
 	WriteAccess bool `json:"writeAccess,omitempty"`
 }

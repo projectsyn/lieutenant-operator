@@ -4,14 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/charmbracelet/keygen"
 	"github.com/go-logr/logr"
 	synv1alpha1 "github.com/projectsyn/lieutenant-operator/api/v1alpha1"
 	"go.uber.org/multierr"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/json"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/utils/ptr"
@@ -24,6 +27,11 @@ import (
 	"github.com/projectsyn/lieutenant-operator/git/manager"
 	"github.com/projectsyn/lieutenant-operator/pipeline"
 )
+
+const DEPLOY_KEY_NAME_INFIX = "-deploy-key-"
+const DEPLOY_KEY_SECRET_PUBKEY = "publicKey"
+const DEPLOY_KEY_SECRET_PRIVKEY = "privateKey"
+const DEPLOY_KEY_SECRET_TYPE = "type"
 
 func Steps(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	return steps(obj, data, manager.GetGitClient)
@@ -98,6 +106,10 @@ func steps(obj pipeline.Object, data *pipeline.Context, getGitClient gitClientFa
 	}
 
 	if err := ensureCIVariables(data.Context, data.Client, instance, repo); err != nil {
+		return pipeline.Result{Err: handleRepoError(data.Context, fmt.Errorf("ensure ci variables: %w", err), instance, data.Client)}
+	}
+
+	if err := ensureGeneratedDeployKeys(data.Context, data.Client, instance); err != nil {
 		return pipeline.Result{Err: handleRepoError(data.Context, fmt.Errorf("ensure ci variables: %w", err), instance, data.Client)}
 	}
 
@@ -250,6 +262,74 @@ func ensureCIVariables(ctx context.Context, cli client.Client, instance *synv1al
 
 	instance.Status.LastAppliedCIVariables = string(varsJSON)
 	return nil
+}
+
+// ensureGeneratedDeployKeys ensures that the repo's `generateDeployKey` entries
+// all have a corresponding `deployKey` entry, generating SSH keys as required
+// and storing them in individual secrets.
+func ensureGeneratedDeployKeys(ctx context.Context, cli client.Client, instance *synv1alpha1.GitRepo) error {
+	for genKey, settings := range instance.Spec.GeneratedDeployKeys {
+		secretName := instance.Name + DEPLOY_KEY_NAME_INFIX + genKey
+		secretNSName := types.NamespacedName{Name: secretName, Namespace: instance.Namespace}
+		secret := &corev1.Secret{}
+
+		err := cli.Get(ctx, secretNSName, secret)
+		if err != nil {
+			if !apierrors.IsNotFound(err) {
+				return err
+			}
+			err = generateNewDeployKeySecret(ctx, cli, settings, secretNSName, secret)
+			if err != nil {
+				return err
+			}
+		}
+
+		pubkeyB, ok := secret.Data[DEPLOY_KEY_SECRET_PUBKEY]
+		if !ok {
+			return fmt.Errorf("could not retrieve deploy key from secret: missing key: %s", DEPLOY_KEY_SECRET_PUBKEY)
+		}
+		pubkey := string(pubkeyB[:])
+		parts := strings.Split(pubkey, " ")
+
+		oldKey, ok := instance.Spec.DeployKeys[genKey]
+		if !ok || oldKey.Key != parts[1] {
+			if instance.Spec.DeployKeys == nil {
+				instance.Spec.DeployKeys = make(map[string]synv1alpha1.DeployKey)
+			}
+			instance.Spec.DeployKeys[genKey] = synv1alpha1.DeployKey{
+				Type:        parts[0],
+				Key:         parts[1],
+				WriteAccess: settings.WriteAccess,
+			}
+		}
+	}
+
+	return nil
+}
+
+func generateNewDeployKeySecret(ctx context.Context, cli client.Client, settings synv1alpha1.DeployKeyTemplate, secretName types.NamespacedName, secretRef *corev1.Secret) error {
+	keyType := keygen.Ed25519
+	if settings.Type == "ssh-rsa" {
+		keyType = keygen.RSA
+	}
+
+	kp, err := keygen.New(
+		"/tmp/"+secretName.Name,
+		keygen.WithKeyType(keyType),
+	)
+	if err != nil {
+		return err
+	}
+
+	secretRef.Name = secretName.Name
+	secretRef.Namespace = secretName.Namespace
+
+	secretRef.Data = make(map[string][]byte)
+
+	secretRef.Data[DEPLOY_KEY_SECRET_PUBKEY] = kp.RawAuthorizedKey()
+	secretRef.Data[DEPLOY_KEY_SECRET_PRIVKEY] = kp.RawPrivateKey()
+
+	return cli.Create(ctx, secretRef)
 }
 
 // valueFromEnvVar returns the value of an envVar. It returns an error if the envVar is invalid or the value cannot be retrieved.
