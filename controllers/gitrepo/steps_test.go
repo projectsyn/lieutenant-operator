@@ -436,6 +436,7 @@ func TestSteps_GenerateDeployKeys(t *testing.T) {
 	assert.Equal(t, "ssh-rsa", repo.Status.GeneratedDeployKeys["generated-testkey"].Type)
 	assert.Equal(t, "ssh-rsa", spParts[0])
 	assert.Equal(t, spParts[1], repo.Status.GeneratedDeployKeys["generated-testkey"].Key)
+	assert.Equal(t, "c-bar-deploy-key-testkey", repo.Status.GeneratedDeployKeys["generated-testkey"].SecretRef.Name)
 	assert.True(t, repo.Status.GeneratedDeployKeys["generated-testkey"].WriteAccess)
 
 	err = c.Get(context.TODO(), types.NamespacedName{Namespace: "foo", Name: "c-bar-deploy-key-fookey"}, secret)
@@ -449,10 +450,12 @@ func TestSteps_GenerateDeployKeys(t *testing.T) {
 	assert.Equal(t, "ssh-ed25519", repo.Status.GeneratedDeployKeys["generated-fookey"].Type)
 	assert.Equal(t, "ssh-ed25519", spParts[0])
 	assert.Equal(t, spParts[1], repo.Status.GeneratedDeployKeys["generated-fookey"].Key)
+	assert.Equal(t, "c-bar-deploy-key-fookey", repo.Status.GeneratedDeployKeys["generated-fookey"].SecretRef.Name)
 	assert.False(t, repo.Status.GeneratedDeployKeys["generated-fookey"].WriteAccess)
 
 	assert.Equal(t, "ssh-ecdsa", repo.Status.GeneratedDeployKeys["generated-existing"].Type)
 	assert.Equal(t, "foo", repo.Status.GeneratedDeployKeys["generated-existing"].Key)
+	assert.Equal(t, "c-bar-deploy-key-existing", repo.Status.GeneratedDeployKeys["generated-existing"].SecretRef.Name)
 	assert.False(t, repo.Status.GeneratedDeployKeys["generated-existing"].WriteAccess)
 
 }

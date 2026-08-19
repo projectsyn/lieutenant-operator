@@ -307,7 +307,7 @@ func ensureGeneratedDeployKeys(ctx context.Context, cli client.Client, instance 
 					Key:         parts[1],
 					WriteAccess: settings.WriteAccess,
 				},
-				SecretRef: secretName,
+				SecretRef: corev1.LocalObjectReference{Name: secretName},
 			}
 		}
 	}

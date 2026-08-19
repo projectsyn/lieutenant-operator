@@ -167,7 +167,7 @@ type DeployKeyTemplate struct {
 type DeployKeyStatus struct {
 	DeployKey `json:",inline"`
 	// SecretRef is the name of the secret in which the SSH keypair is stored.
-	SecretRef string `json:"secretRef,omitempty"`
+	SecretRef corev1.LocalObjectReference `json:"secretRef,omitempty"`
 }
 
 // GitRepoStatus defines the observed state of GitRepo
