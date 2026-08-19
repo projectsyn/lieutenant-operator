@@ -291,7 +291,7 @@ func ensureGeneratedDeployKeys(ctx context.Context, cli client.Client, instance 
 		if !ok {
 			return fmt.Errorf("could not retrieve deploy key from secret: missing key: %s", DEPLOY_KEY_SECRET_PUBKEY)
 		}
-		pubkey := string(pubkeyB[:])
+		pubkey := string(pubkeyB)
 		parts := strings.Split(pubkey, " ")
 
 		keyName := DEPLOY_KEY_GENERATED_PREFIX + genKey
@@ -332,12 +332,9 @@ func generateNewDeployKeySecret(ctx context.Context, cli client.Client, settings
 	secretRef.Name = secretName.Name
 	secretRef.Namespace = secretName.Namespace
 
-	secretRef.ObjectMeta.OwnerReferences = []metav1.OwnerReference{{
-		APIVersion: owner.APIVersion,
-		Kind:       owner.Kind,
-		Name:       owner.Name,
-		UID:        owner.UID,
-	}}
+	secretRef.ObjectMeta.OwnerReferences = []metav1.OwnerReference{
+		*metav1.NewControllerRef(owner, owner.GroupVersionKind()), 
+	}
 
 	secretRef.Data = make(map[string][]byte)
 
