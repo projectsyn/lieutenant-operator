@@ -32,12 +32,13 @@ const DEPLOY_KEY_NAME_INFIX = "-deploy-key-"
 const DEPLOY_KEY_SECRET_PUBKEY = "publicKey"
 const DEPLOY_KEY_SECRET_PRIVKEY = "privateKey"
 const DEPLOY_KEY_SECRET_TYPE = "type"
+const DEPLOY_KEY_GENERATED_PREFIX = "generated-"
 
 func Steps(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
 	return steps(obj, data, manager.GetGitClient)
 }
 
-type gitClientFactory func(ctx context.Context, instance *synv1alpha1.GitRepoTemplate, namespace string, reqLogger logr.Logger, client client.Client) (manager.Repo, string, error)
+type gitClientFactory func(ctx context.Context, instance *synv1alpha1.GitRepo, reqLogger logr.Logger, client client.Client) (manager.Repo, string, error)
 
 func steps(obj pipeline.Object, data *pipeline.Context, getGitClient gitClientFactory) pipeline.Result {
 	instance, ok := obj.(*synv1alpha1.GitRepo)
@@ -55,7 +56,13 @@ func steps(obj pipeline.Object, data *pipeline.Context, getGitClient gitClientFa
 		return pipeline.Result{}
 	}
 
-	repo, hostKeys, err := getGitClient(data.Context, &instance.Spec.GitRepoTemplate, instance.GetNamespace(), data.Log, data.Client)
+	// NOTE(aa): Generate deploy keys before creating Git repo client, since the list of
+	// deploy keys which the client is aware of is frozen at client-creation time.
+	if err := ensureGeneratedDeployKeys(data.Context, data.Client, instance); err != nil {
+		return pipeline.Result{Err: handleRepoError(data.Context, fmt.Errorf("ensure generated deploy keys: %w", err), instance, data.Client)}
+	}
+
+	repo, hostKeys, err := getGitClient(data.Context, instance, data.Log, data.Client)
 	if err != nil {
 		return pipeline.Result{Err: fmt.Errorf("get Git client: %w", err)}
 	}
@@ -106,10 +113,6 @@ func steps(obj pipeline.Object, data *pipeline.Context, getGitClient gitClientFa
 	}
 
 	if err := ensureCIVariables(data.Context, data.Client, instance, repo); err != nil {
-		return pipeline.Result{Err: handleRepoError(data.Context, fmt.Errorf("ensure ci variables: %w", err), instance, data.Client)}
-	}
-
-	if err := ensureGeneratedDeployKeys(data.Context, data.Client, instance); err != nil {
 		return pipeline.Result{Err: handleRepoError(data.Context, fmt.Errorf("ensure ci variables: %w", err), instance, data.Client)}
 	}
 
@@ -278,7 +281,7 @@ func ensureGeneratedDeployKeys(ctx context.Context, cli client.Client, instance 
 			if !apierrors.IsNotFound(err) {
 				return err
 			}
-			err = generateNewDeployKeySecret(ctx, cli, settings, secretNSName, secret)
+			err = generateNewDeployKeySecret(ctx, cli, settings, secretNSName, instance, secret)
 			if err != nil {
 				return err
 			}
@@ -291,15 +294,20 @@ func ensureGeneratedDeployKeys(ctx context.Context, cli client.Client, instance 
 		pubkey := string(pubkeyB[:])
 		parts := strings.Split(pubkey, " ")
 
-		oldKey, ok := instance.Spec.DeployKeys[genKey]
+		keyName := DEPLOY_KEY_GENERATED_PREFIX + genKey
+
+		oldKey, ok := instance.Status.GeneratedDeployKeys[keyName]
 		if !ok || oldKey.Key != parts[1] {
-			if instance.Spec.DeployKeys == nil {
-				instance.Spec.DeployKeys = make(map[string]synv1alpha1.DeployKey)
+			if instance.Status.GeneratedDeployKeys == nil {
+				instance.Status.GeneratedDeployKeys = make(map[string]synv1alpha1.DeployKeyStatus)
 			}
-			instance.Spec.DeployKeys[genKey] = synv1alpha1.DeployKey{
-				Type:        parts[0],
-				Key:         parts[1],
-				WriteAccess: settings.WriteAccess,
+			instance.Status.GeneratedDeployKeys[keyName] = synv1alpha1.DeployKeyStatus{
+				DeployKey: synv1alpha1.DeployKey{
+					Type:        parts[0],
+					Key:         parts[1],
+					WriteAccess: settings.WriteAccess,
+				},
+				SecretRef: secretName,
 			}
 		}
 	}
@@ -307,7 +315,7 @@ func ensureGeneratedDeployKeys(ctx context.Context, cli client.Client, instance 
 	return nil
 }
 
-func generateNewDeployKeySecret(ctx context.Context, cli client.Client, settings synv1alpha1.DeployKeyTemplate, secretName types.NamespacedName, secretRef *corev1.Secret) error {
+func generateNewDeployKeySecret(ctx context.Context, cli client.Client, settings synv1alpha1.DeployKeyTemplate, secretName types.NamespacedName, owner *synv1alpha1.GitRepo, secretRef *corev1.Secret) error {
 	keyType := keygen.Ed25519
 	if settings.Type == "ssh-rsa" {
 		keyType = keygen.RSA
@@ -323,6 +331,13 @@ func generateNewDeployKeySecret(ctx context.Context, cli client.Client, settings
 
 	secretRef.Name = secretName.Name
 	secretRef.Namespace = secretName.Namespace
+
+	secretRef.ObjectMeta.OwnerReferences = []metav1.OwnerReference{{
+		APIVersion: owner.APIVersion,
+		Kind:       owner.Kind,
+		Name:       owner.Name,
+		UID:        owner.UID,
+	}}
 
 	secretRef.Data = make(map[string][]byte)
 

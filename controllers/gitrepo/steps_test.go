@@ -428,28 +428,32 @@ func TestSteps_GenerateDeployKeys(t *testing.T) {
 	err := c.Get(context.TODO(), types.NamespacedName{Namespace: "foo", Name: "c-bar-deploy-key-testkey"}, secret)
 	assert.NoError(t, err)
 
+	assert.Equal(t, "c-bar", secret.ObjectMeta.OwnerReferences[0].Name)
+
 	secretPubkey := string(secret.Data["publicKey"])
 	spParts := strings.Split(secretPubkey, " ")
 
-	assert.Equal(t, "ssh-rsa", repo.Spec.DeployKeys["testkey"].Type)
+	assert.Equal(t, "ssh-rsa", repo.Status.GeneratedDeployKeys["generated-testkey"].Type)
 	assert.Equal(t, "ssh-rsa", spParts[0])
-	assert.Equal(t, spParts[1], repo.Spec.DeployKeys["testkey"].Key)
-	assert.True(t, repo.Spec.DeployKeys["testkey"].WriteAccess)
+	assert.Equal(t, spParts[1], repo.Status.GeneratedDeployKeys["generated-testkey"].Key)
+	assert.True(t, repo.Status.GeneratedDeployKeys["generated-testkey"].WriteAccess)
 
 	err = c.Get(context.TODO(), types.NamespacedName{Namespace: "foo", Name: "c-bar-deploy-key-fookey"}, secret)
 	assert.NoError(t, err)
 
+	assert.Equal(t, "c-bar", secret.ObjectMeta.OwnerReferences[0].Name)
+
 	secretPubkey = string(secret.Data["publicKey"])
 	spParts = strings.Split(secretPubkey, " ")
 
-	assert.Equal(t, "ssh-ed25519", repo.Spec.DeployKeys["fookey"].Type)
+	assert.Equal(t, "ssh-ed25519", repo.Status.GeneratedDeployKeys["generated-fookey"].Type)
 	assert.Equal(t, "ssh-ed25519", spParts[0])
-	assert.Equal(t, spParts[1], repo.Spec.DeployKeys["fookey"].Key)
-	assert.False(t, repo.Spec.DeployKeys["fookey"].WriteAccess)
+	assert.Equal(t, spParts[1], repo.Status.GeneratedDeployKeys["generated-fookey"].Key)
+	assert.False(t, repo.Status.GeneratedDeployKeys["generated-fookey"].WriteAccess)
 
-	assert.Equal(t, "ssh-ecdsa", repo.Spec.DeployKeys["existing"].Type)
-	assert.Equal(t, "foo", repo.Spec.DeployKeys["existing"].Key)
-	assert.False(t, repo.Spec.DeployKeys["existing"].WriteAccess)
+	assert.Equal(t, "ssh-ecdsa", repo.Status.GeneratedDeployKeys["generated-existing"].Type)
+	assert.Equal(t, "foo", repo.Status.GeneratedDeployKeys["generated-existing"].Key)
+	assert.False(t, repo.Status.GeneratedDeployKeys["generated-existing"].WriteAccess)
 
 }
 
@@ -601,7 +605,7 @@ func TestSteps_CIVariables(t *testing.T) {
 }
 
 func fakeGitClientFactory(r *fakeRepo) gitClientFactory {
-	return func(ctx context.Context, instance *synv1alpha1.GitRepoTemplate, namespace string, reqLogger logr.Logger, client client.Client) (manager.Repo, string, error) {
+	return func(ctx context.Context, instance *synv1alpha1.GitRepo, reqLogger logr.Logger, client client.Client) (manager.Repo, string, error) {
 		return r, "", nil
 	}
 }

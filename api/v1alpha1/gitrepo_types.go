@@ -163,6 +163,13 @@ type DeployKeyTemplate struct {
 	WriteAccess bool `json:"writeAccess,omitempty"`
 }
 
+// DeployKeyStatus tracks the status for a generated Deploy Key
+type DeployKeyStatus struct {
+	DeployKey `json:",inline"`
+	// SecretRef is the name of the secret in which the SSH keypair is stored.
+	SecretRef string `json:"secretRef,omitempty"`
+}
+
 // GitRepoStatus defines the observed state of GitRepo
 type GitRepoStatus struct {
 	// Updated by Operator with current phase. The GitPhase enum will be used for application logic
@@ -176,6 +183,8 @@ type GitRepoStatus struct {
 	HostKeys string `json:"hostKeys,omitempty"`
 	// LastAppliedCIVariables contains the last applied CI variables as a json string
 	LastAppliedCIVariables string `json:"lastAppliedCIVariables,omitempty"`
+	// GeneratedDeployKeys contains all SSH deploy keys that were generated for the git repo
+	GeneratedDeployKeys map[string]DeployKeyStatus `json:"generatedDeployKeys,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
