@@ -286,7 +286,7 @@ DeployKeyStatus tracks the status for a generated Deploy Key
 | *`type`* __string__ | Type defines what type the key is (rsa, ed25519, etc...)
 | *`key`* __string__ | Key is the actual key
 | *`writeAccess`* __boolean__ | WriteAccess if the key has RW access or not
-| *`secretRef`* __string__ | SecretRef is the name of the secret in which the SSH keypair is stored.
+| *`secretRef`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#localobjectreference-v1-core[$$LocalObjectReference$$]__ | SecretRef is the name of the secret in which the SSH keypair is stored.
 |===
 
 

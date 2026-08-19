@@ -333,7 +333,7 @@ func generateNewDeployKeySecret(ctx context.Context, cli client.Client, settings
 	secretRef.Namespace = secretName.Namespace
 
 	secretRef.ObjectMeta.OwnerReferences = []metav1.OwnerReference{
-		*metav1.NewControllerRef(owner, owner.GroupVersionKind()), 
+		*metav1.NewControllerRef(owner, owner.GroupVersionKind()),
 	}
 
 	secretRef.Data = make(map[string][]byte)
