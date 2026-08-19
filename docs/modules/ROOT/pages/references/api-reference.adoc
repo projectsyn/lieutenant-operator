@@ -256,6 +256,7 @@ DeployKey defines an SSH key to be used for git operations.
 
 .Appears In:
 ****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deploykeystatus[$$DeployKeyStatus$$]
 - xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepospec[$$GitRepoSpec$$]
 - xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]
 ****
@@ -266,6 +267,26 @@ DeployKey defines an SSH key to be used for git operations.
 | *`type`* __string__ | Type defines what type the key is (rsa, ed25519, etc...)
 | *`key`* __string__ | Key is the actual key
 | *`writeAccess`* __boolean__ | WriteAccess if the key has RW access or not
+|===
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deploykeystatus"]
+=== DeployKeyStatus 
+
+DeployKeyStatus tracks the status for a generated Deploy Key
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepostatus[$$GitRepoStatus$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`type`* __string__ | Type defines what type the key is (rsa, ed25519, etc...)
+| *`key`* __string__ | Key is the actual key
+| *`writeAccess`* __boolean__ | WriteAccess if the key has RW access or not
+| *`secretRef`* __string__ | SecretRef is the name of the secret in which the SSH keypair is stored.
 |===
 
 
