@@ -183,15 +183,15 @@ type CommitFile struct {
 // GetGitClient will return a git client from a provided template. This does a lot more
 // plumbing than the simple NewClient() call. If you're needing a git client from a
 // reconcile function, this is the way to go.
-func GetGitClient(ctx context.Context, instance *synv1alpha1.GitRepoTemplate, namespace string, reqLogger logr.Logger, client client.Client) (Repo, string, error) {
+func GetGitClient(ctx context.Context, instance *synv1alpha1.GitRepo, reqLogger logr.Logger, client client.Client) (Repo, string, error) {
 	secret := &corev1.Secret{}
 	namespacedName := types.NamespacedName{
-		Name:      instance.APISecretRef.Name,
-		Namespace: namespace,
+		Name:      instance.Spec.APISecretRef.Name,
+		Namespace: instance.Namespace,
 	}
 
-	if len(instance.APISecretRef.Namespace) > 0 {
-		namespacedName.Namespace = instance.APISecretRef.Namespace
+	if len(instance.Spec.APISecretRef.Namespace) > 0 {
+		namespacedName.Namespace = instance.Spec.APISecretRef.Namespace
 	}
 
 	err := client.Get(ctx, namespacedName, secret)
@@ -212,7 +212,7 @@ func GetGitClient(ctx context.Context, instance *synv1alpha1.GitRepoTemplate, na
 		return nil, "", fmt.Errorf("secret %s does not contain token", secret.GetName())
 	}
 
-	repoURL, err := url.Parse(string(secret.Data[SecretEndpointName]) + "/" + instance.Path + "/" + instance.RepoName)
+	repoURL, err := url.Parse(string(secret.Data[SecretEndpointName]) + "/" + instance.Spec.Path + "/" + instance.Spec.RepoName)
 	if err != nil {
 		return nil, "", err
 	}
@@ -226,19 +226,27 @@ func GetGitClient(ctx context.Context, instance *synv1alpha1.GitRepoTemplate, na
 		sshHost = parsed
 	}
 
+	deployKeysMerged := make(map[string]synv1alpha1.DeployKey)
+	for dk, dkc := range instance.Status.GeneratedDeployKeys {
+		deployKeysMerged[dk] = dkc.DeployKey
+	}
+	for dk, dkc := range instance.Spec.DeployKeys {
+		deployKeysMerged[dk] = dkc
+	}
+
 	repoOptions := RepoOptions{
 		Credentials: Credentials{
 			Token: string(secret.Data[SecretTokenName]),
 		},
-		DeployKeys:     instance.DeployKeys,
+		DeployKeys:     deployKeysMerged,
 		Logger:         reqLogger,
-		Path:           instance.Path,
-		RepoName:       instance.RepoName,
-		DisplayName:    instance.DisplayName,
+		Path:           instance.Spec.Path,
+		RepoName:       instance.Spec.RepoName,
+		DisplayName:    instance.Spec.DisplayName,
 		URL:            repoURL,
 		SSHHost:        sshHost,
-		TemplateFiles:  instance.TemplateFiles,
-		DeletionPolicy: instance.DeletionPolicy,
+		TemplateFiles:  instance.Spec.TemplateFiles,
+		DeletionPolicy: instance.Spec.DeletionPolicy,
 	}
 
 	repo, err := NewRepo(repoOptions)

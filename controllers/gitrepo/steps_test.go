@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -363,6 +364,102 @@ func TestStepsCreationFailure(t *testing.T) {
 	}
 }
 
+func TestSteps_GenerateDeployKeys(t *testing.T) {
+	scheme := runtime.NewScheme()
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(synv1alpha1.AddToScheme(scheme))
+
+	repo := &synv1alpha1.GitRepo{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "c-bar",
+			Namespace: "foo",
+		},
+		Spec: synv1alpha1.GitRepoSpec{
+			GitRepoTemplate: synv1alpha1.GitRepoTemplate{
+				GeneratedDeployKeys: map[string]synv1alpha1.DeployKeyTemplate{
+					"testkey": {
+						Type:        "ssh-rsa",
+						WriteAccess: true,
+					},
+					"fookey": {
+						Type:        "ssh-ed25519",
+						WriteAccess: false,
+					},
+					"existing": {
+						Type:        "ssh-ed25519",
+						WriteAccess: false,
+					},
+				},
+			},
+		},
+	}
+
+	existingSecret := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "c-bar-deploy-key-existing",
+			Namespace: "foo",
+		},
+		Data: map[string][]byte{
+			"privateKey": []byte("itsasecret"),
+			"publicKey":  []byte("ssh-ecdsa foo"),
+		},
+	}
+
+	c := fake.NewClientBuilder().
+		WithScheme(scheme).
+		WithObjects(repo, existingSecret).
+		WithStatusSubresource(&synv1alpha1.GitRepo{}).
+		Build()
+	pContext := &pipeline.Context{
+		Context:       context.TODO(),
+		FinalizerName: "foo",
+		Client:        c,
+		Log:           testr.New(t),
+	}
+	fr := &fakeRepo{
+		exists: true,
+		url:    new(url.URL),
+	}
+	gc := fakeGitClientFactory(fr)
+	res := steps(repo, pContext, gc)
+	assert.NoError(t, res.Err)
+
+	secret := &corev1.Secret{}
+	err := c.Get(context.TODO(), types.NamespacedName{Namespace: "foo", Name: "c-bar-deploy-key-testkey"}, secret)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "c-bar", secret.ObjectMeta.OwnerReferences[0].Name)
+
+	secretPubkey := string(secret.Data["publicKey"])
+	spParts := strings.Split(secretPubkey, " ")
+
+	assert.Equal(t, "ssh-rsa", repo.Status.GeneratedDeployKeys["generated-testkey"].Type)
+	assert.Equal(t, "ssh-rsa", spParts[0])
+	assert.Equal(t, spParts[1], repo.Status.GeneratedDeployKeys["generated-testkey"].Key)
+	assert.Equal(t, "c-bar-deploy-key-testkey", repo.Status.GeneratedDeployKeys["generated-testkey"].SecretRef.Name)
+	assert.True(t, repo.Status.GeneratedDeployKeys["generated-testkey"].WriteAccess)
+
+	err = c.Get(context.TODO(), types.NamespacedName{Namespace: "foo", Name: "c-bar-deploy-key-fookey"}, secret)
+	assert.NoError(t, err)
+
+	assert.Equal(t, "c-bar", secret.ObjectMeta.OwnerReferences[0].Name)
+
+	secretPubkey = string(secret.Data["publicKey"])
+	spParts = strings.Split(secretPubkey, " ")
+
+	assert.Equal(t, "ssh-ed25519", repo.Status.GeneratedDeployKeys["generated-fookey"].Type)
+	assert.Equal(t, "ssh-ed25519", spParts[0])
+	assert.Equal(t, spParts[1], repo.Status.GeneratedDeployKeys["generated-fookey"].Key)
+	assert.Equal(t, "c-bar-deploy-key-fookey", repo.Status.GeneratedDeployKeys["generated-fookey"].SecretRef.Name)
+	assert.False(t, repo.Status.GeneratedDeployKeys["generated-fookey"].WriteAccess)
+
+	assert.Equal(t, "ssh-ecdsa", repo.Status.GeneratedDeployKeys["generated-existing"].Type)
+	assert.Equal(t, "foo", repo.Status.GeneratedDeployKeys["generated-existing"].Key)
+	assert.Equal(t, "c-bar-deploy-key-existing", repo.Status.GeneratedDeployKeys["generated-existing"].SecretRef.Name)
+	assert.False(t, repo.Status.GeneratedDeployKeys["generated-existing"].WriteAccess)
+
+}
+
 func TestSteps_CIVariables(t *testing.T) {
 	scheme := runtime.NewScheme()
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -511,7 +608,7 @@ func TestSteps_CIVariables(t *testing.T) {
 }
 
 func fakeGitClientFactory(r *fakeRepo) gitClientFactory {
-	return func(ctx context.Context, instance *synv1alpha1.GitRepoTemplate, namespace string, reqLogger logr.Logger, client client.Client) (manager.Repo, string, error) {
+	return func(ctx context.Context, instance *synv1alpha1.GitRepo, reqLogger logr.Logger, client client.Client) (manager.Repo, string, error) {
 		return r, "", nil
 	}
 }

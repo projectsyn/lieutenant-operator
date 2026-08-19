@@ -5,6 +5,7 @@ go 1.26.1
 require (
 	dario.cat/mergo v1.0.2
 	github.com/banzaicloud/bank-vaults/pkg/sdk v0.8.3
+	github.com/charmbracelet/keygen v0.5.4
 	github.com/go-logr/logr v1.4.3
 	github.com/go-logr/zapr v1.3.0
 	github.com/hashicorp/vault/api v1.23.0

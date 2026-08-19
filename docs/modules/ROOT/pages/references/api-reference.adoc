@@ -256,6 +256,7 @@ DeployKey defines an SSH key to be used for git operations.
 
 .Appears In:
 ****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deploykeystatus[$$DeployKeyStatus$$]
 - xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepospec[$$GitRepoSpec$$]
 - xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]
 ****
@@ -265,6 +266,45 @@ DeployKey defines an SSH key to be used for git operations.
 | Field | Description
 | *`type`* __string__ | Type defines what type the key is (rsa, ed25519, etc...)
 | *`key`* __string__ | Key is the actual key
+| *`writeAccess`* __boolean__ | WriteAccess if the key has RW access or not
+|===
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deploykeystatus"]
+=== DeployKeyStatus 
+
+DeployKeyStatus tracks the status for a generated Deploy Key
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepostatus[$$GitRepoStatus$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`type`* __string__ | Type defines what type the key is (rsa, ed25519, etc...)
+| *`key`* __string__ | Key is the actual key
+| *`writeAccess`* __boolean__ | WriteAccess if the key has RW access or not
+| *`secretRef`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#localobjectreference-v1-core[$$LocalObjectReference$$]__ | SecretRef is the name of the secret in which the SSH keypair is stored.
+|===
+
+
+[id="{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deploykeytemplate"]
+=== DeployKeyTemplate 
+
+DeployKeyTemplate defines an SSH key to be generated for git operations.
+
+.Appears In:
+****
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepospec[$$GitRepoSpec$$]
+- xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-gitrepotemplate[$$GitRepoTemplate$$]
+****
+
+[cols="25a,75a", options="header"]
+|===
+| Field | Description
+| *`type`* __string__ | Type defines what type the key is. For key generation, currently only `ssh-rsa` and `ssh-ed25519` are supported.
 | *`writeAccess`* __boolean__ | WriteAccess if the key has RW access or not
 |===
 
@@ -388,6 +428,7 @@ GitRepoSpec defines the desired state of GitRepo
 | Field | Description
 | *`apiSecretRef`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#secretreference-v1-core[$$SecretReference$$]__ | APISecretRef reference to secret containing connection information
 | *`deployKeys`* __object (keys:string, values:xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deploykey[$$DeployKey$$])__ | DeployKeys optional list of SSH deploy keys. If not set, not deploy keys will be configured
+| *`generatedDeployKeys`* __object (keys:string, values:xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deploykeytemplate[$$DeployKeyTemplate$$])__ | Path to Git repository
 | *`path`* __string__ | Path to Git repository
 | *`repoName`* __string__ | RepoName name of Git repository
 | *`repoType`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-repotype[$$RepoType$$]__ | RepoType specifies if a repo should be managed by the git controller. A value of 'unmanaged' means it's not manged by the controller
@@ -432,6 +473,7 @@ controller creating the template instance.
 | Field | Description
 | *`apiSecretRef`* __link:https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.20/#secretreference-v1-core[$$SecretReference$$]__ | APISecretRef reference to secret containing connection information
 | *`deployKeys`* __object (keys:string, values:xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deploykey[$$DeployKey$$])__ | DeployKeys optional list of SSH deploy keys. If not set, not deploy keys will be configured
+| *`generatedDeployKeys`* __object (keys:string, values:xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-deploykeytemplate[$$DeployKeyTemplate$$])__ | Path to Git repository
 | *`path`* __string__ | Path to Git repository
 | *`repoName`* __string__ | RepoName name of Git repository
 | *`repoType`* __xref:{anchor_prefix}-github-com-projectsyn-lieutenant-operator-api-v1alpha1-repotype[$$RepoType$$]__ | RepoType specifies if a repo should be managed by the git controller. A value of 'unmanaged' means it's not manged by the controller

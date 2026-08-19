@@ -65,6 +65,8 @@ type GitRepoTemplate struct {
 	// DeployKeys optional list of SSH deploy keys. If not set, not deploy keys will be configured
 	DeployKeys map[string]DeployKey `json:"deployKeys,omitempty"`
 	// Path to Git repository
+	GeneratedDeployKeys map[string]DeployKeyTemplate `json:"generatedDeployKeys,omitempty"`
+	// Path to Git repository
 	Path string `json:"path,omitempty"`
 	// RepoName name of Git repository
 	RepoName string `json:"repoName,omitempty"`
@@ -153,6 +155,21 @@ type DeployKey struct {
 	WriteAccess bool `json:"writeAccess,omitempty"`
 }
 
+// DeployKeyTemplate defines an SSH key to be generated for git operations.
+type DeployKeyTemplate struct {
+	// Type defines what type the key is. For key generation, currently only `ssh-rsa` and `ssh-ed25519` are supported.
+	Type string `json:"type,omitempty"`
+	// WriteAccess if the key has RW access or not
+	WriteAccess bool `json:"writeAccess,omitempty"`
+}
+
+// DeployKeyStatus tracks the status for a generated Deploy Key
+type DeployKeyStatus struct {
+	DeployKey `json:",inline"`
+	// SecretRef is the name of the secret in which the SSH keypair is stored.
+	SecretRef corev1.LocalObjectReference `json:"secretRef,omitempty"`
+}
+
 // GitRepoStatus defines the observed state of GitRepo
 type GitRepoStatus struct {
 	// Updated by Operator with current phase. The GitPhase enum will be used for application logic
@@ -166,6 +183,8 @@ type GitRepoStatus struct {
 	HostKeys string `json:"hostKeys,omitempty"`
 	// LastAppliedCIVariables contains the last applied CI variables as a json string
 	LastAppliedCIVariables string `json:"lastAppliedCIVariables,omitempty"`
+	// GeneratedDeployKeys contains all SSH deploy keys that were generated for the git repo
+	GeneratedDeployKeys map[string]DeployKeyStatus `json:"generatedDeployKeys,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
