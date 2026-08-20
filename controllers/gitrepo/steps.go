@@ -271,6 +271,33 @@ func ensureCIVariables(ctx context.Context, cli client.Client, instance *synv1al
 // all have a corresponding `deployKey` entry, generating SSH keys as required
 // and storing them in individual secrets.
 func ensureGeneratedDeployKeys(ctx context.Context, cli client.Client, instance *synv1alpha1.GitRepo) error {
+	errors := []error{}
+	deletions := []string{}
+	for oldKey, settings := range instance.Status.GeneratedDeployKeys {
+		keyBaseName := oldKey[len(DEPLOY_KEY_GENERATED_PREFIX):]
+		secretName := settings.SecretRef.Name
+		secretNSName := types.NamespacedName{Name: secretName, Namespace: instance.Namespace}
+		_, ok := instance.Spec.GeneratedDeployKeys[keyBaseName]
+		if !ok {
+
+			secret := &corev1.Secret{}
+			err := cli.Get(ctx, secretNSName, secret)
+			if err != nil {
+				errors = append(errors, fmt.Errorf("could not get deploy key secret: %w", err))
+				continue
+			}
+			err = cli.Delete(ctx, secret)
+			if err != nil {
+				errors = append(errors, fmt.Errorf("could not clean up deploy key secret: %w", err))
+				continue
+			}
+			deletions = append(deletions, oldKey)
+		}
+	}
+	for _, del := range deletions {
+		delete(instance.Status.GeneratedDeployKeys, del)
+	}
+
 	for genKey, settings := range instance.Spec.GeneratedDeployKeys {
 		secretName := instance.Name + DEPLOY_KEY_NAME_INFIX + genKey
 		secretNSName := types.NamespacedName{Name: secretName, Namespace: instance.Namespace}
@@ -279,17 +306,20 @@ func ensureGeneratedDeployKeys(ctx context.Context, cli client.Client, instance 
 		err := cli.Get(ctx, secretNSName, secret)
 		if err != nil {
 			if !apierrors.IsNotFound(err) {
-				return err
+				errors = append(errors, fmt.Errorf("Could not retrieve deploy key secret: %w", err))
+				continue
 			}
 			err = generateNewDeployKeySecret(ctx, cli, settings, secretNSName, instance, secret)
 			if err != nil {
-				return err
+				errors = append(errors, fmt.Errorf("Could not create new deploy key secret: %w", err))
+				continue
 			}
 		}
 
 		pubkeyB, ok := secret.Data[DEPLOY_KEY_SECRET_PUBKEY]
 		if !ok {
-			return fmt.Errorf("could not retrieve deploy key from secret: missing key: %s", DEPLOY_KEY_SECRET_PUBKEY)
+			errors = append(errors, fmt.Errorf("could not retrieve deploy key from secret: missing key: %s", DEPLOY_KEY_SECRET_PUBKEY))
+			continue
 		}
 		pubkey := string(pubkeyB)
 		parts := strings.Split(pubkey, " ")
@@ -312,7 +342,7 @@ func ensureGeneratedDeployKeys(ctx context.Context, cli client.Client, instance 
 		}
 	}
 
-	return nil
+	return multierr.Combine(errors...)
 }
 
 func generateNewDeployKeySecret(ctx context.Context, cli client.Client, settings synv1alpha1.DeployKeyTemplate, secretName types.NamespacedName, owner *synv1alpha1.GitRepo, secretRef *corev1.Secret) error {
