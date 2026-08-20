@@ -392,6 +392,19 @@ func TestSteps_GenerateDeployKeys(t *testing.T) {
 				},
 			},
 		},
+		Status: synv1alpha1.GitRepoStatus{
+			GeneratedDeployKeys: map[string]synv1alpha1.DeployKeyStatus{
+				"generated-oldkey": {
+					DeployKey: synv1alpha1.DeployKey{
+						Type: "ssh-rsa",
+						Key:  "foo",
+					},
+					SecretRef: corev1.LocalObjectReference{
+						Name: "c-bar-deploy-key-oldkey",
+					},
+				},
+			},
+		},
 	}
 
 	existingSecret := &corev1.Secret{
@@ -405,9 +418,20 @@ func TestSteps_GenerateDeployKeys(t *testing.T) {
 		},
 	}
 
+	existingSecret2 := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "c-bar-deploy-key-oldkey",
+			Namespace: "foo",
+		},
+		Data: map[string][]byte{
+			"privateKey": []byte("itsasecret"),
+			"publicKey":  []byte("ssh-ecdsa foo"),
+		},
+	}
+
 	c := fake.NewClientBuilder().
 		WithScheme(scheme).
-		WithObjects(repo, existingSecret).
+		WithObjects(repo, existingSecret, existingSecret2).
 		WithStatusSubresource(&synv1alpha1.GitRepo{}).
 		Build()
 	pContext := &pipeline.Context{
@@ -425,7 +449,12 @@ func TestSteps_GenerateDeployKeys(t *testing.T) {
 	assert.NoError(t, res.Err)
 
 	secret := &corev1.Secret{}
-	err := c.Get(context.TODO(), types.NamespacedName{Namespace: "foo", Name: "c-bar-deploy-key-testkey"}, secret)
+	err := c.Get(context.TODO(), types.NamespacedName{Namespace: "foo", Name: "c-bar-deploy-key-oldkey"}, secret)
+	assert.Error(t, err)
+
+	assert.NotContains(t, "generated-oldkey", repo.Status.GeneratedDeployKeys)
+
+	err = c.Get(context.TODO(), types.NamespacedName{Namespace: "foo", Name: "c-bar-deploy-key-testkey"}, secret)
 	assert.NoError(t, err)
 
 	assert.Equal(t, "c-bar", secret.ObjectMeta.OwnerReferences[0].Name)

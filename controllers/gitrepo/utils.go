@@ -15,6 +15,7 @@ import (
 // CreateOrUpdate will create the gitRepo object if it doesn't already exist.
 // If it does it will update its template if it changed.
 func CreateOrUpdate(obj pipeline.Object, data *pipeline.Context) pipeline.Result {
+
 	template := obj.GetGitTemplate()
 
 	if template == nil {
@@ -75,8 +76,11 @@ func CreateOrUpdate(obj pipeline.Object, data *pipeline.Context) pipeline.Result
 		return pipeline.Result{Err: err}
 	}
 
+	data.Log.Info("Comparing gitrepo to template", "oldDeployKeys", repo.Spec.DeployKeys, "newDeployKeys", found.Spec.DeployKeys)
+
 	if !equality.Semantic.DeepEqual(found.Spec.GitRepoTemplate, repo.Spec.GitRepoTemplate) {
 		found.Spec.GitRepoTemplate = repo.Spec.GitRepoTemplate
+		data.Log.Info("Updating gitrepo based on template", "repo", obj.GetMeta().Name)
 		if err := data.Client.Update(data.Context, found); err != nil {
 			return pipeline.Result{Err: err}
 		}
