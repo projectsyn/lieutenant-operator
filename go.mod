@@ -12,7 +12,7 @@ require (
 	github.com/kouhin/envflag v0.0.0-20150818174321-0e9a86061649
 	github.com/prometheus/client_golang v1.24.1
 	github.com/ryankurte/go-structparse v1.2.0
-	github.com/stretchr/testify v1.12.0
+	github.com/stretchr/testify v1.12.1
 	gitlab.com/gitlab-org/api/client-go/v2 v2.58.1
 	go.uber.org/atomic v1.11.0
 	go.uber.org/multierr v1.11.0
