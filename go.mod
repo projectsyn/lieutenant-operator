@@ -14,7 +14,7 @@ require (
 	github.com/ryankurte/go-structparse v1.2.0
 	github.com/stretchr/testify v1.12.1
 	gitlab.com/gitlab-org/api/client-go/v2 v2.58.1
-	go.uber.org/atomic v1.11.0
+	go.uber.org/atomic v1.12.0
 	go.uber.org/multierr v1.11.0
 	go.uber.org/zap v1.28.0
 	golang.org/x/exp v0.0.0-20260813180055-c1d0aacb2297
